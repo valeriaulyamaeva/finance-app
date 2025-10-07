@@ -3,151 +3,99 @@
 namespace app\controllers;
 
 use app\models\Transaction;
+use app\services\TransactionService;
 use Throwable;
+use Yii;
 use yii\data\ActiveDataProvider;
-use yii\db\Exception;
-use yii\db\StaleObjectException;
 use yii\web\Controller;
-use yii\web\NotFoundHttpException;
-use yii\filters\VerbFilter;
 use yii\web\Response;
 
-/**
- * TransactionController implements the CRUD actions for Transaction model.
- */
 class TransactionController extends Controller
 {
-    /**
-     * @inheritDoc
-     */
-    public function behaviors(): array
+    private TransactionService $service;
+
+    public function __construct($id, $module, TransactionService $service = null, $config = [])
     {
-        return array_merge(
-            parent::behaviors(),
-            [
-                'verbs' => [
-                    'class' => VerbFilter::className(),
-                    'actions' => [
-                        'delete' => ['POST'],
-                    ],
-                ],
-            ]
-        );
+        $this->service = $service ?? new TransactionService();
+        parent::__construct($id, $module, $config);
     }
 
     /**
-     * Lists all Transaction models.
-     *
-     * @return string
+     * Список транзакций и сводка.
      */
     public function actionIndex(): string
     {
+        $userId = Yii::$app->user->id;
+
         $dataProvider = new ActiveDataProvider([
-            'query' => Transaction::find(),
-            /*
-            'pagination' => [
-                'pageSize' => 50
-            ],
-            'sort' => [
-                'defaultOrder' => [
-                    'id' => SORT_DESC,
-                ]
-            ],
-            */
+            'query' => Transaction::find()
+                ->where(['user_id' => $userId])
+                ->orderBy(['date' => SORT_DESC]),
+            'pagination' => ['pageSize' => 25],
         ]);
 
         return $this->render('index', [
             'dataProvider' => $dataProvider,
+            'summary' => $this->service->getSummary($userId),
         ]);
     }
 
     /**
-     * Displays a single Transaction model.
-     * @param int $id ID
-     * @return string
-     * @throws NotFoundHttpException if the model cannot be found
+     * Создание транзакции (AJAX).
      */
-    public function actionView(int $id): string
+    public function actionCreate(): array
     {
-        return $this->render('view', [
-            'model' => $this->findModel($id),
-        ]);
-    }
+        Yii::$app->response->format = Response::FORMAT_JSON;
 
-    /**
-     * Creates a new Transaction model.
-     * If creation is successful, the browser will be redirected to the 'view' page.
-     * @return string|Response
-     * @throws Exception
-     */
-    public function actionCreate(): Response|string
-    {
-        $model = new Transaction();
-
-        if ($this->request->isPost) {
-            if ($model->load($this->request->post()) && $model->save()) {
-                return $this->redirect(['view', 'id' => $model->id]);
-            }
-        } else {
-            $model->loadDefaultValues();
-        }
-
-        return $this->render('create', [
-            'model' => $model,
-        ]);
-    }
-
-    /**
-     * Updates an existing Transaction model.
-     * If update is successful, the browser will be redirected to the 'view' page.
-     * @param int $id ID
-     * @return string|Response
-     * @throws NotFoundHttpException if the model cannot be found
-     * @throws Exception
-     */
-    public function actionUpdate(int $id): Response|string
-    {
-        $model = $this->findModel($id);
-
-        if ($this->request->isPost && $model->load($this->request->post()) && $model->save()) {
-            return $this->redirect(['view', 'id' => $model->id]);
-        }
-
-        return $this->render('update', [
-            'model' => $model,
-        ]);
-    }
-
-    /**
-     * Deletes an existing Transaction model.
-     * If deletion is successful, the browser will be redirected to the 'index' page.
-     * @param int $id ID
-     * @return Response
-     */
-    public function actionDelete(int $id): Response
-    {
         try {
-            $this->findModel($id)->delete();
-        } catch (StaleObjectException|NotFoundHttpException|Throwable $e) {
-
+            $transaction = $this->service->create(Yii::$app->request->post(), Yii::$app->user->id);
+            return ['success' => true, 'transaction' => $transaction->toArray()];
+        } catch (Throwable $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
         }
-
-        return $this->redirect(['index']);
     }
 
     /**
-     * Finds the Transaction model based on its primary key value.
-     * If the model is not found, a 404 HTTP exception will be thrown.
-     * @param int $id ID
-     * @return Transaction the loaded model
-     * @throws NotFoundHttpException if the model cannot be found
+     * Обновление транзакции (AJAX).
      */
-    protected function findModel(int $id): Transaction
+    public function actionUpdate(int $id): array
     {
-        if (($model = Transaction::findOne(['id' => $id])) !== null) {
-            return $model;
-        }
+        Yii::$app->response->format = Response::FORMAT_JSON;
 
-        throw new NotFoundHttpException('The requested page does not exist.');
+        try {
+            $transaction = $this->service->update($id, Yii::$app->request->post());
+            return ['success' => true, 'transaction' => $transaction->toArray()];
+        } catch (Throwable $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
+    }
+
+    /**
+     * Удаление транзакции (AJAX).
+     */
+    public function actionDelete(int $id): array
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        try {
+            $this->service->delete($id);
+            return ['success' => true];
+        } catch (Throwable $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
+    }
+
+    /**
+     * Просмотр одной транзакции (AJAX).
+     */
+    public function actionView(int $id): array
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        $transaction = Transaction::findOne($id);
+
+        return $transaction
+            ? ['success' => true, 'transaction' => $transaction->toArray()]
+            : ['success' => false, 'message' => 'Транзакция не найдена'];
     }
 }
