@@ -12,8 +12,6 @@ use yii\web\NotFoundHttpException;
 class CategoryService
 {
     /**
-     * Получить все категории пользователя
-     *
      * @param int $userId
      * @return Category[]
      */
@@ -26,8 +24,6 @@ class CategoryService
     }
 
     /**
-     * Найти категорию по id
-     *
      * @param int $id
      * @param int $userId
      * @return Category
@@ -43,8 +39,6 @@ class CategoryService
     }
 
     /**
-     * Создать категорию
-     *
      * @param int $userId
      * @param array $data
      * @return Category
@@ -68,8 +62,6 @@ class CategoryService
     }
 
     /**
-     * Обновить категорию
-     *
      * @param int $id
      * @param int $userId
      * @param array $data
@@ -94,8 +86,6 @@ class CategoryService
     }
 
     /**
-     * Удалить категорию
-     *
      * @param int $id
      * @param int $userId
      * @throws NotFoundHttpException

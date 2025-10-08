@@ -2,6 +2,7 @@
 
 namespace app\services;
 
+use app\models\Budget;
 use app\models\Category;
 use app\models\Transaction;
 use Throwable;
@@ -11,8 +12,6 @@ use yii\web\NotFoundHttpException;
 class TransactionService
 {
     /**
-     * Создание транзакции.
-     *
      * @throws Exception
      */
     public function create(array $data, int $userId): Transaction
@@ -20,8 +19,7 @@ class TransactionService
         $transaction = new Transaction([
             'user_id' => $userId,
         ]);
-        $transaction->load($data);
-        $transaction->type = $this->resolveTypeByCategory($transaction->category_id);
+        $this->updateBudget($transaction, $data);
 
         if (!$transaction->validate() || !$transaction->save()) {
             throw new Exception('Ошибка при создании транзакции: ' . json_encode($transaction->errors, JSON_UNESCAPED_UNICODE));
@@ -31,8 +29,6 @@ class TransactionService
     }
 
     /**
-     * Обновление транзакции.
-     *
      * @throws Exception
      * @throws NotFoundHttpException
      */
@@ -43,8 +39,7 @@ class TransactionService
             throw new NotFoundHttpException('Транзакция не найдена');
         }
 
-        $transaction->load($data);
-        $transaction->type = $this->resolveTypeByCategory($transaction->category_id);
+        $this->updateBudget($transaction, $data);
 
         if (!$transaction->validate() || !$transaction->save()) {
             throw new Exception('Ошибка при обновлении транзакции: ' . json_encode($transaction->errors, JSON_UNESCAPED_UNICODE));
@@ -53,9 +48,6 @@ class TransactionService
         return $transaction;
     }
 
-    /**
-     * Определение типа по категории.
-     */
     private function resolveTypeByCategory(?int $categoryId): string
     {
         $category = Category::findOne($categoryId);
@@ -66,9 +58,6 @@ class TransactionService
         };
     }
 
-    /**
-     * Удаление транзакции.
-     */
     public function delete(int $id): void
     {
         if ($transaction = Transaction::findOne($id)) {
@@ -79,9 +68,6 @@ class TransactionService
         }
     }
 
-    /**
-     * Получение сводки (доход, расход, баланс).
-     */
     public function getSummary(int $userId): array
     {
         $income = (float)Transaction::find()
@@ -98,5 +84,41 @@ class TransactionService
             'expense' => $expense,
             'balance' => $income - $expense,
         ];
+    }
+
+    /**
+     * @param Transaction $transaction
+     * @param array $data
+     * @return void
+     * @throws Exception
+     */
+    public function updateBudget(Transaction $transaction, array $data): void
+    {
+        $transaction->load($data);
+        $transaction->type = $this->resolveTypeByCategory($transaction->category_id);
+
+        if (!empty($transaction->category_id)) {
+            $budget = Budget::findOne(['category_id' => $transaction->category_id, 'user_id' => $transaction->user_id]);
+            if ($budget) {
+                $summary = (new BudgetService())->calculateSummary($budget);
+                $budget->updated_at = date('Y-m-d H:i:s');
+                $budget->save(false);
+            }
+        }
+
+        if (!empty($transaction->category_id)) {
+            $budget = Budget::findOne(['category_id' => $transaction->category_id, 'user_id' => $transaction->user_id]);
+            if ($budget) {
+                if ($transaction->isTypeExpense()) {
+                    $budget->amount -= $transaction->amount;
+                } elseif ($transaction->isTypeIncome()) {
+                    $budget->amount += $transaction->amount;
+                }
+
+
+                $budget->updated_at = date('Y-m-d H:i:s');
+                $budget->save(false);
+            }
+        }
     }
 }
