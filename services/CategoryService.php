@@ -100,4 +100,13 @@ class CategoryService
             throw new RuntimeException('Не удалось удалить категорию');
         }
     }
+
+    public function getByType(int $userId, string $type): array
+    {
+        return Category::find()
+            ->where(['user_id' => $userId, 'type' => $type])
+            ->asArray()
+            ->all();
+    }
+
 }

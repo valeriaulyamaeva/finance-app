@@ -2,7 +2,9 @@
 
 namespace app\models;
 
-use Yii;
+
+use yii\db\ActiveQuery;
+use yii\db\ActiveRecord;
 
 /**
  * This is the model class for table "goal".
@@ -21,7 +23,7 @@ use Yii;
  * @property Transaction[] $transactions
  * @property User $user
  */
-class Goal extends \yii\db\ActiveRecord
+class Goal extends ActiveRecord
 {
 
     /**
@@ -30,11 +32,15 @@ class Goal extends \yii\db\ActiveRecord
     const STATUS_ACTIVE = 'active';
     const STATUS_COMPLETED = 'completed';
     const STATUS_FAILED = 'failed';
+    /**
+     * @var float|mixed|null
+     */
+    public mixed $progress;
 
     /**
      * {@inheritdoc}
      */
-    public static function tableName()
+    public static function tableName(): string
     {
         return 'goal';
     }
@@ -42,7 +48,7 @@ class Goal extends \yii\db\ActiveRecord
     /**
      * {@inheritdoc}
      */
-    public function rules()
+    public function rules(): array
     {
         return [
             [['current_amount'], 'default', 'value' => 0.00],
@@ -61,7 +67,7 @@ class Goal extends \yii\db\ActiveRecord
     /**
      * {@inheritdoc}
      */
-    public function attributeLabels()
+    public function attributeLabels(): array
     {
         return [
             'id' => 'ID',
@@ -79,9 +85,9 @@ class Goal extends \yii\db\ActiveRecord
     /**
      * Gets query for [[RecurringTransactions]].
      *
-     * @return \yii\db\ActiveQuery
+     * @return ActiveQuery
      */
-    public function getRecurringTransactions()
+    public function getRecurringTransactions(): ActiveQuery
     {
         return $this->hasMany(RecurringTransaction::class, ['goal_id' => 'id']);
     }
@@ -89,9 +95,9 @@ class Goal extends \yii\db\ActiveRecord
     /**
      * Gets query for [[Transactions]].
      *
-     * @return \yii\db\ActiveQuery
+     * @return ActiveQuery
      */
-    public function getTransactions()
+    public function getTransactions(): ActiveQuery
     {
         return $this->hasMany(Transaction::class, ['goal_id' => 'id']);
     }
@@ -99,9 +105,9 @@ class Goal extends \yii\db\ActiveRecord
     /**
      * Gets query for [[User]].
      *
-     * @return \yii\db\ActiveQuery
+     * @return ActiveQuery
      */
-    public function getUser()
+    public function getUser(): ActiveQuery
     {
         return $this->hasOne(User::class, ['id' => 'user_id']);
     }
@@ -111,7 +117,7 @@ class Goal extends \yii\db\ActiveRecord
      * column status ENUM value labels
      * @return string[]
      */
-    public static function optsStatus()
+    public static function optsStatus(): array
     {
         return [
             self::STATUS_ACTIVE => 'active',
@@ -123,7 +129,7 @@ class Goal extends \yii\db\ActiveRecord
     /**
      * @return string
      */
-    public function displayStatus()
+    public function displayStatus(): string
     {
         return self::optsStatus()[$this->status];
     }
@@ -131,12 +137,12 @@ class Goal extends \yii\db\ActiveRecord
     /**
      * @return bool
      */
-    public function isStatusActive()
+    public function isStatusActive(): bool
     {
         return $this->status === self::STATUS_ACTIVE;
     }
 
-    public function setStatusToActive()
+    public function setStatusToActive(): void
     {
         $this->status = self::STATUS_ACTIVE;
     }
@@ -144,12 +150,12 @@ class Goal extends \yii\db\ActiveRecord
     /**
      * @return bool
      */
-    public function isStatusCompleted()
+    public function isStatusCompleted(): bool
     {
         return $this->status === self::STATUS_COMPLETED;
     }
 
-    public function setStatusToCompleted()
+    public function setStatusToCompleted(): void
     {
         $this->status = self::STATUS_COMPLETED;
     }
@@ -157,12 +163,12 @@ class Goal extends \yii\db\ActiveRecord
     /**
      * @return bool
      */
-    public function isStatusFailed()
+    public function isStatusFailed(): bool
     {
         return $this->status === self::STATUS_FAILED;
     }
 
-    public function setStatusToFailed()
+    public function setStatusToFailed(): void
     {
         $this->status = self::STATUS_FAILED;
     }

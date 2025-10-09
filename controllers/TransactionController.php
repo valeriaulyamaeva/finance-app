@@ -2,6 +2,7 @@
 
 namespace app\controllers;
 
+use app\models\Category;
 use app\models\Transaction;
 use app\services\TransactionService;
 use Throwable;
@@ -9,6 +10,8 @@ use Yii;
 use yii\data\ActiveDataProvider;
 use yii\web\Controller;
 use yii\web\Response;
+use app\models\Goal;
+use yii\helpers\ArrayHelper;
 
 class TransactionController extends Controller
 {
@@ -34,9 +37,18 @@ class TransactionController extends Controller
             'pagination' => ['pageSize' => 25],
         ]);
 
+        $goals = ArrayHelper::map(
+            Goal::find()
+                ->where(['user_id' => $userId])
+                ->all(),
+            'id',
+            'name'
+        );
+
         return $this->render('index', [
             'dataProvider' => $dataProvider,
             'summary' => $this->service->getSummary($userId),
+            'goals' => $goals,
         ]);
     }
 

@@ -4,6 +4,7 @@ namespace app\services;
 
 use app\models\Budget;
 use app\models\Category;
+use app\models\Goal;
 use app\models\Transaction;
 use Throwable;
 use yii\db\Exception;
@@ -18,8 +19,11 @@ class TransactionService
     {
         $transaction = new Transaction([
             'user_id' => $userId,
+            'category_id' => $data['category_id'] ?? null,
+            'goal_id' => $data['goal_id'] ?? null,
         ]);
-        $this->updateBudget($transaction, $data);
+
+        $this->updateRelatedEntities($transaction, $data);
 
         if (!$transaction->validate() || !$transaction->save()) {
             throw new Exception('Ошибка при создании транзакции: ' . json_encode($transaction->errors, JSON_UNESCAPED_UNICODE));
@@ -39,7 +43,7 @@ class TransactionService
             throw new NotFoundHttpException('Транзакция не найдена');
         }
 
-        $this->updateBudget($transaction, $data);
+        $this->updateRelatedEntities($transaction, $data);
 
         if (!$transaction->validate() || !$transaction->save()) {
             throw new Exception('Ошибка при обновлении транзакции: ' . json_encode($transaction->errors, JSON_UNESCAPED_UNICODE));
@@ -48,12 +52,15 @@ class TransactionService
         return $transaction;
     }
 
-    private function resolveTypeByCategory(?int $categoryId): string
+    private function resolveTypeByCategory(?int $categoryId, ?int $goalId): string
     {
+        if ($goalId !== null) {
+            return Transaction::TYPE_GOAL;
+        }
+
         $category = Category::findOne($categoryId);
         return match ($category->type ?? null) {
             'income' => Transaction::TYPE_INCOME,
-            'goal' => Transaction::TYPE_GOAL,
             default => Transaction::TYPE_EXPENSE,
         };
     }
@@ -92,32 +99,37 @@ class TransactionService
      * @return void
      * @throws Exception
      */
-    public function updateBudget(Transaction $transaction, array $data): void
+    public function updateRelatedEntities(Transaction $transaction, array $data): void
     {
         $transaction->load($data);
-        $transaction->type = $this->resolveTypeByCategory($transaction->category_id);
 
-        if (!empty($transaction->category_id)) {
-            $budget = Budget::findOne(['category_id' => $transaction->category_id, 'user_id' => $transaction->user_id]);
-            if ($budget) {
-                $summary = (new BudgetService())->calculateSummary($budget);
-                $budget->updated_at = date('Y-m-d H:i:s');
-                $budget->save(false);
-            }
-        }
+        $categoryId = $transaction->category_id ?? $data['category_id'] ?? null;
+        $goalId = $transaction->goal_id ?? $data['goal_id'] ?? null;
 
-        if (!empty($transaction->category_id)) {
-            $budget = Budget::findOne(['category_id' => $transaction->category_id, 'user_id' => $transaction->user_id]);
+        $transaction->type = $this->resolveTypeByCategory($categoryId, $goalId);
+
+        if ($categoryId) {
+            $budget = Budget::findOne(['category_id' => $categoryId, 'user_id' => $transaction->user_id]);
             if ($budget) {
                 if ($transaction->isTypeExpense()) {
                     $budget->amount -= $transaction->amount;
                 } elseif ($transaction->isTypeIncome()) {
                     $budget->amount += $transaction->amount;
                 }
-
-
                 $budget->updated_at = date('Y-m-d H:i:s');
                 $budget->save(false);
+            }
+        }
+
+        if ($goalId) {
+            $goal = Goal::findOne($goalId);
+            if ($goal && $transaction->isTypeGoal()) {
+                $goal->current_amount += $transaction->amount;
+                if ($goal->current_amount >= $goal->target_amount) {
+                    $goal->status = Goal::STATUS_COMPLETED;
+                }
+                $goal->updated_at = date('Y-m-d H:i:s');
+                $goal->save(false);
             }
         }
     }

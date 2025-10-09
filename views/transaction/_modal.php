@@ -3,10 +3,16 @@ use app\models\Category;
 use app\models\Transaction;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Html;
+use yii\helpers\Url;
 use yii\widgets\ActiveForm;
 
-$categories = ArrayHelper::map(Category::find()->all(), 'id', 'name');
+$categories = ArrayHelper::map(
+    Category::find()->where(['user_id' => Yii::$app->user->id])->all(),
+    'id',
+    'name'
+);
 $transaction = new Transaction();
+/** @var array $goals */
 ?>
 
 <div class="modal fade" id="transactionModal" tabindex="-1" aria-labelledby="transactionModalLabel" aria-hidden="true">
@@ -28,10 +34,13 @@ $transaction = new Transaction();
                     'oninput' => "this.value = this.value.replace(',', '.')",
                     'required' => true,
                 ]) ?>
-
                 <?= $form->field($transaction, 'date')->input('date', ['required' => true]) ?>
                 <?= $form->field($transaction, 'category_id')->dropDownList($categories, ['prompt' => 'Выберите категорию']) ?>
                 <?= $form->field($transaction, 'description')->textarea(['rows' => 2]) ?>
+
+                <div id="goalSelector" style="display:none;">
+                    <?= $form->field($transaction, 'goal_id')->dropDownList($goals, ['prompt' => 'Выберите цель']) ?>
+                </div>
 
                 <?php ActiveForm::end(); ?>
 
@@ -45,3 +54,26 @@ $transaction = new Transaction();
         </div>
     </div>
 </div>
+<?php
+$checkTypeUrl = Url::to(['category/type']);
+$script = <<<JS
+$('#transaction-category_id').on('change', function() {
+    var categoryId = $(this).val();
+    if (!categoryId) {
+        $('#goalSelector').hide();
+        $('#transaction-goal_id').val('');
+        return;
+    }
+    $.getJSON('$checkTypeUrl', {id: categoryId}, function(res) {
+        if (res.type === 'goal') {
+            $('#goalSelector').show();
+        } else {
+            $('#goalSelector').hide();
+            $('#transaction-goal_id').val('');
+        }
+    });
+});
+JS;
+$this->registerJs($script);
+?>
+

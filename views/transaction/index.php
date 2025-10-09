@@ -75,7 +75,7 @@ $deleteUrl = Url::to(['transaction/delete']);
             ],
         ]); ?>
 
-        <?= $this->render('_modal'); ?>
+        <?= $this->render('_modal', ['goals' => $goals]); ?>
     </div>
 
 <?php
