@@ -72,11 +72,11 @@ class BudgetService
             ->andWhere(['type' => ['expense', 'goal']])
             ->sum('amount') ?? 0;
 
-        $remaining = $budget->amount - $spent;
+        $remaining = $budget->amount - $budget->spent;
 
         return [
-            'spent' => (float) $spent,
-            'remaining' => (float) $remaining,
+            'spent' => $budget->spent,
+            'remaining' => $remaining,
             'total' => $budget->amount,
         ];
     }

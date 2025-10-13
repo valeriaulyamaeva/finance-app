@@ -64,6 +64,9 @@ class Transaction extends ActiveRecord
             [['goal_id'], 'exist', 'skipOnError' => true, 'targetClass' => Goal::class, 'targetAttribute' => ['goal_id' => 'id']],
             [['recurring_id'], 'exist', 'skipOnError' => true, 'targetClass' => RecurringTransaction::class, 'targetAttribute' => ['recurring_id' => 'id']],
             [['user_id'], 'exist', 'skipOnError' => true, 'targetClass' => User::class, 'targetAttribute' => ['user_id' => 'id']],
+            [['goal_id'], 'required', 'when' => function ($model) {
+                return $model->category_id && Category::findOne($model->category_id)?->type === 'goal';
+            }, 'message' => 'Выберите цель для категории типа "goal".'],
         ];
     }
 

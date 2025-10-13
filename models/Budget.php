@@ -19,6 +19,7 @@ use yii\db\ActiveRecord;
  * @property string|null $created_at
  * @property string|null $updated_at
  * @property int|null $category_id
+ * @property float $spent
  *
  * @property RecurringTransaction[] $recurringTransactions
  * @property Transaction[] $transactions
@@ -78,6 +79,8 @@ class Budget extends ActiveRecord
             'end_date' => 'End Date',
             'created_at' => 'Created At',
             'updated_at' => 'Updated At',
+            'spent' => 'Потрачено',
+
         ];
     }
 
@@ -119,10 +122,13 @@ class Budget extends ActiveRecord
     public static function optsPeriod(): array
     {
         return [
-            self::PERIOD_MONTHLY => 'monthly',
-            self::PERIOD_YEARLY => 'yearly',
+            'daily' => 'День',
+            'weekly' => 'Неделя',
+            'monthly' => 'Месяц',
+            'yearly' => 'Год',
         ];
     }
+
 
     /**
      * @return string

@@ -3,13 +3,13 @@
 use yii\helpers\Html;
 
 /** @var yii\web\View $this */
-/** @var app\models\Goal $model */
+/** @var app\models\RecurringTransaction $model */
 
-$this->title = 'Create Goal';
-$this->params['breadcrumbs'][] = ['label' => 'Goals', 'url' => ['index']];
+$this->title = 'Create Recurring Transaction';
+$this->params['breadcrumbs'][] = ['label' => 'Recurring Transactions', 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 ?>
-<div class="goal-create">
+<div class="recurring-transaction-create">
 
     <h1><?= Html::encode($this->title) ?></h1>
 

@@ -4,14 +4,14 @@ use yii\helpers\Html;
 use yii\widgets\DetailView;
 
 /** @var yii\web\View $this */
-/** @var app\models\Goal $model */
+/** @var app\models\RecurringTransaction $model */
 
-$this->title = $model->name;
-$this->params['breadcrumbs'][] = ['label' => 'Goals', 'url' => ['index']];
+$this->title = $model->id;
+$this->params['breadcrumbs'][] = ['label' => 'Recurring Transactions', 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 \yii\web\YiiAsset::register($this);
 ?>
-<div class="goal-view">
+<div class="recurring-transaction-view">
 
     <h1><?= Html::encode($this->title) ?></h1>
 
@@ -31,11 +31,14 @@ $this->params['breadcrumbs'][] = $this->title;
         'attributes' => [
             'id',
             'user_id',
-            'name',
-            'target_amount',
-            'deadline',
-            'current_amount',
-            'status',
+            'amount',
+            'frequency',
+            'next_date',
+            'category_id',
+            'budget_id',
+            'goal_id',
+            'description:ntext',
+            'active',
             'created_at',
             'updated_at',
         ],

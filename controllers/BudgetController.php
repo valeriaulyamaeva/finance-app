@@ -3,7 +3,6 @@
 namespace app\controllers;
 
 use app\models\Budget;
-use app\models\Category;
 use app\services\BudgetService;
 use Throwable;
 use Yii;
@@ -27,29 +26,31 @@ class BudgetController extends Controller
     public function actionIndex(): string
     {
         $userId = Yii::$app->user->id;
-        $dataProvider = new ActiveDataProvider([
-            'query' => Budget::find()->where(['user_id' => $userId])->orderBy(['created_at' => SORT_DESC]),
-            'pagination' => ['pageSize' => 20],
-        ]);
-
         $summary = $this->service->getUserSummary($userId);
 
-        $categories = Category::find()
-            ->where(['user_id' => $userId])
-            ->select(['name', 'id'])
-            ->indexBy('id')
-            ->column();
+        $dataProvider = new ActiveDataProvider([
+            'query' => Budget::find()->where(['user_id' => $userId])->with('category'),
+            'pagination' => ['pageSize' => 10],
+            'sort' => ['defaultOrder' => ['start_date' => SORT_DESC]],
+        ]);
 
         return $this->render('index', [
-            'dataProvider' => $dataProvider,
             'summary' => $summary,
-            'categories' => $categories,
+            'dataProvider' => $dataProvider,
         ]);
     }
 
-    /**
-     * Создание бюджета (AJAX JSON).
-     */
+    public function actionView(int $id): array
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        $budget = Budget::findOne($id);
+        if (!$budget) {
+            return ['success' => false, 'message' => 'Бюджет не найден'];
+        }
+
+        return ['success' => true, 'budget' => $budget->toArray()];
+    }
+
     public function actionCreate(): array
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
@@ -61,9 +62,6 @@ class BudgetController extends Controller
         }
     }
 
-    /**
-     * Обновление бюджета (AJAX JSON).
-     */
     public function actionUpdate(int $id): array
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
@@ -75,9 +73,6 @@ class BudgetController extends Controller
         }
     }
 
-    /**
-     * Удаление бюджета.
-     */
     public function actionDelete(int $id): array
     {
         Yii::$app->response->format = Response::FORMAT_JSON;

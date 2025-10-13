@@ -85,16 +85,15 @@ class CategoryController extends Controller
         }
     }
 
-    public function actionType(int $id): Response
+    public function actionType(int $id): array
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
-        $userId = Yii::$app->user->id;
 
-        $category = Category::findOne(['id' => $id, 'user_id' => $userId]);
+        $category = Category::findOne($id);
         if (!$category) {
-            return $this->asJson(['error' => 'Категория не найдена']);
+            return ['success' => false, 'message' => 'Категория не найдена'];
         }
 
-        return $this->asJson(['type' => $category->type]);
+        return ['success' => true, 'type' => $category->type];
     }
 }

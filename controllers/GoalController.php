@@ -1,5 +1,4 @@
 <?php
-
 namespace app\controllers;
 
 use app\models\Goal;
@@ -7,11 +6,11 @@ use app\services\GoalService;
 use Throwable;
 use Yii;
 use yii\data\ActiveDataProvider;
-use yii\db\StaleObjectException;
+use yii\filters\AccessControl;
+use yii\filters\VerbFilter;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\web\Response;
-use yii\filters\VerbFilter;
 
 class GoalController extends Controller
 {
@@ -30,7 +29,27 @@ class GoalController extends Controller
                 'class' => VerbFilter::class,
                 'actions' => [
                     'delete' => ['POST'],
+                    'create' => ['GET', 'POST'],
+                    'update' => ['GET', 'POST'],
+                    'view' => ['GET'],
                 ],
+            ],
+            'access' => [
+                'class' => AccessControl::class,
+                'rules' => [
+                    [
+                        'actions' => ['index', 'view', 'create', 'update', 'delete'],
+                        'allow' => true,
+                        'roles' => ['@'],
+                    ],
+                ],
+                'denyCallback' => function () {
+                    if (Yii::$app->request->isAjax) {
+                        Yii::$app->response->format = Response::FORMAT_JSON;
+                        return ['success' => false, 'message' => 'Требуется авторизация'];
+                    }
+                    return Yii::$app->response->redirect(['site/login']);
+                },
             ],
         ]);
     }
@@ -48,58 +67,84 @@ class GoalController extends Controller
     /**
      * @throws NotFoundHttpException
      */
-    public function actionView(int $id): string
+    public function actionView(int $id): array|string
     {
         $model = $this->findModel($id);
+        if (Yii::$app->request->isAjax || Yii::$app->request->get('ajax')) {
+            Yii::$app->response->format = Response::FORMAT_JSON;
+            return ['success' => true, 'goal' => $model->toArray()];
+        }
         return $this->render('view', compact('model'));
     }
 
-    public function actionCreate(): Response|string
+    public function actionCreate(): array|string|Response
     {
         $model = new Goal();
-
         if (Yii::$app->request->isPost) {
             $data = Yii::$app->request->post('Goal', []);
-            try {
-                $goal = $this->service->create($data, Yii::$app->user->id);
-                return $this->redirect(['view', 'id' => $goal->id]);
-            } catch (Throwable $e) {
-                Yii::$app->session->setFlash('error', $e->getMessage());
+            if (Yii::$app->request->isAjax) {
+                Yii::$app->response->format = Response::FORMAT_JSON;
+                try {
+                    $goal = $this->service->create($data, Yii::$app->user->id);
+                    return ['success' => true, 'goal' => $goal->toArray()];
+                } catch (Throwable $e) {
+                    Yii::error('Create goal error: ' . $e->getMessage(), __METHOD__);
+                    return ['success' => false, 'message' => $e->getMessage()];
+                }
+            } else {
+                try {
+                    $goal = $this->service->create($data, Yii::$app->user->id);
+                    return $this->redirect(['view', 'id' => $goal->id]);
+                } catch (Throwable $e) {
+                    Yii::$app->session->setFlash('error', $e->getMessage());
+                }
             }
         }
-
         return $this->render('create', compact('model'));
     }
 
     /**
      * @throws NotFoundHttpException
      */
-    public function actionUpdate(int $id): Response|string
+    public function actionUpdate(int $id): Response|string|array
     {
         $goal = $this->findModel($id);
-
         if (Yii::$app->request->isPost) {
             $data = Yii::$app->request->post('Goal', []);
-            try {
-                $goal = $this->service->update($goal, $data);
-                return $this->redirect(['view', 'id' => $goal->id]);
-            } catch (Throwable $e) {
-                Yii::$app->session->setFlash('error', $e->getMessage());
+            if (Yii::$app->request->isAjax) {
+                Yii::$app->response->format = Response::FORMAT_JSON;
+                try {
+                    $goal = $this->service->update($goal, $data);
+                    return ['success' => true, 'goal' => $goal->toArray()];
+                } catch (Throwable $e) {
+                    Yii::error('Update goal error: ' . $e->getMessage(), __METHOD__);
+                    return ['success' => false, 'message' => $e->getMessage()];
+                }
+            } else {
+                try {
+                    $goal = $this->service->update($goal, $data);
+                    return $this->redirect(['view', 'id' => $goal->id]);
+                } catch (Throwable $e) {
+                    Yii::$app->session->setFlash('error', $e->getMessage());
+                }
             }
         }
-
         return $this->render('update', compact('goal'));
     }
 
-    public function actionDelete(int $id): Response
+    public function actionDelete(int $id): array
     {
+        Yii::$app->response->format = Response::FORMAT_JSON;
         try {
-            $this->findModel($id)->delete();
-        } catch (StaleObjectException|Throwable $e) {
-            Yii::$app->session->setFlash('error', $e->getMessage());
+            $goal = $this->findModel($id);
+            $goal->delete();
+            return ['success' => true];
+        } catch (NotFoundHttpException $e) {
+            return ['success' => false, 'message' => 'Цель не найдена или вы не авторизованы'];
+        } catch (Throwable $e) {
+            Yii::error('Delete goal error: ' . $e->getMessage(), __METHOD__);
+            return ['success' => false, 'message' => 'Ошибка при удалении цели: ' . $e->getMessage()];
         }
-
-        return $this->redirect(['index']);
     }
 
     /**

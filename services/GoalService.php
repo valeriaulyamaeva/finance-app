@@ -3,6 +3,7 @@
 namespace app\services;
 
 use app\models\Goal;
+use Yii;
 use yii\db\Exception;
 
 class GoalService
@@ -21,10 +22,11 @@ class GoalService
         $goal->target_amount = $data['target_amount'] ?? 0;
         $goal->deadline = $data['deadline'] ?? date('Y-m-d');
         $goal->current_amount = $data['current_amount'] ?? 0;
-        $goal->status = Goal::STATUS_ACTIVE;
+        $goal->status = $data['status'] ?? Goal::STATUS_ACTIVE;
 
         if (!$goal->save()) {
-            throw new Exception('Failed to create goal: ' . json_encode($goal->errors));
+            Yii::error('Goal validation errors: ' . json_encode($goal->errors, JSON_UNESCAPED_UNICODE), __METHOD__);
+            throw new Exception('Failed to create goal: ' . json_encode($goal->errors, JSON_UNESCAPED_UNICODE));
         }
 
         return $goal;
@@ -45,7 +47,8 @@ class GoalService
         $goal->status = $data['status'] ?? $goal->status;
 
         if (!$goal->save()) {
-            throw new Exception('Failed to update goal: ' . json_encode($goal->errors));
+            Yii::error('Goal update errors: ' . json_encode($goal->errors, JSON_UNESCAPED_UNICODE), __METHOD__);
+            throw new Exception('Failed to update goal: ' . json_encode($goal->errors, JSON_UNESCAPED_UNICODE));
         }
 
         return $goal;
