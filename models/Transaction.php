@@ -11,6 +11,7 @@ use yii\db\ActiveRecord;
  * @property int $id
  * @property int $user_id
  * @property float $amount
+ * @property string $currency
  * @property string $date
  * @property string $type
  * @property int|null $category_id
@@ -36,6 +37,8 @@ class Transaction extends ActiveRecord
     const TYPE_INCOME = 'income';
     const TYPE_EXPENSE = 'expense';
     const TYPE_GOAL = 'goal';
+    public ?string $display_amount = null;
+    public ?string $display_currency = null;
 
     /**
      * {@inheritdoc}
@@ -56,6 +59,8 @@ class Transaction extends ActiveRecord
             [['user_id', 'amount', 'date'], 'required'],
             [['user_id', 'category_id', 'budget_id', 'goal_id', 'recurring_id'], 'integer'],
             [['amount'], 'number'],
+            ['currency', 'string', 'max' => 3],
+            [['currency'], 'safe'],
             [['date', 'created_at', 'updated_at'], 'safe'],
             [['type', 'description'], 'string'],
             ['type', 'in', 'range' => array_keys(self::optsType())],
@@ -81,6 +86,7 @@ class Transaction extends ActiveRecord
             'id' => 'ID',
             'user_id' => 'User ID',
             'amount' => 'Amount',
+            'currency' => 'Currency',
             'date' => 'Date',
             'type' => 'Type',
             'category_id' => 'Category ID',
@@ -202,5 +208,10 @@ class Transaction extends ActiveRecord
     public function setTypeToGoal(): void
     {
         $this->type = self::TYPE_GOAL;
+    }
+
+    public function getDisplayAmount(): string
+    {
+        return number_format($this->amount, 2, '.', '');
     }
 }

@@ -9,7 +9,10 @@ use yii\helpers\Url;
 use app\assets\AppAsset;
 
 $this->title = 'Транзакции';
+
 AppAsset::register($this);
+$currencySymbols = ['BYN'=>'Br','USD'=>'$','EUR'=>'€'];
+$userCurrency = Yii::$app->user->identity->currency ?? 'BYN';
 
 $createUrl = Url::to(['transaction/create']);
 $updateUrl = Url::to(['transaction/update']);
@@ -237,15 +240,15 @@ $createRecurringUrl = Url::to(['recurring-transaction/create']);
     <div class="summary-cards">
         <div class="summary-card">
             <h5>Доход</h5>
-            <p style="color:#16a34a;"><?= number_format($summary['income'] ?? 0, 2) ?></p>
+            <p style="color:#16a34a;"><?= number_format($summary['income'] ?? 0, 2) ?> <?= $currencySymbols[$userCurrency] ?? '' ?></p>
         </div>
         <div class="summary-card">
             <h5>Расход</h5>
-            <p style="color:#dc2626;"><?= number_format($summary['expense'] ?? 0, 2) ?></p>
+            <p style="color:#dc2626;"><?= number_format($summary['expense'] ?? 0, 2) ?> <?= $currencySymbols[$userCurrency] ?? '' ?></p>
         </div>
         <div class="summary-card">
             <h5>Баланс</h5>
-            <p><?= number_format($summary['balance'] ?? 0, 2) ?></p>
+            <p><?= number_format($summary['balance'] ?? 0, 2) ?> <?= $currencySymbols[$userCurrency] ?? '' ?></p>
         </div>
     </div>
 
@@ -258,7 +261,7 @@ $createRecurringUrl = Url::to(['recurring-transaction/create']);
                 <div class="transaction-card" data-id="<?= $transaction->id ?>">
                     <div class="transaction-info">
                         <p><strong>Дата:</strong> <?= Html::encode($transaction->date) ?></p>
-                        <p><strong>Сумма:</strong> <?= number_format($transaction->amount, 2) ?></p>
+                        <p><strong>Сумма:</strong> <?= number_format($transaction->amount, 2) ?> <?= $currencySymbols[$transaction->currency ?? $userCurrency] ?? '' ?></p>
                         <p><strong>Тип:</strong> <?= Html::encode($transaction->category->type ?? '-') ?></p>
                         <p><strong>Категория:</strong> <?= Html::encode($transaction->category->name ?? '-') ?></p>
                         <p><strong>Описание:</strong> <?= Html::encode($transaction->description ?? '-') ?></p>
@@ -295,6 +298,9 @@ $createRecurringUrl = Url::to(['recurring-transaction/create']);
         const viewUrl = '<?= $viewUrl ?>';
         const createRecurringUrl = '<?= $createRecurringUrl ?>';
 
+        const currencySymbols = <?= json_encode($currencySymbols) ?>;
+        const userCurrency = '<?= $userCurrency ?>';
+
         document.getElementById('createTransactionBtn').addEventListener('click', () => {
             currentAction = 'create';
             currentId = null;
@@ -305,6 +311,7 @@ $createRecurringUrl = Url::to(['recurring-transaction/create']);
             formErrors.textContent = '';
             formErrors.style.display = 'none';
             modalEl.querySelector('.modal-title').textContent = 'Создать транзакцию';
+            document.getElementById('currencySymbol').textContent = currencySymbols[userCurrency] || '';
             modal.show();
         });
 

@@ -88,13 +88,45 @@ class TransactionService
     }
 
 
+    /**
+     * @throws Exception
+     */
     public function delete(int $id): void
     {
-        if ($transaction = Transaction::findOne($id)) {
-            try {
-                $transaction->delete();
-            } catch (Throwable) {
+        $transaction = Transaction::findOne($id);
+        if (!$transaction) {
+            return;
+        }
+
+        if ($transaction->category_id) {
+            $budget = Budget::findOne(['category_id' => $transaction->category_id, 'user_id' => $transaction->user_id]);
+            if ($budget) {
+                if ($transaction->isTypeExpense()) {
+                    $budget->spent = max(0, $budget->spent - $transaction->amount);
+                } elseif ($transaction->isTypeIncome()) {
+                    $budget->spent += $transaction->amount;
+                }
+                $budget->updated_at = date('Y-m-d H:i:s');
+                $budget->save(false);
             }
+        }
+
+        if ($transaction->goal_id) {
+            $goal = Goal::findOne($transaction->goal_id);
+            if ($goal) {
+                $goal->current_amount = max(0, $goal->current_amount - $transaction->amount);
+                $goal->status = $goal->current_amount >= $goal->target_amount
+                    ? Goal::STATUS_COMPLETED
+                    : ($goal->current_amount > 0 ? Goal::STATUS_ACTIVE : Goal::STATUS_ACTIVE);
+                $goal->updated_at = date('Y-m-d H:i:s');
+                $goal->save(false);
+            }
+        }
+
+        try {
+            $transaction->delete();
+        } catch (Throwable $e) {
+            Yii::error('Ошибка при удалении транзакции: ' . $e->getMessage(), __METHOD__);
         }
     }
 
@@ -124,68 +156,74 @@ class TransactionService
      */
     public function updateRelatedEntities(Transaction $transaction, array $data): void
     {
+        $isNew = $transaction->isNewRecord;
+
+        $oldAmount = $isNew ? 0 : (float)$transaction->amount;
+        $oldCategoryId = $isNew ? null : $transaction->category_id;
+        $oldGoalId = $isNew ? null : $transaction->goal_id;
+        $oldType = $isNew ? null : $transaction->type;
+
         $transaction->load($data);
 
-        if (isset($data['goal_id']) && $data['goal_id'] !== '') {
-            $transaction->goal_id = (int)$data['goal_id'];
-        } elseif (isset($data['Transaction']['goal_id']) && $data['Transaction']['goal_id'] !== '') {
-            $transaction->goal_id = (int)$data['Transaction']['goal_id'];
-        }
+        $transaction->goal_id = $data['goal_id'] ?? $data['Transaction']['goal_id'] ?? null;
+        $transaction->category_id = $data['category_id'] ?? $data['Transaction']['category_id'] ?? null;
 
-        if (isset($data['category_id']) && $data['category_id'] !== '') {
-            $transaction->category_id = (int)$data['category_id'];
-        } elseif (isset($data['Transaction']['category_id']) && $data['Transaction']['category_id'] !== '') {
-            $transaction->category_id = (int)$data['Transaction']['category_id'];
-        }
-
-        $categoryId = $transaction->category_id !== null && $transaction->category_id !== '' ? (int)$transaction->category_id : null;
-        $goalId = $transaction->goal_id !== null && $transaction->goal_id !== '' ? (int)$transaction->goal_id : null;
-
-        Yii::debug("Category ID: $categoryId, Goal ID: $goalId", __METHOD__);
+        $categoryId = $transaction->category_id ? (int)$transaction->category_id : null;
+        $goalId = $transaction->goal_id ? (int)$transaction->goal_id : null;
 
         $transaction->type = $this->resolveTypeByCategory($categoryId, $goalId);
 
-        Yii::debug("Transaction Type: $transaction->type, Amount: $transaction->amount", __METHOD__);
+        $user = Yii::$app->user->identity;
+        if (!$user) {
+            throw new Exception('Пользователь не найден для транзакции');
+        }
+        $transaction->currency = $user->currency;
+
+        // Коррекция бюджета
+        if ($oldCategoryId) {
+            $budget = Budget::findOne(['category_id' => $oldCategoryId, 'user_id' => $transaction->user_id]);
+            if ($budget) {
+                if ($oldType === Transaction::TYPE_EXPENSE) {
+                    $budget->spent = max(0, $budget->spent - $oldAmount);
+                } elseif ($oldType === Transaction::TYPE_INCOME) {
+                    $budget->spent += $oldAmount;
+                }
+                $budget->updated_at = date('Y-m-d H:i:s');
+                $budget->save(false);
+            }
+        }
+
         if ($categoryId) {
             $budget = Budget::findOne(['category_id' => $categoryId, 'user_id' => $transaction->user_id]);
             if ($budget) {
-                $oldBudgetAmount = $budget->amount;
-
                 if ($transaction->isTypeExpense()) {
                     $budget->spent += $transaction->amount;
                 } elseif ($transaction->isTypeIncome()) {
                     $budget->spent = max(0, $budget->spent - $transaction->amount);
                 }
-
-
                 $budget->updated_at = date('Y-m-d H:i:s');
                 $budget->save(false);
+            }
+        }
 
-                Yii::debug("Budget updated: ID={$budget->id}, Old={$oldBudgetAmount}, New={$budget->amount}", __METHOD__);
-            } else {
-                Yii::debug("No budget found for Category={$categoryId}, User={$transaction->user_id}", __METHOD__);
+        // Коррекция цели
+        if ($oldGoalId) {
+            $goal = Goal::findOne($oldGoalId);
+            if ($goal) {
+                $goal->current_amount = max(0, $goal->current_amount - $oldAmount);
+                $goal->status = $goal->current_amount >= $goal->target_amount ? Goal::STATUS_COMPLETED : Goal::STATUS_ACTIVE;
+                $goal->updated_at = date('Y-m-d H:i:s');
+                $goal->save(false);
             }
         }
 
         if ($goalId) {
             $goal = Goal::findOne($goalId);
-
             if ($goal) {
-                $oldGoalAmount = $goal->current_amount;
                 $goal->current_amount += $transaction->amount;
-
-                if ($goal->current_amount >= $goal->target_amount) {
-                    $goal->status = Goal::STATUS_COMPLETED;
-                } elseif ($goal->current_amount < $oldGoalAmount) {
-                    $goal->status = Goal::STATUS_ACTIVE;
-                }
-
+                $goal->status = $goal->current_amount >= $goal->target_amount ? Goal::STATUS_COMPLETED : Goal::STATUS_ACTIVE;
                 $goal->updated_at = date('Y-m-d H:i:s');
                 $goal->save(false);
-
-                Yii::debug("Goal updated: ID={$goal->id}, Old={$oldGoalAmount}, New={$goal->current_amount}, Status={$goal->status}", __METHOD__);
-            } else {
-                Yii::debug("Goal not found: ID={$goalId}", __METHOD__);
             }
         }
     }

@@ -33,7 +33,7 @@ class TransactionController extends Controller
     {
         $user = Yii::$app->user->identity;
         $userId = $user->id;
-        $currency = $user->currency;
+        $userCurrency = $user->currency;
 
         $dataProvider = new ActiveDataProvider([
             'query' => Transaction::find()
@@ -43,24 +43,29 @@ class TransactionController extends Controller
         ]);
 
         $goals = ArrayHelper::map(
-            Goal::find()
-                ->where(['user_id' => $userId])
-                ->all(),
+            Goal::find()->where(['user_id' => $userId])->all(),
             'id',
             'name'
         );
 
         $summary = $this->service->getSummary($userId);
 
-        if ($currency !== 'BYN') {
-            $rate = $this->currencyService->getRate('BYN', $currency);
-            foreach ($summary as $key => $value) {
-                if (is_numeric($value)) {
-                    $summary[$key] *= $rate;
-                }
+        foreach ($dataProvider->models as $transaction) {
+            $transactionCurrency = $transaction->currency ?? 'BYN';
+            $displayAmount = $transaction->amount;
+
+            if ($transactionCurrency !== $userCurrency) {
+                $rate = $this->currencyService->getRate($transactionCurrency, $userCurrency);
+                $displayAmount *= $rate;
             }
-            foreach ($dataProvider->models as $transaction) {
-                $transaction->amount *= $rate;
+
+            $transaction->display_amount = number_format($displayAmount, 2, '.', '');
+            $transaction->display_currency = $userCurrency;
+        }
+
+        foreach (['income', 'expense', 'balance'] as $key) {
+            if (isset($summary[$key])) {
+                $summary[$key] = number_format($summary[$key], 2, '.', '');
             }
         }
 
@@ -78,17 +83,24 @@ class TransactionController extends Controller
 
         try {
             $data = Yii::$app->request->post();
-            $currency = Yii::$app->user->identity->currency;
-            $originalAmount = $data['amount'] ?? 0;
+            $user = Yii::$app->user->identity;
+            $userCurrency = $user->currency;
+            $originalAmount = isset($data['amount']) ? (float)$data['amount'] : 0;
 
-            if ($currency !== 'BYN' && isset($data['amount'])) {
-                $rate = $this->currencyService->getRate($currency, 'BYN');
-                $data['amount'] *= $rate;
+            $data['amount'] = $originalAmount;
+            $data['currency'] = $userCurrency;
+
+            $transaction = $this->service->create($data, $user->id);
+
+            $displayAmount = $originalAmount;
+            if ($transaction->currency !== $userCurrency) {
+                $rate = $this->currencyService->getRate($transaction->currency, $userCurrency);
+                $displayAmount *= $rate;
             }
 
-            $transaction = $this->service->create($data, Yii::$app->user->id);
             $transactionArray = $transaction->toArray();
-            $transactionArray['display_amount'] = number_format($originalAmount, 2, '.', '');
+            $transactionArray['display_amount'] = number_format($displayAmount, 2, '.', '');
+            $transactionArray['currency'] = $userCurrency;
 
             return ['success' => true, 'transaction' => $transactionArray];
         } catch (Throwable $e) {
@@ -102,17 +114,24 @@ class TransactionController extends Controller
 
         try {
             $data = Yii::$app->request->post();
-            $currency = Yii::$app->user->identity->currency;
-            $originalAmount = $data['amount'] ?? 0;
+            $user = Yii::$app->user->identity;
+            $userCurrency = $user->currency;
+            $originalAmount = isset($data['amount']) ? (float)$data['amount'] : 0;
 
-            if ($currency !== 'BYN' && isset($data['amount'])) {
-                $rate = $this->currencyService->getRate($currency, 'BYN');
-                $data['amount'] *= $rate;
-            }
+            $data['amount'] = $originalAmount;
+            $data['currency'] = $userCurrency;
 
             $transaction = $this->service->update($id, $data);
+
+            $displayAmount = $originalAmount;
+            if ($transaction->currency !== $userCurrency) {
+                $rate = $this->currencyService->getRate($transaction->currency, $userCurrency);
+                $displayAmount *= $rate;
+            }
+
             $transactionArray = $transaction->toArray();
-            $transactionArray['display_amount'] = number_format($originalAmount, 2, '.', '');
+            $transactionArray['display_amount'] = number_format($displayAmount, 2, '.', '');
+            $transactionArray['currency'] = $userCurrency;
 
             return ['success' => true, 'transaction' => $transactionArray];
         } catch (Throwable $e) {
@@ -144,15 +163,18 @@ class TransactionController extends Controller
             return ['success' => false, 'message' => 'Транзакция не найдена'];
         }
 
-        $currency = Yii::$app->user->identity->currency;
+        $userCurrency = Yii::$app->user->identity->currency;
+        $transactionCurrency = $transaction->currency ?? 'BYN';
         $displayAmount = $transaction->amount;
-        if ($currency !== 'BYN') {
-            $rate = $this->currencyService->getRate('BYN', $currency);
+
+        if ($transactionCurrency !== $userCurrency) {
+            $rate = $this->currencyService->getRate($transactionCurrency, $userCurrency);
             $displayAmount *= $rate;
         }
 
         $transactionArray = $transaction->toArray();
         $transactionArray['display_amount'] = number_format($displayAmount, 2, '.', '');
+        $transactionArray['display_currency'] = $userCurrency;
 
         return ['success' => true, 'transaction' => $transactionArray];
     }
