@@ -37,5 +37,16 @@ services:
     depends_on:
       - php
 
+  cron:
+    build:
+      context: .
+      dockerfile: docker/cron/Dockerfile
+    container_name: finance_app_cron
+    volumes:
+      - .:/var/www/html
+    depends_on:
+      - php
+      - mysql
+
 volumes:
   mysql_data:

@@ -61,6 +61,8 @@ class Goal extends ActiveRecord
             [['name'], 'string', 'max' => 255],
             ['status', 'in', 'range' => array_keys(self::optsStatus())],
             [['user_id'], 'exist', 'skipOnError' => true, 'targetClass' => User::class, 'targetAttribute' => ['user_id' => 'id']],
+            ['currency', 'string', 'max' => 3],
+            ['currency', 'default', 'value' => 'BYN'],
         ];
     }
 

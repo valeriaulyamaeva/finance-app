@@ -6,7 +6,6 @@ use Yii;
 use yii\base\Exception;
 use yii\db\ActiveQuery;
 use yii\db\ActiveRecord;
-use yii\db\Expression;
 use yii\web\IdentityInterface;
 
 /**
@@ -44,17 +43,14 @@ class User extends ActiveRecord implements IdentityInterface
     public function rules(): array
     {
         return [
-            // Rules for 'create' scenario (registration)
             [['username', 'email', 'password', 'password_repeat'], 'required', 'on' => 'create'],
             [['password_repeat'], 'compare', 'compareAttribute' => 'password', 'on' => 'create'],
             [['password'], 'string', 'min' => 6, 'on' => 'create'],
             [['email'], 'email', 'on' => 'create'],
             [['email'], 'unique', 'on' => 'create'],
-            // Rules for 'login' scenario
             [['email', 'password'], 'required', 'on' => 'login'],
             [['email'], 'email', 'on' => 'login'],
             [['password'], 'string', 'min' => 6, 'on' => 'login'],
-            // Common rules
             [['access_token', 'avatar', 'last_login'], 'default', 'value' => null],
             [['theme'], 'default', 'value' => self::THEME_LIGHT],
             [['currency'], 'default', 'value' => 'BYN'],

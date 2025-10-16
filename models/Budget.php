@@ -13,6 +13,7 @@ use yii\db\ActiveRecord;
  * @property int $user_id
  * @property string $name
  * @property float $amount
+ * @property string $currency
  * @property string $period
  * @property string $start_date
  * @property string|null $end_date
@@ -55,6 +56,9 @@ class Budget extends ActiveRecord
             [['category_id'], 'exist', 'skipOnError' => true, 'targetClass' => Category::class, 'targetAttribute' => ['category_id' => 'id']],
             [['user_id', 'name', 'amount', 'start_date', 'category_id'], 'required'],
             [['amount'], 'number'],
+            ['currency', 'string', 'max' => 3],
+            ['currency', 'default', 'value' => 'BYN'],
+            [['currency'], 'safe'],
             [['period'], 'string'],
             [['start_date', 'end_date', 'created_at', 'updated_at'], 'safe'],
             [['name'], 'string', 'max' => 255],
@@ -73,6 +77,7 @@ class Budget extends ActiveRecord
             'user_id' => 'User ID',
             'name' => 'Name',
             'amount' => 'Amount',
+            'currency' => 'Currency',
             'category_id' => 'Category',
             'period' => 'Period',
             'start_date' => 'Start Date',

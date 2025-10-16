@@ -19,6 +19,7 @@ class BudgetService
         $budget = new Budget();
         $budget->load($data);
         $budget->user_id = $userId;
+        $budget->currency = $data['currency'] ?? 'BYN';
 
         if (empty($budget->category_id) || !is_numeric($budget->category_id)) {
             throw new RuntimeException('Категория не выбрана.');
@@ -42,6 +43,8 @@ class BudgetService
         }
 
         $budget->load($data);
+
+        $budget->currency = $data['currency'] ?? ($data['Budget']['currency'] ?? 'BYN');
 
         if (empty($budget->category_id) || !is_numeric($budget->category_id)) {
             throw new RuntimeException('Категория не выбрана.');

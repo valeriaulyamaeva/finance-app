@@ -2,7 +2,8 @@
 
 namespace app\models;
 
-use Yii;
+use yii\db\ActiveQuery;
+use yii\db\ActiveRecord;
 
 /**
  * This is the model class for table "recurring_transaction".
@@ -26,28 +27,18 @@ use Yii;
  * @property Transaction[] $transactions
  * @property User $user
  */
-class RecurringTransaction extends \yii\db\ActiveRecord
+class RecurringTransaction extends ActiveRecord
 {
-
-    /**
-     * ENUM field values
-     */
     const FREQUENCY_DAILY = 'daily';
     const FREQUENCY_WEEKLY = 'weekly';
     const FREQUENCY_MONTHLY = 'monthly';
 
-    /**
-     * {@inheritdoc}
-     */
-    public static function tableName()
+    public static function tableName(): string
     {
         return 'recurring_transaction';
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function rules()
+    public function rules(): array
     {
         return [
             [['category_id', 'budget_id', 'goal_id', 'description'], 'default', 'value' => null],
@@ -62,137 +53,94 @@ class RecurringTransaction extends \yii\db\ActiveRecord
             [['category_id'], 'exist', 'skipOnError' => true, 'targetClass' => Category::class, 'targetAttribute' => ['category_id' => 'id']],
             [['goal_id'], 'exist', 'skipOnError' => true, 'targetClass' => Goal::class, 'targetAttribute' => ['goal_id' => 'id']],
             [['user_id'], 'exist', 'skipOnError' => true, 'targetClass' => User::class, 'targetAttribute' => ['user_id' => 'id']],
+            ['currency', 'string', 'max' => 3],
+            ['currency', 'default', 'value' => 'BYN'],
         ];
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function attributeLabels()
+    public function attributeLabels(): array
     {
         return [
             'id' => 'ID',
-            'user_id' => 'User ID',
-            'amount' => 'Amount',
-            'frequency' => 'Frequency',
-            'next_date' => 'Next Date',
-            'category_id' => 'Category ID',
-            'budget_id' => 'Budget ID',
-            'goal_id' => 'Goal ID',
-            'description' => 'Description',
-            'active' => 'Active',
-            'created_at' => 'Created At',
-            'updated_at' => 'Updated At',
+            'user_id' => 'Пользователь',
+            'amount' => 'Сумма',
+            'frequency' => 'Частота',
+            'next_date' => 'Следующая дата',
+            'category_id' => 'Категория',
+            'budget_id' => 'Бюджет',
+            'goal_id' => 'Цель',
+            'description' => 'Описание',
+            'active' => 'Активно',
+            'created_at' => 'Создано',
+            'updated_at' => 'Обновлено',
         ];
     }
 
-    /**
-     * Gets query for [[Budget]].
-     *
-     * @return \yii\db\ActiveQuery
-     */
-    public function getBudget()
+    public function getBudget(): ActiveQuery
     {
         return $this->hasOne(Budget::class, ['id' => 'budget_id']);
     }
 
-    /**
-     * Gets query for [[Category]].
-     *
-     * @return \yii\db\ActiveQuery
-     */
-    public function getCategory()
+    public function getCategory(): ActiveQuery
     {
         return $this->hasOne(Category::class, ['id' => 'category_id']);
     }
 
-    /**
-     * Gets query for [[Goal]].
-     *
-     * @return \yii\db\ActiveQuery
-     */
-    public function getGoal()
+    public function getGoal(): ActiveQuery
     {
         return $this->hasOne(Goal::class, ['id' => 'goal_id']);
     }
 
-    /**
-     * Gets query for [[Transactions]].
-     *
-     * @return \yii\db\ActiveQuery
-     */
-    public function getTransactions()
+    public function getTransactions(): ActiveQuery
     {
         return $this->hasMany(Transaction::class, ['recurring_id' => 'id']);
     }
 
-    /**
-     * Gets query for [[User]].
-     *
-     * @return \yii\db\ActiveQuery
-     */
-    public function getUser()
+    public function getUser(): ActiveQuery
     {
         return $this->hasOne(User::class, ['id' => 'user_id']);
     }
 
-
-    /**
-     * column frequency ENUM value labels
-     * @return string[]
-     */
-    public static function optsFrequency()
+    public static function optsFrequency(): array
     {
         return [
-            self::FREQUENCY_DAILY => 'daily',
-            self::FREQUENCY_WEEKLY => 'weekly',
-            self::FREQUENCY_MONTHLY => 'monthly',
+            self::FREQUENCY_DAILY => 'Ежедневно',
+            self::FREQUENCY_WEEKLY => 'Еженедельно',
+            self::FREQUENCY_MONTHLY => 'Ежемесячно',
         ];
     }
 
-    /**
-     * @return string
-     */
-    public function displayFrequency()
+    public function displayFrequency(): string
     {
-        return self::optsFrequency()[$this->frequency];
+        return self::optsFrequency()[$this->frequency] ?? $this->frequency;
     }
 
-    /**
-     * @return bool
-     */
-    public function isFrequencyDaily()
+    public function isFrequencyDaily(): bool
     {
         return $this->frequency === self::FREQUENCY_DAILY;
     }
 
-    public function setFrequencyToDaily()
+    public function setFrequencyToDaily(): void
     {
         $this->frequency = self::FREQUENCY_DAILY;
     }
 
-    /**
-     * @return bool
-     */
-    public function isFrequencyWeekly()
+    public function isFrequencyWeekly(): bool
     {
         return $this->frequency === self::FREQUENCY_WEEKLY;
     }
 
-    public function setFrequencyToWeekly()
+    public function setFrequencyToWeekly(): void
     {
         $this->frequency = self::FREQUENCY_WEEKLY;
     }
 
-    /**
-     * @return bool
-     */
-    public function isFrequencyMonthly()
+    public function isFrequencyMonthly(): bool
     {
         return $this->frequency === self::FREQUENCY_MONTHLY;
     }
 
-    public function setFrequencyToMonthly()
+    public function setFrequencyToMonthly(): void
     {
         $this->frequency = self::FREQUENCY_MONTHLY;
     }

@@ -14,10 +14,21 @@ $config = [
     'components' => [
         'request' => [
             'cookieValidationKey' => 'fVLhdUkDMa9mEaqUdkr1toumhJ_aj-ss',
+            'class' => 'yii\web\Request', // Explicitly specify class
         ],
+        'cache' => [
+            'class' => 'yii\caching\FileCache',
+            'cachePath' => '@runtime/cache',
+            'keyPrefix' => 'pastelfinance_',
+        ],
+        'container' => require __DIR__ . '/di.php', // Include di.php
         'user' => [
             'identityClass' => 'app\models\User',
             'enableAutoLogin' => true,
+            'class' => 'yii\web\User', // Explicitly specify class
+        ],
+        'recurringTransactionService' => [
+            'class' => 'app\services\RecurringTransactionService',
         ],
         'errorHandler' => [
             'errorAction' => 'site/error',

@@ -3,8 +3,10 @@
 namespace app\controllers;
 
 use app\models\User;
+use Throwable;
 use yii\data\ActiveDataProvider;
 use yii\db\Exception;
+use yii\db\StaleObjectException;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
@@ -65,7 +67,7 @@ class UserController extends Controller
      * @return string
      * @throws NotFoundHttpException if the model cannot be found
      */
-    public function actionView($id): string
+    public function actionView(int $id): string
     {
         return $this->render('view', [
             'model' => $this->findModel($id),
@@ -78,7 +80,7 @@ class UserController extends Controller
      * @return string|Response
      * @throws Exception
      */
-    public function actionCreate()
+    public function actionCreate(): Response|string
     {
         $model = new User();
 
@@ -102,7 +104,7 @@ class UserController extends Controller
      * @return string|Response
      * @throws NotFoundHttpException|Exception if the model cannot be found
      */
-    public function actionUpdate(int $id)
+    public function actionUpdate(int $id): Response|string
     {
         $model = $this->findModel($id);
 
@@ -120,11 +122,14 @@ class UserController extends Controller
      * If deletion is successful, the browser will be redirected to the 'index' page.
      * @param int $id ID
      * @return Response
-     * @throws NotFoundHttpException if the model cannot be found
      */
-    public function actionDelete($id): Response
+    public function actionDelete(int $id): Response
     {
-        $this->findModel($id)->delete();
+        try {
+            $this->findModel($id)->delete();
+        } catch (StaleObjectException|Throwable|NotFoundHttpException $e) {
+
+        }
 
         return $this->redirect(['index']);
     }
@@ -136,7 +141,7 @@ class UserController extends Controller
      * @return User the loaded model
      * @throws NotFoundHttpException if the model cannot be found
      */
-    protected function findModel($id): User
+    protected function findModel(int $id): User
     {
         if (($model = User::findOne(['id' => $id])) !== null) {
             return $model;

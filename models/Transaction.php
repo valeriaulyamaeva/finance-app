@@ -67,6 +67,8 @@ class Transaction extends ActiveRecord
             [['goal_id'], 'required', 'when' => function ($model) {
                 return $model->category_id && Category::findOne($model->category_id)?->type === 'goal';
             }, 'message' => 'Выберите цель для категории типа "goal".'],
+            ['currency', 'string', 'max' => 3],
+            ['currency', 'default', 'value' => 'BYN'],
         ];
     }
 

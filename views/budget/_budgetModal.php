@@ -6,7 +6,7 @@ use yii\helpers\Html;
 use yii\widgets\ActiveForm;
 
 $categories = ArrayHelper::map(Category::find()->all(), 'id', 'name');
-$budget = new Budget();
+$budget = new Budget(['currency' => Yii::$app->user->identity->currency ?? 'BYN']);
 ?>
 
 <div class="modal fade" id="budgetModal" tabindex="-1" aria-labelledby="budgetModalLabel" aria-hidden="true">
@@ -23,11 +23,10 @@ $budget = new Budget();
 
                 <?= $form->field($budget, 'name')->textInput(['placeholder' => 'Название бюджета', 'required' => true]) ?>
 
-                <?= $form->field($budget, 'amount')->input('text', [
+                <?= $form->field($budget, 'amount')->input('number', [
                     'placeholder' => 'Сумма бюджета',
-                    'pattern' => '^[0-9]+([.,][0-9]{1,2})?$',
-                    'title' => 'Введите число (например: 1500.50)',
-                    'oninput' => "this.value = this.value.replace(',', '.')",
+                    'step' => '0.01',
+                    'min' => '0',
                     'required' => true,
                 ]) ?>
 

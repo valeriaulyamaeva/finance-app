@@ -20,31 +20,55 @@ $transaction = new Transaction();
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="transactionModalLabel">Создать/обновить транзакцию</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
                 </div>
 
                 <div class="modal-body">
                     <?php $form = ActiveForm::begin(['id' => 'transactionForm']); ?>
                     <?= Html::hiddenInput(Yii::$app->request->csrfParam, Yii::$app->request->csrfToken) ?>
 
-                    <?= $form->field($transaction, 'amount')->input('text', [
+                    <?= $form->field($transaction, 'amount')->textInput([
                         'placeholder' => 'Введите сумму',
                         'pattern' => '^[0-9]+([.,][0-9]{1,2})?$',
                         'title' => 'Введите число (например: 1500.50)',
                         'oninput' => "this.value = this.value.replace(',', '.')",
                         'required' => true,
                     ]) ?>
+
                     <?= $form->field($transaction, 'date')->input('date', ['required' => true]) ?>
-                    <?= $form->field($transaction, 'category_id')->dropDownList($categories, ['prompt' => 'Выберите категорию', 'required' => true]) ?>
-                    <?= $form->field($transaction, 'description')->textarea(['rows' => 2]) ?>
+
+                    <?= $form->field($transaction, 'category_id')->dropDownList($categories, [
+                        'prompt' => 'Выберите категорию',
+                        'required' => true,
+                    ]) ?>
 
                     <div id="goalSelector" style="display:none;">
-                        <?= $form->field($transaction, 'goal_id')->dropDownList($goals, ['prompt' => 'Выберите цель', 'required' => true]) ?>
+                        <?= $form->field($transaction, 'goal_id')->dropDownList($goals, [
+                            'prompt' => 'Выберите цель',
+                        ]) ?>
                     </div>
 
-                    <?php ActiveForm::end(); ?>
+                    <?= $form->field($transaction, 'description')->textarea(['rows' => 2, 'placeholder' => 'Описание']) ?>
+
+                    <hr>
+                    <h6>Повторяющаяся транзакция</h6>
+                    <div class="mb-3">
+                        <label class="form-label">Повторять</label>
+                        <label for="recurringFrequency"></label><select id="recurringFrequency" name="RecurringTransaction[frequency]" class="form-select">
+                            <option value="">Никогда</option>
+                            <option value="daily">Ежедневно</option>
+                            <option value="weekly">Еженедельно</option>
+                            <option value="monthly">Ежемесячно</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3" id="nextDateWrapper" style="display:none;">
+                        <label class="form-label">Следующая дата</label>
+                        <label for="recurringNextDate"></label><input type="date" id="recurringNextDate" name="RecurringTransaction[next_date]" class="form-control" required>
+                    </div>
 
                     <div id="formErrors" class="text-danger mt-2"></div>
+                    <?php ActiveForm::end(); ?>
                 </div>
 
                 <div class="modal-footer">
@@ -54,6 +78,7 @@ $transaction = new Transaction();
             </div>
         </div>
     </div>
+
 <?php
 $checkTypeUrl = Url::to(['category/type']);
 $script = <<<JS
@@ -80,6 +105,18 @@ $('#transaction-category_id').on('change', function() {
         goalSelector.hide();
         goalInput.val('').prop('required', false);
     });
+});
+
+$('#recurringFrequency').on('change', function() {
+    var nextDateWrapper = $('#nextDateWrapper');
+    var nextDateInput = $('#recurringNextDate');
+    if ($(this).val()) {
+        nextDateWrapper.show();
+        nextDateInput.prop('required', true);
+    } else {
+        nextDateWrapper.hide();
+        nextDateInput.val('').prop('required', false);
+    }
 });
 JS;
 $this->registerJs($script);

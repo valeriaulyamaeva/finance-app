@@ -3,142 +3,130 @@
 namespace app\controllers;
 
 use app\models\RecurringTransaction;
-use yii\data\ActiveDataProvider;
+use app\services\CurrencyService;
+use app\services\RecurringTransactionService;
+use Throwable;
+use Yii;
+use yii\db\Exception;
 use yii\web\Controller;
+use yii\web\Response;
 use yii\web\NotFoundHttpException;
-use yii\filters\VerbFilter;
 
-/**
- * RecurringTransactionController implements the CRUD actions for RecurringTransaction model.
- */
 class RecurringTransactionController extends Controller
 {
-    /**
-     * @inheritDoc
-     */
-    public function behaviors()
+    private RecurringTransactionService $service;
+    private CurrencyService $currencyService;
+
+    public function __construct($id, $module, RecurringTransactionService $service, CurrencyService $currencyService, $config = [])
     {
-        return array_merge(
-            parent::behaviors(),
-            [
-                'verbs' => [
-                    'class' => VerbFilter::className(),
-                    'actions' => [
-                        'delete' => ['POST'],
-                    ],
-                ],
-            ]
-        );
+        $this->service = $service;
+        $this->currencyService = $currencyService;
+        parent::__construct($id, $module, $config);
     }
 
     /**
-     * Lists all RecurringTransaction models.
-     *
-     * @return string
+     * @throws Exception
+     * @throws \Exception
      */
-    public function actionIndex()
-    {
-        $dataProvider = new ActiveDataProvider([
-            'query' => RecurringTransaction::find(),
-            /*
-            'pagination' => [
-                'pageSize' => 50
-            ],
-            'sort' => [
-                'defaultOrder' => [
-                    'id' => SORT_DESC,
-                ]
-            ],
-            */
-        ]);
-
-        return $this->render('index', [
-            'dataProvider' => $dataProvider,
-        ]);
-    }
-
-    /**
-     * Displays a single RecurringTransaction model.
-     * @param int $id ID
-     * @return string
-     * @throws NotFoundHttpException if the model cannot be found
-     */
-    public function actionView($id)
-    {
-        return $this->render('view', [
-            'model' => $this->findModel($id),
-        ]);
-    }
-
-    /**
-     * Creates a new RecurringTransaction model.
-     * If creation is successful, the browser will be redirected to the 'view' page.
-     * @return string|\yii\web\Response
-     */
-    public function actionCreate()
+    public function actionCreate(): Response|array
     {
         $model = new RecurringTransaction();
+        $model->user_id = Yii::$app->user->id;
+
+        Yii::$app->response->format = Response::FORMAT_JSON;
 
         if ($this->request->isPost) {
-            if ($model->load($this->request->post()) && $model->save()) {
-                return $this->redirect(['view', 'id' => $model->id]);
+            $data = array_merge(
+                $this->request->post('RecurringTransaction', []),
+                $this->request->post('Transaction', [])
+            );
+
+            $currency = Yii::$app->user->identity->currency;
+            $originalAmount = $data['amount'] ?? 0;
+
+            if ($currency !== 'BYN' && isset($data['amount'])) {
+                $rate = $this->currencyService->getRate($currency, 'BYN');
+                $data['amount'] *= $rate;
             }
-        } else {
-            $model->loadDefaultValues();
+
+            $model->load($data, '');
+            if ($model->save()) {
+                return [
+                    'success' => true,
+                    'id' => $model->id,
+                    'amount' => $model->amount,
+                    'display_amount' => number_format($originalAmount, 2, '.', ''),
+                    'category_name' => $model->category->name ?? null,
+                    'description' => $model->description,
+                    'type' => $model->frequency,
+                    'date' => $model->next_date,
+                ];
+            }
         }
 
-        return $this->render('create', [
-            'model' => $model,
-        ]);
+        return ['success' => false, 'errors' => $model->errors];
     }
 
     /**
-     * Updates an existing RecurringTransaction model.
-     * If update is successful, the browser will be redirected to the 'view' page.
-     * @param int $id ID
-     * @return string|\yii\web\Response
-     * @throws NotFoundHttpException if the model cannot be found
+     * @throws Exception
+     * @throws NotFoundHttpException
+     * @throws \Exception
      */
-    public function actionUpdate($id)
+    public function actionUpdate(int $id): Response|string
     {
         $model = $this->findModel($id);
 
-        if ($this->request->isPost && $model->load($this->request->post()) && $model->save()) {
-            return $this->redirect(['view', 'id' => $model->id]);
+        if ($this->request->isPost) {
+            $data = $this->request->post('RecurringTransaction', []);
+            $currency = Yii::$app->user->identity->currency;
+            $originalAmount = $data['amount'] ?? 0;
+
+            if ($currency !== 'BYN' && isset($data['amount'])) {
+                $rate = $this->currencyService->getRate($currency, 'BYN');
+                $data['amount'] *= $rate;
+            }
+
+            if ($this->service->saveRecurringTransaction($model, $data)) {
+                return $this->redirect(['view', 'id' => $model->id]);
+            }
         }
 
-        return $this->render('update', [
-            'model' => $model,
-        ]);
+        return $this->render('update', ['model' => $model]);
     }
 
-    /**
-     * Deletes an existing RecurringTransaction model.
-     * If deletion is successful, the browser will be redirected to the 'index' page.
-     * @param int $id ID
-     * @return \yii\web\Response
-     * @throws NotFoundHttpException if the model cannot be found
-     */
-    public function actionDelete($id)
+    public function actionDelete(int $id): Response
     {
-        $this->findModel($id)->delete();
+        try {
+            $this->findModel($id)->delete();
+        } catch (Throwable) {
+        }
 
         return $this->redirect(['index']);
     }
 
     /**
-     * Finds the RecurringTransaction model based on its primary key value.
-     * If the model is not found, a 404 HTTP exception will be thrown.
-     * @param int $id ID
-     * @return RecurringTransaction the loaded model
-     * @throws NotFoundHttpException if the model cannot be found
+     * @throws NotFoundHttpException
      */
-    protected function findModel($id)
+    protected function findModel(int $id): RecurringTransaction
     {
-        if (($model = RecurringTransaction::findOne(['id' => $id])) !== null) {
-            return $model;
+        $model = RecurringTransaction::findOne($id);
+        if (!$model || $model->user_id !== Yii::$app->user->id) {
+            throw new NotFoundHttpException('The requested page does not exist.');
+        }
+        return $model;
+    }
+
+    /**
+     * @throws \DateMalformedStringException
+     * @throws Exception
+     */
+    public function actionGenerate(): Response
+    {
+        $transactions = $this->service->getDueRecurringTransactions();
+        foreach ($transactions as $recurring) {
+            $this->service->createTransactionFromRecurring($recurring);
         }
 
-        throw new NotFoundHttpException('The requested page does not exist.');
+        return $this->asJson(['success' => true, 'count' => count($transactions)]);
     }
 }
