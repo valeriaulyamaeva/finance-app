@@ -13,19 +13,20 @@ use yii\db\Exception;
 
 class RecurringTransactionService
 {
+    private CurrencyService $currencyService;
+
+    public function __construct(CurrencyService $currencyService)
+    {
+        $this->currencyService = $currencyService;
+    }
+
     /**
-     * @param RecurringTransaction $model
-     * @param array $data
-     * @return bool
      * @throws Exception
      */
     public function saveRecurringTransaction(RecurringTransaction $model, array $data): bool
     {
         $model->load($data, '');
-        if (!$model->save()) {
-            return false;
-        }
-        return true;
+        return $model->save();
     }
 
     /**
@@ -33,6 +34,7 @@ class RecurringTransactionService
      * @return Transaction|null
      * @throws Exception
      * @throws DateMalformedStringException
+     * @throws \Exception
      */
     public function createTransactionFromRecurring(RecurringTransaction $recurring): ?Transaction
     {
@@ -40,9 +42,18 @@ class RecurringTransactionService
             return null;
         }
 
+        $userCurrency = $recurring->user->currency ?? 'BYN';
+        $amount = $recurring->amount;
+
+        if ($recurring->currency !== $userCurrency) {
+            $rate = $this->currencyService->getRate($recurring->currency, $userCurrency);
+            $amount = round($amount * $rate, 2);
+        }
+
         $transaction = new Transaction();
         $transaction->user_id = $recurring->user_id;
-        $transaction->amount = $recurring->amount;
+        $transaction->amount = $amount;
+        $transaction->currency = $userCurrency;
         $transaction->category_id = $recurring->category_id;
         $transaction->budget_id = $recurring->budget_id;
         $transaction->goal_id = $recurring->goal_id;
@@ -60,6 +71,7 @@ class RecurringTransactionService
 
         return $transaction;
     }
+
 
     /**
      * @param string $currentDate

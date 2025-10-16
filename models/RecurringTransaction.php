@@ -11,6 +11,7 @@ use yii\db\ActiveRecord;
  * @property int $id
  * @property int $user_id
  * @property float $amount
+ * @property string $currency
  * @property string $frequency
  * @property string $next_date
  * @property int|null $category_id
@@ -46,6 +47,8 @@ class RecurringTransaction extends ActiveRecord
             [['user_id', 'amount', 'frequency', 'next_date'], 'required'],
             [['user_id', 'category_id', 'budget_id', 'goal_id', 'active'], 'integer'],
             [['amount'], 'number'],
+            ['currency', 'string', 'max' => 3],
+            [['currency'], 'safe'],
             [['frequency', 'description'], 'string'],
             [['next_date', 'created_at', 'updated_at'], 'safe'],
             ['frequency', 'in', 'range' => array_keys(self::optsFrequency())],
@@ -64,6 +67,7 @@ class RecurringTransaction extends ActiveRecord
             'id' => 'ID',
             'user_id' => 'Пользователь',
             'amount' => 'Сумма',
+            'currency' => 'Валюта',
             'frequency' => 'Частота',
             'next_date' => 'Следующая дата',
             'category_id' => 'Категория',

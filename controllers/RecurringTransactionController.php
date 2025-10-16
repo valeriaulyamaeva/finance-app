@@ -5,6 +5,7 @@ namespace app\controllers;
 use app\models\RecurringTransaction;
 use app\services\CurrencyService;
 use app\services\RecurringTransactionService;
+use DateMalformedStringException;
 use Throwable;
 use Yii;
 use yii\db\Exception;
@@ -117,7 +118,7 @@ class RecurringTransactionController extends Controller
     }
 
     /**
-     * @throws \DateMalformedStringException
+     * @throws DateMalformedStringException
      * @throws Exception
      */
     public function actionGenerate(): Response
