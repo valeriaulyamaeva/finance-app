@@ -14,7 +14,7 @@ use yii\web\Response;
 /**
  * Controller for handling site-wide actions.
  */
-class SiteController extends Controller
+class SiteController extends BaseController
 {
     private UserService $userService;
 

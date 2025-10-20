@@ -13,7 +13,7 @@ use yii\web\Controller;
 use yii\web\Response;
 use yii\web\NotFoundHttpException;
 
-class RecurringTransactionController extends Controller
+class RecurringTransactionController extends BaseController
 {
     private RecurringTransactionService $service;
     private CurrencyService $currencyService;

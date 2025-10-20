@@ -9,7 +9,7 @@ use yii\db\Exception;
 use yii\web\Controller;
 use yii\web\Response;
 
-class CategoryController extends Controller
+class CategoryController extends BaseController
 {
     private CategoryService $service;
 

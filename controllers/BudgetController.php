@@ -12,7 +12,7 @@ use yii\data\ActiveDataProvider;
 use yii\web\Controller;
 use yii\web\Response;
 
-class BudgetController extends Controller
+class BudgetController extends BaseController
 {
     private BudgetService $service;
     private CurrencyService $currencyService;

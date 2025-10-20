@@ -32,14 +32,32 @@ $formInputBorder = $theme === 'dark' ? '#4b5563' : '#d1d5db';
         }
         .sidebar {
             width: 20rem;
-            background-color: <?= $sidebarBg ?>;
-            color: #fff;
+            background-color: #b6b6b6;
+            color: #8e8e8e;
             padding: 2rem 1rem;
             height: 100vh;
             position: fixed;
         }
+        .sidebar h2 {
+            font-size: 2.5rem;
+            color: #2c2929;
+            margin-bottom: 2rem;
+            font-weight: 600;
+        }
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+        }
+        .sidebar ul li a {
+            color: #1c1b1b;
+            text-decoration: none;
+            display: block;
+            padding: 0.5rem 0;
+            font-weight: 500;
+        }
+        .sidebar ul li a:hover { color: #535353; }
+
         .content {
-            margin-left: 21rem;
             padding: 2rem;
         }
         .settings-form {

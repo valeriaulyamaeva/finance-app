@@ -15,7 +15,7 @@ use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\web\Response;
 
-class GoalController extends Controller
+class GoalController extends BaseController
 {
     public GoalService $service;
     private CurrencyService $currencyService;

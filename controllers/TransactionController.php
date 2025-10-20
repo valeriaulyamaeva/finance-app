@@ -14,7 +14,7 @@ use yii\web\Response;
 use app\models\Goal;
 use yii\helpers\ArrayHelper;
 
-class TransactionController extends Controller
+class TransactionController extends BaseController
 {
     private TransactionService $service;
     private CurrencyService $currencyService;

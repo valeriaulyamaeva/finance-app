@@ -69,7 +69,6 @@ $currencySymbol = $currencySymbols[$userCurrency] ?? $userCurrency;
         .sidebar ul li a:hover { color: #535353; }
 
         .content {
-            margin-left: 21rem;
             padding: 2rem;
         }
         .content h1 {

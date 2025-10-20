@@ -12,7 +12,7 @@ use yii\filters\VerbFilter;
 use yii\web\Controller;
 use yii\web\Response;
 
-class SettingsController extends Controller
+class SettingsController extends BaseController
 {
     public CurrencyService $currencyService;
 
