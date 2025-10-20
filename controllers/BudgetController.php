@@ -31,7 +31,6 @@ class BudgetController extends BaseController
     {
         $user = Yii::$app->user->identity;
         $userId = $user->id;
-        $summary = $this->service->getUserSummary($userId);
         $userCurrency = $user->currency ?? 'BYN';
 
         $dataProvider = new ActiveDataProvider([
@@ -43,24 +42,33 @@ class BudgetController extends BaseController
         ]);
 
         $budgetsWithDisplay = [];
+        $totalBudget = 0;
+        $totalSpent = 0;
+
         foreach ($dataProvider->models as $budget) {
             $budgetSummary = $this->service->calculateSummary($budget);
 
-            $displayAmount = $budget->amount;
-            $displaySpent = $budgetSummary['spent'];
-            $displayRemaining = $budgetSummary['remaining'];
-
-            $userCurrency = $user->currency ?? 'BYN';
-            if ($budget->currency !== $userCurrency) {
-                $displayAmount = $this->currencyService->fromBase(
+            $displayAmount = $budget->currency !== $userCurrency
+                ? $this->currencyService->fromBase(
                     $this->currencyService->toBase($budget->amount, $budget->currency),
                     $userCurrency
-                );
-                $displaySpent = $this->currencyService->fromBase(
+                )
+                : $budget->amount;
+
+
+            $displaySpent = $budget->currency !== $userCurrency
+                ? $this->currencyService->fromBase(
                     $this->currencyService->toBase($budgetSummary['spent'], $budget->currency),
                     $userCurrency
-                );
-            }
+                )
+                : $budgetSummary['spent'];
+
+            $displayRemaining = $budget->currency !== $userCurrency
+                ? $this->currencyService->fromBase(
+                    $this->currencyService->toBase($budgetSummary['remaining'], $budget->currency),
+                    $userCurrency
+                )
+                : $budgetSummary['remaining'];
 
             $budgetsWithDisplay[] = [
                 'model' => $budget,
@@ -71,7 +79,16 @@ class BudgetController extends BaseController
                 'category_name' => $budget->category->name ?? '-',
                 'display_period' => $budget->displayPeriod(),
             ];
+
+            $totalBudget += $displayAmount;
+            $totalSpent += $displaySpent;
         }
+
+        $summary = [
+            'total_budget' => number_format($totalBudget, 2, '.', ''),
+            'total_spent' => number_format($totalSpent, 2, '.', ''),
+            'remaining' => number_format($totalBudget - $totalSpent, 2, '.', ''),
+        ];
 
         return $this->render('index', [
             'user' => $user,
@@ -145,9 +162,12 @@ class BudgetController extends BaseController
             return ['success' => false, 'message' => 'Бюджет не найден'];
         }
 
+        $budgetSummary = $this->service->calculateSummary($budget);
+
         $userCurrency = Yii::$app->user->identity->currency ?? 'BYN';
         $displayAmount = $budget->amount;
-        $displaySpent = $budget->spent;
+        $displaySpent = $budgetSummary['spent'];
+        $displayRemaining = $budgetSummary['remaining'];
 
         if ($budget->currency !== $userCurrency) {
             $displayAmount = $this->currencyService->fromBase(
@@ -155,7 +175,11 @@ class BudgetController extends BaseController
                 $userCurrency
             );
             $displaySpent = $this->currencyService->fromBase(
-                $this->currencyService->toBase($budget->spent, $budget->currency),
+                $this->currencyService->toBase($budgetSummary['spent'], $budget->currency),
+                $userCurrency
+            );
+            $displayRemaining = $this->currencyService->fromBase(
+                $this->currencyService->toBase($budgetSummary['remaining'], $budget->currency),
                 $userCurrency
             );
         }
@@ -163,7 +187,8 @@ class BudgetController extends BaseController
         $budgetArray = $budget->toArray();
         $budgetArray['display_amount'] = number_format($displayAmount, 2, '.', '');
         $budgetArray['display_spent'] = number_format($displaySpent, 2, '.', '');
-        $budgetArray['display_currency'] = $userCurrency;
+        $budgetArray['display_remaining'] = number_format($displayRemaining, 2, '.', '');
+        $budgetArray['display_currency'] = $userCurrency; // валюта для отображения
         $budgetArray['display_period'] = $budget->displayPeriod();
         $budgetArray['category_name'] = $budget->category->name ?? '-';
 

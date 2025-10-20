@@ -30,6 +30,8 @@ $budget = new Budget(['currency' => Yii::$app->user->identity->currency ?? 'BYN'
                     'required' => true,
                 ]) ?>
 
+                <input type="hidden" name="Budget[currency]" id="budgetCurrency" value="<?= Html::encode($user->currency ?? 'BYN') ?>">
+
                 <?= $form->field($budget, 'period')->dropDownList([
                     'daily' => 'День',
                     'weekly' => 'Неделя',

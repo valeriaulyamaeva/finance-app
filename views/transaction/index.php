@@ -11,7 +11,7 @@ use app\assets\AppAsset;
 $this->title = 'Транзакции';
 
 AppAsset::register($this);
-$currencySymbols = ['BYN'=>'Br','USD'=>'$','EUR'=>'€'];
+$currencySymbols = ['BYN'=>'Br','USD'=>'$','EUR'=>'€', 'RUB' => '₽'];
 $userCurrency = Yii::$app->user->identity->currency ?? 'BYN';
 
 $createUrl = Url::to(['transaction/create']);
@@ -260,7 +260,7 @@ $createRecurringUrl = Url::to(['recurring-transaction/create']);
                 <div class="transaction-card" data-id="<?= $transaction->id ?>">
                     <div class="transaction-info">
                         <p><strong>Дата:</strong> <?= Html::encode($transaction->date) ?></p>
-                        <p><strong>Сумма:</strong> <?= number_format($transaction->amount, 2) ?> <?= $currencySymbols[$transaction->currency ?? $userCurrency] ?? '' ?></p>
+                        <p><strong>Сумма:</strong> <?= Html::encode($transaction->display_amount ?? number_format($transaction->amount, 2)) ?> <?= $currencySymbols[$transaction->display_currency ?? $transaction->currency ?? $userCurrency] ?? '' ?></p>
                         <p><strong>Тип:</strong> <?= Html::encode($transaction->category->type ?? '-') ?></p>
                         <p><strong>Категория:</strong> <?= Html::encode($transaction->category->name ?? '-') ?></p>
                         <p><strong>Описание:</strong> <?= Html::encode($transaction->description ?? '-') ?></p>
@@ -300,17 +300,20 @@ $createRecurringUrl = Url::to(['recurring-transaction/create']);
         const currencySymbols = <?= json_encode($currencySymbols) ?>;
         const userCurrency = '<?= $userCurrency ?>';
 
+        const currencyInput = document.createElement('input');
+        currencyInput.type = 'hidden';
+        currencyInput.name = 'Transaction[currency]';
+        form.appendChild(currencyInput);
+
+        // Создание транзакции
         document.getElementById('createTransactionBtn').addEventListener('click', () => {
             currentAction = 'create';
             currentId = null;
             form.reset();
-            document.getElementById('recurringFrequency').value = '';
-            document.getElementById('nextDateWrapper').style.display = 'none';
-            document.getElementById('recurringNextDate').required = false;
+            currencyInput.value = userCurrency;
             formErrors.textContent = '';
             formErrors.style.display = 'none';
             modalEl.querySelector('.modal-title').textContent = 'Создать транзакцию';
-            document.getElementById('currencySymbol').textContent = currencySymbols[userCurrency] || '';
             modal.show();
         });
 
@@ -318,49 +321,38 @@ $createRecurringUrl = Url::to(['recurring-transaction/create']);
             currentAction = 'createRecurring';
             currentId = null;
             form.reset();
-            document.getElementById('recurringFrequency').value = '';
-            document.getElementById('nextDateWrapper').style.display = 'none';
-            document.getElementById('recurringNextDate').required = false;
+            currencyInput.value = userCurrency;
             formErrors.textContent = '';
             formErrors.style.display = 'none';
             modalEl.querySelector('.modal-title').textContent = 'Создать повторяющуюся транзакцию';
             modal.show();
         });
 
-        document.querySelectorAll('.js-update').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const id = btn.dataset.id;
-                console.log('Fetching transaction:', viewUrl + '?id=' + id);
-                fetch(viewUrl + '?id=' + id)
-                    .then(res => {
-                        console.log('Response status:', res.status);
-                        if (res.status === 401 || res.status === 403) {
-                            throw new Error('Требуется авторизация');
-                        }
-                        if (!res.ok) {
-                            throw new Error('Ошибка сервера: ' + res.status);
-                        }
-                        return res.json();
-                    })
+        // Делегирование кликов на редактирование и удаление
+        document.querySelector('.transactions-container').addEventListener('click', (e) => {
+            const target = e.target;
+
+            if (target.classList.contains('js-update')) {
+                const id = target.dataset.id;
+                fetch(`${viewUrl}?id=${id}`)
+                    .then(res => res.ok ? res.json() : res.text().then(t => { throw new Error(t); }))
                     .then(data => {
-                        console.log('Response data:', data);
                         if (data.success && data.transaction) {
                             const t = data.transaction;
-                            form.querySelector('[name="Transaction[amount]"]').value = t.amount;
+                            form.querySelector('[name="Transaction[amount]"]').value = t.display_amount;
                             form.querySelector('[name="Transaction[date]"]').value = t.date;
                             form.querySelector('[name="Transaction[category_id]"]').value = t.category_id;
                             form.querySelector('[name="Transaction[goal_id]"]').value = t.goal_id || '';
                             form.querySelector('[name="Transaction[description]"]').value = t.description || '';
-                            form.querySelector('[name="RecurringTransaction[frequency]"]').value = '';
-                            document.getElementById('nextDateWrapper').style.display = 'none';
-                            document.getElementById('recurringNextDate').required = false;
+                            currencyInput.value = t.display_currency;
                             currentAction = 'update';
                             currentId = id;
                             formErrors.textContent = '';
                             formErrors.style.display = 'none';
                             modalEl.querySelector('.modal-title').textContent = 'Обновить транзакцию';
                             modal.show();
-                        } else {
+                        }
+                        else {
                             formErrors.textContent = data.message || 'Ошибка при загрузке транзакции';
                             formErrors.style.display = 'block';
                         }
@@ -370,15 +362,13 @@ $createRecurringUrl = Url::to(['recurring-transaction/create']);
                         formErrors.textContent = 'Ошибка: ' + err.message;
                         formErrors.style.display = 'block';
                     });
-            });
-        });
+            }
 
-        document.querySelectorAll('.js-delete').forEach(btn => {
-            btn.addEventListener('click', () => {
+            if (target.classList.contains('js-delete')) {
                 if (!confirm('Удалить транзакцию?')) return;
-                const id = btn.dataset.id;
-                console.log('Deleting transaction:', id);
-                fetch(deleteUrl + '?id=' + id, {
+                const id = target.dataset.id;
+
+                fetch(deleteUrl, {
                     method: 'POST',
                     headers: {
                         'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content,
@@ -386,18 +376,8 @@ $createRecurringUrl = Url::to(['recurring-transaction/create']);
                     },
                     body: new URLSearchParams({ id })
                 })
-                    .then(res => {
-                        console.log('Response status:', res.status);
-                        if (res.status === 401 || res.status === 403) {
-                            throw new Error('Требуется авторизация');
-                        }
-                        if (!res.ok) {
-                            throw new Error('Ошибка сервера: ' + res.status);
-                        }
-                        return res.json();
-                    })
+                    .then(res => res.ok ? res.json() : res.text().then(t => { throw new Error(t); }))
                     .then(data => {
-                        console.log('Delete response:', data);
                         if (data.success) {
                             location.reload();
                         } else {
@@ -410,33 +390,24 @@ $createRecurringUrl = Url::to(['recurring-transaction/create']);
                         formErrors.textContent = 'Ошибка: ' + err.message;
                         formErrors.style.display = 'block';
                     });
-            });
+            }
         });
 
+        // Сохранение транзакции
         document.querySelector('.saveTransaction').addEventListener('click', () => {
+            currencyInput.value = form.querySelector('#currencySelector')?.value || userCurrency; // если есть селектор валюты
             const formData = new FormData(form);
-            const url = currentAction === 'create' ? createUrl : currentAction === 'createRecurring' ? createRecurringUrl : `${updateUrl}?id=${currentId}`;
-            console.log('Form Data:', Array.from(formData.entries()));
-            console.log('Sending request to:', url);
+            const url = currentAction === 'create' ? createUrl :
+                currentAction === 'createRecurring' ? createRecurringUrl :
+                    `${updateUrl}?id=${currentId}`;
+
             fetch(url, {
                 method: 'POST',
                 body: formData,
-                headers: {
-                    'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
-                }
+                headers: { 'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content }
             })
-                .then(res => {
-                    console.log('Response status:', res.status);
-                    if (res.status === 401 || res.status === 403) {
-                        throw new Error('Требуется авторизация');
-                    }
-                    if (!res.ok) {
-                        throw new Error('Ошибка сервера: ' + res.status);
-                    }
-                    return res.json();
-                })
+                .then(res => res.ok ? res.json() : res.text().then(t => { throw new Error(t); }))
                 .then(data => {
-                    console.log('Response data:', data);
                     if (data.success || data.id) {
                         modal.hide();
                         location.reload();
@@ -446,7 +417,7 @@ $createRecurringUrl = Url::to(['recurring-transaction/create']);
                     }
                 })
                 .catch(err => {
-                    console.error('Error:', err);
+                    console.error('Save error:', err);
                     formErrors.textContent = 'Ошибка: ' + err.message;
                     formErrors.style.display = 'block';
                 });

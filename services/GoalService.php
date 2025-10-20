@@ -20,9 +20,11 @@ class GoalService
         $goal->user_id = $userId;
         $goal->name = $data['name'] ?? '';
         $goal->target_amount = $data['target_amount'] ?? 0;
-        $goal->deadline = $data['deadline'] ?? date('Y-m-d');
         $goal->current_amount = $data['current_amount'] ?? 0;
+        $goal->deadline = $data['deadline'] ?? date('Y-m-d');
         $goal->status = $data['status'] ?? Goal::STATUS_ACTIVE;
+
+        $goal->currency = $data['currency'] ?? Yii::$app->user->identity->currency;
 
         if (!$goal->save()) {
             Yii::error('Goal validation errors: ' . json_encode($goal->errors, JSON_UNESCAPED_UNICODE), __METHOD__);
@@ -33,18 +35,19 @@ class GoalService
     }
 
     /**
-     * @param Goal $goal
-     * @param array $data
-     * @return Goal
      * @throws Exception
      */
     public function update(Goal $goal, array $data): Goal
     {
         $goal->name = $data['name'] ?? $goal->name;
         $goal->target_amount = $data['target_amount'] ?? $goal->target_amount;
-        $goal->deadline = $data['deadline'] ?? $goal->deadline;
         $goal->current_amount = $data['current_amount'] ?? $goal->current_amount;
+        $goal->deadline = $data['deadline'] ?? $goal->deadline;
         $goal->status = $data['status'] ?? $goal->status;
+
+        if (isset($data['currency'])) {
+            $goal->currency = $data['currency'];
+        }
 
         if (!$goal->save()) {
             Yii::error('Goal update errors: ' . json_encode($goal->errors, JSON_UNESCAPED_UNICODE), __METHOD__);
@@ -53,6 +56,7 @@ class GoalService
 
         return $goal;
     }
+
 
     /**
      * @param Goal $goal

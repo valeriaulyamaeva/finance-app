@@ -11,6 +11,13 @@ use yii\db\StaleObjectException;
 
 class BudgetService
 {
+    private $currencyService;
+
+    public function __construct(CurrencyService $currencyService)
+    {
+        $this->currencyService = $currencyService;
+    }
+
     /**
      * @throws Exception
      */
@@ -70,15 +77,27 @@ class BudgetService
 
     public function calculateSummary(Budget $budget): array
     {
-        $spent = Transaction::find()
+        $transactions = Transaction::find()
             ->where(['budget_id' => $budget->id])
             ->andWhere(['type' => ['expense', 'goal']])
-            ->sum('amount') ?? 0;
+            ->all();
 
-        $remaining = $budget->amount - $budget->spent;
+        $spent = 0;
+        foreach ($transactions as $t) {
+            $amount = $t->amount;
+            if ($t->currency !== $budget->currency) {
+                $amount = $this->currencyService->fromBase(
+                    $this->currencyService->toBase($amount, $t->currency),
+                    $budget->currency
+                );
+            }
+            $spent += $amount;
+        }
+
+        $remaining = $budget->amount - $spent;
 
         return [
-            'spent' => $budget->spent,
+            'spent' => $spent,
             'remaining' => $remaining,
             'total' => $budget->amount,
         ];

@@ -72,9 +72,9 @@ class GoalController extends BaseController
             'pagination' => ['pageSize' => 20],
         ]);
 
-        if ($currency !== 'BYN') {
-            $rate = $this->currencyService->getRate('BYN', $currency);
-            foreach ($dataProvider->models as $goal) {
+        foreach ($dataProvider->models as $goal) {
+            if ($goal->currency !== $currency) {
+                $rate = $this->currencyService->getRate($goal->currency, $currency);
                 $goal->target_amount *= $rate;
                 $goal->current_amount *= $rate;
             }
@@ -94,8 +94,8 @@ class GoalController extends BaseController
         $displayTargetAmount = $model->target_amount;
         $displayCurrentAmount = $model->current_amount;
 
-        if ($currency !== 'BYN') {
-            $rate = $this->currencyService->getRate('BYN', $currency);
+        if ($model->currency !== $currency) {
+            $rate = $this->currencyService->getRate($model->currency, $currency);
             $displayTargetAmount *= $rate;
             $displayCurrentAmount *= $rate;
         }
@@ -123,16 +123,6 @@ class GoalController extends BaseController
             $currency = $user->currency;
             $originalTargetAmount = $data['target_amount'] ?? 0;
             $originalCurrentAmount = $data['current_amount'] ?? 0;
-
-            if ($currency !== 'BYN') {
-                $rate = $this->currencyService->getRate($currency, 'BYN');
-                if (isset($data['target_amount'])) {
-                    $data['target_amount'] *= $rate;
-                }
-                if (isset($data['current_amount'])) {
-                    $data['current_amount'] *= $rate;
-                }
-            }
 
             if (Yii::$app->request->isAjax) {
                 Yii::$app->response->format = Response::FORMAT_JSON;
@@ -171,16 +161,6 @@ class GoalController extends BaseController
             $currency = $user->currency;
             $originalTargetAmount = $data['target_amount'] ?? 0;
             $originalCurrentAmount = $data['current_amount'] ?? 0;
-
-            if ($currency !== 'BYN') {
-                $rate = $this->currencyService->getRate($currency, 'BYN');
-                if (isset($data['target_amount'])) {
-                    $data['target_amount'] *= $rate;
-                }
-                if (isset($data['current_amount'])) {
-                    $data['current_amount'] *= $rate;
-                }
-            }
 
             if (Yii::$app->request->isAjax) {
                 Yii::$app->response->format = Response::FORMAT_JSON;

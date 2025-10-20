@@ -231,6 +231,7 @@ $currencySymbol = $currencySymbols[$userCurrency] ?? $userCurrency;
         const modal = new bootstrap.Modal(modalEl);
         const form = document.getElementById('budgetForm');
         const formErrors = document.getElementById('formErrors');
+        const budgetCurrency = document.getElementById('budgetCurrency');
         let currentAction = 'create';
         let currentId = null;
 
@@ -240,29 +241,26 @@ $currencySymbol = $currencySymbols[$userCurrency] ?? $userCurrency;
         const viewUrl = '<?= $viewUrl ?>';
         const currencySymbol = '<?= Html::encode($currencySymbol) ?>';
 
-        // Открытие модалки для создания
+        // Создание бюджета
         document.getElementById('addBudgetBtn').addEventListener('click', () => {
             currentAction = 'create';
             currentId = null;
             form.reset();
+            budgetCurrency.value = '<?= $userCurrency ?>';
             formErrors.textContent = '';
             formErrors.style.display = 'none';
             modal.show();
         });
 
-        // Редактирование бюджета
-        document.querySelectorAll('.editBtn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const id = btn.dataset.id;
+        // Делегирование кликов по кнопкам редактирования и удаления
+        document.querySelector('.cards-container').addEventListener('click', (e) => {
+            const target = e.target;
+
+            // Редактирование
+            if (target.classList.contains('editBtn')) {
+                const id = target.dataset.id;
                 fetch(`${viewUrl}?id=${id}`)
-                    .then(res => {
-                        if (!res.ok) {
-                            return res.text().then(text => {
-                                throw new Error(`Сервер вернул ошибку ${res.status}: ${text}`);
-                            });
-                        }
-                        return res.json();
-                    })
+                    .then(res => res.ok ? res.json() : res.text().then(t => { throw new Error(t); }))
                     .then(data => {
                         if (data.success && data.budget) {
                             const b = data.budget;
@@ -272,7 +270,7 @@ $currencySymbol = $currencySymbols[$userCurrency] ?? $userCurrency;
                             form.querySelector('[name="Budget[category_id]"]').value = b.category_id;
                             form.querySelector('[name="Budget[start_date]"]').value = b.start_date;
                             form.querySelector('[name="Budget[end_date]"]').value = b.end_date;
-
+                            budgetCurrency.value = b.display_currency || 'BYN';
                             currentAction = 'update';
                             currentId = id;
                             formErrors.textContent = '';
@@ -288,14 +286,12 @@ $currencySymbol = $currencySymbols[$userCurrency] ?? $userCurrency;
                         formErrors.textContent = `Ошибка: ${err.message}`;
                         formErrors.style.display = 'block';
                     });
-            });
-        });
+            }
 
-        // Удаление бюджета
-        document.querySelectorAll('.deleteBtn').forEach(btn => {
-            btn.addEventListener('click', () => {
+            // Удаление
+            if (target.classList.contains('deleteBtn')) {
                 if (!confirm('Удалить бюджет?')) return;
-                const id = btn.dataset.id;
+                const id = target.dataset.id;
 
                 fetch(deleteUrl, {
                     method: 'POST',
@@ -305,14 +301,7 @@ $currencySymbol = $currencySymbols[$userCurrency] ?? $userCurrency;
                     },
                     body: new URLSearchParams({ id })
                 })
-                    .then(res => {
-                        if (!res.ok) {
-                            return res.text().then(text => {
-                                throw new Error(`Сервер вернул ошибку ${res.status}: ${text}`);
-                            });
-                        }
-                        return res.json();
-                    })
+                    .then(res => res.ok ? res.json() : res.text().then(t => { throw new Error(t); }))
                     .then(data => {
                         if (data.success) {
                             location.reload();
@@ -326,58 +315,24 @@ $currencySymbol = $currencySymbols[$userCurrency] ?? $userCurrency;
                         formErrors.textContent = `Ошибка: ${err.message}`;
                         formErrors.style.display = 'block';
                     });
-            });
+            }
         });
 
-        // Сохранение (создание/редактирование)
+        // Сохранение бюджета
         document.querySelector('.saveBudget').addEventListener('click', () => {
             const formData = new FormData(form);
+            formData.set('Budget[currency]', budgetCurrency.value);
             const url = currentAction === 'create' ? createUrl : `${updateUrl}?id=${currentId}`;
 
             fetch(url, {
                 method: 'POST',
                 body: formData,
-                headers: {
-                    'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
-                }
+                headers: { 'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content }
             })
-                .then(res => {
-                    if (!res.ok) {
-                        return res.text().then(text => {
-                            throw new Error(`Сервер вернул ошибку ${res.status}: ${text}`);
-                        });
-                    }
-                    return res.json();
-                })
+                .then(res => res.ok ? res.json() : res.text().then(t => { throw new Error(t); }))
                 .then(data => {
                     if (data.success && data.budget) {
-                        const b = data.budget;
-                        let card;
-                        if (currentAction === 'create') {
-                            card = document.createElement('div');
-                            card.classList.add('card');
-                            card.dataset.id = b.id;
-                            document.querySelector('.cards-container').prepend(card);
-                        } else {
-                            card = document.querySelector(`.card[data-id="${b.id}"]`);
-                        }
-
-                        card.innerHTML = `
-                            <div>
-                                <h3>${b.name}</h3>
-                                <p>Сумма: ${b.display_amount} ${b.display_currency || currencySymbol}</p>
-                                <p>Период: ${b.display_period}</p>
-                                <p>Категория: ${b.category_name || '-'}</p>
-                                <p>Срок: ${b.start_date} → ${b.end_date}</p>
-                            </div>
-                            <div class="actions">
-                                <button class="editBtn" data-id="${b.id}">✏️</button>
-                                <button class="deleteBtn" data-id="${b.id}">🗑️</button>
-                            </div>
-                        `;
-
-                        modal.hide();
-                        location.reload();
+                        location.reload(); // можно заменить на динамическое обновление карточки
                     } else {
                         formErrors.textContent = data.message || 'Ошибка при сохранении';
                         formErrors.style.display = 'block';

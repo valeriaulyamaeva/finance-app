@@ -13,6 +13,13 @@ use yii\web\NotFoundHttpException;
 
 class TransactionService
 {
+    private $currencyService;
+
+    public function __construct(CurrencyService $currencyService)
+    {
+        $this->currencyService = $currencyService;
+    }
+
     /**
      * @throws Exception
      */
@@ -132,21 +139,37 @@ class TransactionService
 
     public function getSummary(int $userId): array
     {
-        $income = (float)Transaction::find()
-            ->where(['user_id' => $userId, 'type' => Transaction::TYPE_INCOME])
-            ->sum('amount');
+        $transactions = Transaction::find()->where(['user_id' => $userId])->all();
+        $income = 0;
+        $expense = 0;
 
-        $expense = (float)Transaction::find()
-            ->where(['user_id' => $userId])
-            ->andWhere(['in', 'type', [Transaction::TYPE_EXPENSE, Transaction::TYPE_GOAL]])
-            ->sum('amount');
+        $userCurrency = Yii::$app->user->identity->currency ?? 'BYN';
+
+        foreach ($transactions as $t) {
+            $amount = $t->amount;
+
+            if ($t->currency !== $userCurrency) {
+                $amount = $this->currencyService->fromBase(
+                    $this->currencyService->toBase($amount, $t->currency),
+                    $userCurrency
+                );
+            }
+
+            if ($t->isTypeIncome()) {
+                $income += $amount;
+            } else {
+                $expense += $amount;
+            }
+        }
 
         return [
             'income' => $income,
             'expense' => $expense,
             'balance' => $income - $expense,
+            'currency' => $userCurrency,
         ];
     }
+
 
     /**
      * @param Transaction $transaction
@@ -158,13 +181,11 @@ class TransactionService
     {
         $isNew = $transaction->isNewRecord;
 
-        $oldAmount = $isNew ? 0 : (float)$transaction->amount;
+        $oldAmount = $isNew ? 0 : $transaction->amount;
         $oldCategoryId = $isNew ? null : $transaction->category_id;
         $oldGoalId = $isNew ? null : $transaction->goal_id;
-        $oldType = $isNew ? null : $transaction->type;
 
         $transaction->load($data);
-
         $transaction->goal_id = $data['goal_id'] ?? $data['Transaction']['goal_id'] ?? null;
         $transaction->category_id = $data['category_id'] ?? $data['Transaction']['category_id'] ?? null;
 
@@ -179,34 +200,26 @@ class TransactionService
         }
         $transaction->currency = $user->currency;
 
-        // Коррекция бюджета
+        // Обработка бюджета
         if ($oldCategoryId) {
-            $budget = Budget::findOne(['category_id' => $oldCategoryId, 'user_id' => $transaction->user_id]);
-            if ($budget) {
-                if ($oldType === Transaction::TYPE_EXPENSE) {
-                    $budget->spent = max(0, $budget->spent - $oldAmount);
-                } elseif ($oldType === Transaction::TYPE_INCOME) {
-                    $budget->spent += $oldAmount;
-                }
-                $budget->updated_at = date('Y-m-d H:i:s');
-                $budget->save(false);
+            $oldBudget = Budget::findOne(['category_id' => $oldCategoryId, 'user_id' => $transaction->user_id]);
+            if ($oldBudget && $transaction->isTypeExpense()) {
+                $oldBudget->spent = max(0, $oldBudget->spent - $oldAmount);
+                $oldBudget->updated_at = date('Y-m-d H:i:s');
+                $oldBudget->save(false);
             }
         }
 
         if ($categoryId) {
             $budget = Budget::findOne(['category_id' => $categoryId, 'user_id' => $transaction->user_id]);
-            if ($budget) {
-                if ($transaction->isTypeExpense()) {
-                    $budget->spent += $transaction->amount;
-                } elseif ($transaction->isTypeIncome()) {
-                    $budget->spent = max(0, $budget->spent - $transaction->amount);
-                }
+            if ($budget && $transaction->isTypeExpense()) {
+                $budget->spent += $transaction->amount;
                 $budget->updated_at = date('Y-m-d H:i:s');
                 $budget->save(false);
+                $transaction->budget_id = $budget->id;
             }
         }
 
-        // Коррекция цели
         if ($oldGoalId) {
             $goal = Goal::findOne($oldGoalId);
             if ($goal) {

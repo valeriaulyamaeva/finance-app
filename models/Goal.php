@@ -13,6 +13,7 @@ use yii\db\ActiveRecord;
  * @property int $user_id
  * @property string $name
  * @property float $target_amount
+ * @property string $currency
  * @property string $deadline
  * @property float $current_amount
  * @property string $status

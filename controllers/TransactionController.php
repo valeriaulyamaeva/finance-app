@@ -29,11 +29,12 @@ class TransactionController extends BaseController
     /**
      * @throws Exception
      */
+    // TransactionController.php
     public function actionIndex(): string
     {
         $user = Yii::$app->user->identity;
         $userId = $user->id;
-        $userCurrency = $user->currency;
+        $userCurrency = $user->currency ?? 'BYN';
 
         $dataProvider = new ActiveDataProvider([
             'query' => Transaction::find()
@@ -50,23 +51,27 @@ class TransactionController extends BaseController
 
         $summary = $this->service->getSummary($userId);
 
+        // Только форматируем суммы для отображения, не конвертируем повторно
+        foreach (['income', 'expense', 'balance'] as $key) {
+            if (isset($summary[$key])) {
+                $summary[$key] = number_format($summary[$key], 2, '.', '');
+            }
+        }
+
+        // Для транзакций конвертация отдельная, оставляем как было
         foreach ($dataProvider->models as $transaction) {
             $transactionCurrency = $transaction->currency ?? 'BYN';
             $displayAmount = $transaction->amount;
 
             if ($transactionCurrency !== $userCurrency) {
-                $rate = $this->currencyService->getRate($transactionCurrency, $userCurrency);
-                $displayAmount *= $rate;
+                $displayAmount = $this->currencyService->fromBase(
+                    $this->currencyService->toBase($transaction->amount, $transactionCurrency),
+                    $userCurrency
+                );
             }
 
             $transaction->display_amount = number_format($displayAmount, 2, '.', '');
             $transaction->display_currency = $userCurrency;
-        }
-
-        foreach (['income', 'expense', 'balance'] as $key) {
-            if (isset($summary[$key])) {
-                $summary[$key] = number_format($summary[$key], 2, '.', '');
-            }
         }
 
         return $this->render('index', [
@@ -76,6 +81,7 @@ class TransactionController extends BaseController
             'goals' => $goals,
         ]);
     }
+
 
     public function actionCreate(): array
     {
@@ -163,13 +169,15 @@ class TransactionController extends BaseController
             return ['success' => false, 'message' => 'Транзакция не найдена'];
         }
 
-        $userCurrency = Yii::$app->user->identity->currency;
+        $userCurrency = Yii::$app->user->identity->currency ?? 'BYN';
         $transactionCurrency = $transaction->currency ?? 'BYN';
         $displayAmount = $transaction->amount;
 
         if ($transactionCurrency !== $userCurrency) {
-            $rate = $this->currencyService->getRate($transactionCurrency, $userCurrency);
-            $displayAmount *= $rate;
+            $displayAmount = $this->currencyService->fromBase(
+                $this->currencyService->toBase($transaction->amount, $transactionCurrency),
+                $userCurrency
+            );
         }
 
         $transactionArray = $transaction->toArray();

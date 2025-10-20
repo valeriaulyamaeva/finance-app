@@ -145,8 +145,8 @@ $viewUrl = Url::to(['goal/view']);
                 <div class="card" data-id="<?= $goal->id ?>">
                     <div>
                         <h3><?= Html::encode($goal->name) ?></h3>
-                        <p>Цель: <?= number_format($goal->target_amount, 2) ?></p>
-                        <p>Текущая сумма: <?= number_format($goal->current_amount, 2) ?></p>
+                        <p>Цель: <?= number_format($goal->display_target_amount ?? $goal->target_amount, 2) ?></p>
+                        <p>Текущая сумма: <?= number_format($goal->display_current_amount ?? $goal->current_amount, 2) ?></p>
                         <p>Статус: <?= Html::encode($goal->displayStatus()) ?></p>
                         <p>Срок: <?= Html::encode($goal->deadline) ?></p>
                     </div>
@@ -177,6 +177,9 @@ $viewUrl = Url::to(['goal/view']);
                 <div class="mb-3">
                     <label class="form-label">Целевая сумма</label>
                     <label for="goalTarget"></label><input type="number" class="form-control" name="Goal[target_amount]" id="goalTarget" step="0.01" required>
+                    <span><?= Yii::$app->user->identity->currency ?></span>
+                    <input type="hidden" name="Goal[currency]" id="goalCurrency" value="<?= Yii::$app->user->identity->currency ?>">
+
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Текущая сумма</label>
@@ -204,6 +207,8 @@ $viewUrl = Url::to(['goal/view']);
     </div>
 </div>
 <script>
+    const userCurrency = '<?= Yii::$app->user->identity->currency ?>';
+
     document.addEventListener('DOMContentLoaded', () => {
         const modal = new bootstrap.Modal(document.getElementById('goalModal'));
         let currentAction = 'create';
@@ -212,51 +217,48 @@ $viewUrl = Url::to(['goal/view']);
         const deleteUrl = '<?= $deleteUrl ?>';
         const viewUrl = '<?= $viewUrl ?>';
 
+        const goalForm = document.getElementById('goalForm');
+        const formErrors = document.getElementById('formErrors');
+        const goalCurrency = document.getElementById('goalCurrency');
+
         document.getElementById('addGoalBtn').addEventListener('click', () => {
             currentAction = 'create';
-            document.getElementById('goalForm').reset();
-            document.getElementById('formErrors').textContent = '';
-            document.getElementById('formErrors').style.display = 'none';
+            goalForm.reset();
+            formErrors.style.display = 'none';
+            goalCurrency.value = userCurrency;
             modal.show();
         });
 
         document.querySelectorAll('.editBtn').forEach(btn => {
             btn.addEventListener('click', () => {
                 const id = btn.dataset.id;
-                fetch(viewUrl + '?id=' + id, {
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
-                })
-                    .then(res => {
-                        if (!res.ok) throw new Error('Ошибка сервера: ' + res.status);
-                        return res.json();
-                    })
+                fetch(`${viewUrl}?id=${id}`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                    .then(res => res.json())
                     .then(data => {
                         if (data.success && data.goal) {
                             const g = data.goal;
                             document.getElementById('goalId').value = g.id;
                             document.getElementById('goalName').value = g.name;
-                            document.getElementById('goalTarget').value = g.target_amount;
-                            document.getElementById('goalCurrent').value = g.current_amount;
+                            document.getElementById('goalTarget').value = parseFloat(g.display_target_amount ?? g.target_amount);
+                            document.getElementById('goalCurrent').value = parseFloat(g.display_current_amount ?? g.current_amount);
                             document.getElementById('goalDeadline').value = g.deadline;
                             document.getElementById('goalStatus').value = g.status;
+                            goalCurrency.value = userCurrency; // обновляем валюту на текущую пользователя
                             currentAction = 'update';
-                            document.getElementById('formErrors').style.display = 'none';
+                            formErrors.style.display = 'none';
                             modal.show();
                         } else {
-                            document.getElementById('formErrors').textContent = data.message || 'Ошибка загрузки данных';
-                            document.getElementById('formErrors').style.display = 'block';
+                            formErrors.textContent = data.message || 'Ошибка загрузки данных';
+                            formErrors.style.display = 'block';
                         }
                     })
                     .catch(error => {
                         console.error('Edit error:', error);
-                        document.getElementById('formErrors').textContent = 'Ошибка: ' + error.message;
-                        document.getElementById('formErrors').style.display = 'block';
+                        formErrors.textContent = 'Ошибка: ' + error.message;
+                        formErrors.style.display = 'block';
                     });
             });
         });
-
 
         document.querySelectorAll('.deleteBtn').forEach(btn => {
             btn.addEventListener('click', () => {
@@ -290,41 +292,42 @@ $viewUrl = Url::to(['goal/view']);
             });
         });
 
-        document.getElementById('goalForm').addEventListener('submit', e => {
+        goalForm.addEventListener('submit', e => {
             e.preventDefault();
             const id = document.getElementById('goalId').value;
-            const data = new FormData(e.target);
-            console.log('Form Data:', Array.from(data.entries()));
-            const url = currentAction === 'create' ? createUrl : updateUrl + '?id=' + id;
+            const formData = new FormData(goalForm);
+
+            if (formData.get('Goal[target_amount]')) {
+                formData.set('Goal[target_amount]', parseFloat(formData.get('Goal[target_amount]')));
+            }
+            if (formData.get('Goal[current_amount]')) {
+                formData.set('Goal[current_amount]', parseFloat(formData.get('Goal[current_amount]')));
+            }
+
+            formData.set('Goal[currency]', userCurrency);
+
+            const url = currentAction === 'create' ? createUrl : `${updateUrl}?id=${id}`;
+
             fetch(url, {
                 method: 'POST',
-                body: data,
+                body: formData,
                 headers: {
                     'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content,
                     'X-Requested-With': 'XMLHttpRequest'
                 }
             })
-                    .then(res => {
-                    if (res.status === 401 || res.status === 403) {
-                        throw new Error('Требуется авторизация');
-                    }
-                    if (!res.ok) {
-                        throw new Error('Ошибка сервера: ' + res.status);
-                    }
-                    return res.json();
-                })
+                .then(res => res.json())
                 .then(data => {
-                    if (data.success) {
-                        location.reload();
-                    } else {
-                        document.getElementById('formErrors').textContent = data.message || 'Ошибка сохранения';
-                        document.getElementById('formErrors').style.display = 'block';
+                    if (data.success) location.reload();
+                    else {
+                        formErrors.textContent = data.message || 'Ошибка сохранения';
+                        formErrors.style.display = 'block';
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    document.getElementById('formErrors').textContent = 'Ошибка: ' + error.message;
-                    document.getElementById('formErrors').style.display = 'block';
+                    formErrors.textContent = 'Ошибка: ' + error.message;
+                    formErrors.style.display = 'block';
                 });
         });
     });
