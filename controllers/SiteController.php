@@ -51,6 +51,16 @@ class SiteController extends BaseController
         ];
     }
 
+    public function beforeAction($action): bool
+    {
+        if (in_array($action->id, ['login', 'register', 'google-login', 'home'])) {
+            $this->layout = 'guest';
+        } else {
+            $this->layout = 'main';
+        }
+        return parent::beforeAction($action);
+    }
+
     public function actions(): array
     {
         return [
@@ -84,7 +94,7 @@ class SiteController extends BaseController
             if ($user && Yii::$app->user->login($user, 3600 * 24 * 30)) {
                 $user->last_login = date('Y-m-d H:i:s');
                 $user->save(false);
-                return $this->goHome();
+                return $this->redirect(['./analytics']);
             }
             Yii::$app->session->setFlash('error', 'Неверный email или пароль.');
         }

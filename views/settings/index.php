@@ -5,98 +5,14 @@
 use yii\helpers\Html;
 use yii\helpers\Url;
 use app\assets\AppAsset;
+use yii\web\JqueryAsset;
+use yii\web\View;
 
 AppAsset::register($this);
 $this->title = 'Настройки профиля';
 $saveUrl = Url::to(['settings/save']);
-$theme = $user->theme;
-$bodyBg = $theme === 'dark' ? '#1f1f1f' : '#f9f7f4';
-$bodyColor = $theme === 'dark' ? '#f3f3f3' : '#4b453f';
-$sidebarBg = $theme === 'dark' ? '#333' : '#b6b6b6';
-$formBg = $theme === 'dark' ? '#2a2a2a' : '#fff';
-$formInputBorder = $theme === 'dark' ? '#4b5563' : '#d1d5db';
 ?>
 
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="csrf-token" content="<?= Yii::$app->request->csrfToken ?>">
-    <title><?= Html::encode($this->title) ?></title>
-    <style>
-        body {
-            font-family: 'Poppins', sans-serif;
-            background-color: <?= $bodyBg ?>;
-            color: <?= $bodyColor ?>;
-            margin: 0;
-        }
-        .sidebar {
-            width: 20rem;
-            background-color: #b6b6b6;
-            color: #8e8e8e;
-            padding: 2rem 1rem;
-            height: 100vh;
-            position: fixed;
-        }
-        .sidebar h2 {
-            font-size: 2.5rem;
-            color: #2c2929;
-            margin-bottom: 2rem;
-            font-weight: 600;
-        }
-        .sidebar ul {
-            list-style: none;
-            padding: 0;
-        }
-        .sidebar ul li a {
-            color: #1c1b1b;
-            text-decoration: none;
-            display: block;
-            padding: 0.5rem 0;
-            font-weight: 500;
-        }
-        .sidebar ul li a:hover { color: #535353; }
-
-        .content {
-            padding: 2rem;
-            margin-left: 10rem;
-        }
-        .settings-form {
-            background: <?= $formBg ?>;
-            padding: 2rem;
-            border-radius: 16px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            max-width: 600px;
-        }
-        input, select {
-            width: 100%;
-            padding: 0.6rem;
-            border-radius: 10px;
-            border: 1px solid <?= $formInputBorder ?>;
-            margin-bottom: 1rem;
-            background-color: <?= $theme === 'dark' ? '#374151' : '#fff' ?>;
-            color: <?= $theme === 'dark' ? '#f3f3f3' : '#4b453f' ?>;
-        }
-        .btn-save {
-            background-color: #a3c9c9;
-            border: none;
-            border-radius: 10px;
-            padding: 0.8rem 1.2rem;
-            cursor: pointer;
-            font-weight: 500;
-        }
-        .btn-save:hover {
-            background-color: #8da4a4;
-            color: #fff;
-        }
-        .message {
-            margin-top: 1rem;
-            color: #16a34a;
-            display: none;
-        }
-    </style>
-</head>
-<body>
 <div class="sidebar">
     <h2>PastelFinance</h2>
     <ul>
@@ -137,37 +53,13 @@ $formInputBorder = $theme === 'dark' ? '#4b5563' : '#d1d5db';
         </select>
 
         <button class="btn-save" id="saveSettingsBtn">Сохранить</button>
-        <p class="message" id="saveMessage">Настройки сохранены ✅</p>
+        <p class="message" id="saveMessage">Настройки сохранены</p>
     </div>
 </div>
 
-<script>
-    document.getElementById('saveSettingsBtn').addEventListener('click', async () => {
-        const formData = new FormData();
-        formData.append('User[username]', document.getElementById('username').value);
-        formData.append('User[email]', document.getElementById('email').value);
-        formData.append('User[password]', document.getElementById('password').value);
-        formData.append('User[theme]', document.getElementById('theme').value);
-        formData.append('User[currency]', document.getElementById('currency').value);
+<?php
+$this->registerJs("const saveUrl = '$saveUrl'; const userTheme = '{$user->theme}';", View::POS_HEAD);
 
-        const res = await fetch('<?= $saveUrl ?>', {
-            method: 'POST',
-            body: formData,
-            headers: {'X-CSRF-Token': document.querySelector("meta[name='csrf-token']").content}
-        });
-        const data = await res.json();
-
-        const msg = document.getElementById('saveMessage');
-        if (data.success) {
-            msg.style.display = 'block';
-            msg.style.color = '#16a34a';
-            setTimeout(() => location.reload(), 1000);
-        } else {
-            msg.style.display = 'block';
-            msg.style.color = '#dc2626';
-            msg.textContent = data.message || 'Ошибка при сохранении';
-        }
-    });
-</script>
-</body>
-</html>
+$this->registerCssFile('@web/css/settings.css');
+$this->registerJsFile('@web/js/settings.js', ['depends' => [JqueryAsset::class]]);
+?>
