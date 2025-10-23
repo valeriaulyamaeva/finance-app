@@ -13,7 +13,7 @@ use yii\web\NotFoundHttpException;
 
 class TransactionService
 {
-    private $currencyService;
+    private CurrencyService $currencyService;
 
     public function __construct(CurrencyService $currencyService)
     {
@@ -137,6 +137,9 @@ class TransactionService
         }
     }
 
+    /**
+     * @throws \Exception
+     */
     public function getSummary(int $userId): array
     {
         $transactions = Transaction::find()->where(['user_id' => $userId])->all();

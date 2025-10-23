@@ -4,9 +4,10 @@ namespace app\controllers;
 
 use app\models\Category;
 use app\services\CategoryService;
+use Throwable;
 use Yii;
 use yii\db\Exception;
-use yii\web\Controller;
+use yii\web\NotFoundHttpException;
 use yii\web\Response;
 
 class CategoryController extends BaseController
@@ -56,6 +57,9 @@ class CategoryController extends BaseController
         }
     }
 
+    /**
+     * @throws NotFoundHttpException
+     */
     public function actionUpdate(int $id): Response
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
@@ -71,6 +75,10 @@ class CategoryController extends BaseController
         }
     }
 
+    /**
+     * @throws Throwable
+     * @throws NotFoundHttpException
+     */
     public function actionDelete(int $id): Response
     {
         Yii::$app->response->format = Response::FORMAT_JSON;

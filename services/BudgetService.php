@@ -11,7 +11,7 @@ use yii\db\StaleObjectException;
 
 class BudgetService
 {
-    private $currencyService;
+    private CurrencyService $currencyService;
 
     public function __construct(CurrencyService $currencyService)
     {
@@ -71,16 +71,25 @@ class BudgetService
             if ($budget && !$budget->delete()) {
                 throw new RuntimeException('Ошибка при удалении бюджета');
             }
-        } catch (StaleObjectException|Throwable $e) {
+        } catch (StaleObjectException|Throwable) {
         }
     }
 
+    /**
+     * @throws \Exception
+     */
     public function calculateSummary(Budget $budget): array
     {
-        $transactions = Transaction::find()
+        $query = Transaction::find()
             ->where(['budget_id' => $budget->id])
-            ->andWhere(['type' => ['expense', 'goal']])
-            ->all();
+            ->andWhere(['type' => ['expense', 'goal']]);
+
+        $query->andWhere(['>=', 'date', $budget->start_date]);
+        if ($budget->end_date) {
+            $query->andWhere(['<=', 'date', $budget->end_date]);
+        }
+
+        $transactions = $query->all();
 
         $spent = 0;
         foreach ($transactions as $t) {
@@ -103,6 +112,9 @@ class BudgetService
         ];
     }
 
+    /**
+     * @throws \Exception
+     */
     public function getUserSummary(int $userId): array
     {
         $budgets = Budget::find()->where(['user_id' => $userId])->all();

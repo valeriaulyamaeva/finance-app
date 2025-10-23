@@ -31,9 +31,8 @@ class AnalyticsController extends Controller
         $userCurrency = $user->currency ?? 'BYN';
 
         $currentMonth = date('Y-m');
-        $startYearMonth = date('Y-m', strtotime('-11 months')); // 12 месяцев назад
+        $startYearMonth = date('Y-m', strtotime('-11 months'));
 
-        // Общие данные только за текущий месяц
         $totalSpent = Transaction::find()
             ->where(['user_id' => $userId, 'type' => 'expense'])
             ->andWhere(['like', 'date', $currentMonth])
@@ -63,7 +62,6 @@ class AnalyticsController extends Controller
 
         $remainingDisplay = $totalBudgetDisplay - $totalSpentDisplay;
 
-        // Расходы по категориям текущего месяца
         $categoryData = (new Query())
             ->select(['c.name AS category', 'SUM(t.amount) AS total'])
             ->from(['t' => 'transaction'])
@@ -80,7 +78,6 @@ class AnalyticsController extends Controller
             );
         }
 
-        // Расходы и доходы по месяцам за последние 12 месяцев
         $monthlyDataQuery = (new Query())
             ->select([
                 "DATE_FORMAT(t.date, '%Y-%m') AS month",
@@ -109,7 +106,6 @@ class AnalyticsController extends Controller
             );
         }
 
-        // Средний чек по категориям текущего месяца
         $averageData = (new Query())
             ->select(['c.name AS category', 'AVG(t.amount) AS avg_amount'])
             ->from(['t' => 'transaction'])
@@ -126,7 +122,6 @@ class AnalyticsController extends Controller
             );
         }
 
-        // Топ 5 категорий текущего месяца
         $topCategories = (new Query())
             ->select(['c.name AS category', 'SUM(t.amount) AS total'])
             ->from(['t' => 'transaction'])

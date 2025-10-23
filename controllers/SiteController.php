@@ -6,16 +6,11 @@ use app\models\User;
 use app\services\UserService;
 use Yii;
 use yii\authclient\AuthAction;
-use yii\authclient\ClientInterface;
 use yii\db\Exception;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
-use yii\web\Controller;
 use yii\web\Response;
 
-/**
- * Controller for handling site-wide actions.
- */
 class SiteController extends BaseController
 {
     private UserService $userService;

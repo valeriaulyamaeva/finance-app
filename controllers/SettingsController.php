@@ -9,7 +9,6 @@ use Throwable;
 use Yii;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
-use yii\web\Controller;
 use yii\web\Response;
 
 class SettingsController extends BaseController

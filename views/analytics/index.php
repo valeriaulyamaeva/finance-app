@@ -76,24 +76,19 @@ $this->title = 'Аналитика';
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    // Расходы по категориям
     const categoryLabels = <?= json_encode(array_column($categoryData, 'category')) ?>;
     const categoryValues = <?= json_encode(array_map('floatval', array_column($categoryData, 'total'))) ?>;
 
-    // Расходы и доходы по месяцам
     const monthlyLabels = <?= json_encode($months) ?>;
     const expenseValues = <?= json_encode($expenseValues) ?>;
     const incomeValues = <?= json_encode($incomeValues) ?>;
 
-    // Средний чек по категориям
     const averageLabels = <?= json_encode(array_column($averageData, 'category')) ?>;
     const averageValues = <?= json_encode(array_map('floatval', array_column($averageData, 'avg_amount'))) ?>;
 
-    // Топ 5 категорий
     const topLabels = <?= json_encode(array_column($topCategories, 'category')) ?>;
     const topValues = <?= json_encode(array_map('floatval', array_column($topCategories, 'total'))) ?>;
 
-    // График "Расходы по категориям"
     new Chart(document.getElementById('categoryChart'), {
         type: 'doughnut',
         data: {
@@ -109,7 +104,6 @@ $this->title = 'Аналитика';
         }
     });
 
-    // График "Расходы и доходы по месяцам"
     new Chart(document.getElementById('monthlyChart'), {
         type: 'line',
         data: {
@@ -139,7 +133,6 @@ $this->title = 'Аналитика';
         }
     });
 
-    // График "Структура бюджета"
     new Chart(document.getElementById('budgetChart'), {
         type: 'bar',
         data: {
@@ -155,7 +148,6 @@ $this->title = 'Аналитика';
         }
     });
 
-    // График "Средний чек по категориям"
     new Chart(document.getElementById('averageChart'), {
         type: 'bar',
         data: {
@@ -173,7 +165,6 @@ $this->title = 'Аналитика';
         }
     });
 
-    // График "Топ 5 категорий"
     new Chart(document.getElementById('topCategoriesChart'), {
         type: 'pie',
         data: {

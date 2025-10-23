@@ -11,7 +11,6 @@ use Yii;
 use yii\data\ActiveDataProvider;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
-use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\web\Response;
 
@@ -120,7 +119,6 @@ class GoalController extends BaseController
         $model = new Goal();
         if (Yii::$app->request->isPost) {
             $data = Yii::$app->request->post('Goal', []);
-            $currency = $user->currency;
             $originalTargetAmount = $data['target_amount'] ?? 0;
             $originalCurrentAmount = $data['current_amount'] ?? 0;
 
@@ -158,7 +156,6 @@ class GoalController extends BaseController
         $user = Yii::$app->user->identity;
         if (Yii::$app->request->isPost) {
             $data = Yii::$app->request->post('Goal', []);
-            $currency = $user->currency;
             $originalTargetAmount = $data['target_amount'] ?? 0;
             $originalCurrentAmount = $data['current_amount'] ?? 0;
 

@@ -9,7 +9,6 @@ use DateMalformedStringException;
 use Throwable;
 use Yii;
 use yii\db\Exception;
-use yii\web\Controller;
 use yii\web\Response;
 use yii\web\NotFoundHttpException;
 
@@ -80,7 +79,6 @@ class RecurringTransactionController extends BaseController
         if ($this->request->isPost) {
             $data = $this->request->post('RecurringTransaction', []);
             $currency = Yii::$app->user->identity->currency;
-            $originalAmount = $data['amount'] ?? 0;
 
             if ($currency !== 'BYN' && isset($data['amount'])) {
                 $rate = $this->currencyService->getRate($currency, 'BYN');

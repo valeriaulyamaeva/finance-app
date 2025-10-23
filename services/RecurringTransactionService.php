@@ -72,7 +72,6 @@ class RecurringTransactionService
         return $transaction;
     }
 
-
     /**
      * @param string $currentDate
      * @param string $frequency

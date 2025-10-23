@@ -9,7 +9,6 @@ use Exception;
 use Throwable;
 use Yii;
 use yii\data\ActiveDataProvider;
-use yii\web\Controller;
 use yii\web\Response;
 use app\models\Goal;
 use yii\helpers\ArrayHelper;
@@ -29,16 +28,36 @@ class TransactionController extends BaseController
     /**
      * @throws Exception
      */
-    // TransactionController.php
     public function actionIndex(): string
     {
         $user = Yii::$app->user->identity;
         $userId = $user->id;
         $userCurrency = $user->currency ?? 'BYN';
 
+        $firstDayOfMonth = date('Y-m-01');
+        $lastDayOfMonth = date('Y-m-t');
+
+        $previousTransactions = Transaction::find()
+            ->where(['user_id' => $userId])
+            ->andWhere(['<', 'date', $firstDayOfMonth])
+            ->all();
+
+        $previousBalance = 0;
+        foreach ($previousTransactions as $t) {
+            $amount = $t->amount;
+            if ($t->currency !== $userCurrency) {
+                $amount = $this->currencyService->fromBase(
+                    $this->currencyService->toBase($amount, $t->currency),
+                    $userCurrency
+                );
+            }
+            $previousBalance += $t->isTypeIncome() ? $amount : -$amount;
+        }
+
         $dataProvider = new ActiveDataProvider([
             'query' => Transaction::find()
                 ->where(['user_id' => $userId])
+                ->andWhere(['between', 'date', $firstDayOfMonth, $lastDayOfMonth])
                 ->orderBy(['date' => SORT_DESC]),
             'pagination' => ['pageSize' => 25],
         ]);
@@ -49,16 +68,38 @@ class TransactionController extends BaseController
             'name'
         );
 
-        $summary = $this->service->getSummary($userId);
+        $transactions = Transaction::find()
+            ->where(['user_id' => $userId])
+            ->andWhere(['between', 'date', $firstDayOfMonth, $lastDayOfMonth])
+            ->all();
 
-        // Только форматируем суммы для отображения, не конвертируем повторно
-        foreach (['income', 'expense', 'balance'] as $key) {
-            if (isset($summary[$key])) {
-                $summary[$key] = number_format($summary[$key], 2, '.', '');
+        $income = 0;
+        $expense = 0;
+
+        foreach ($transactions as $t) {
+            $amount = $t->amount;
+            if ($t->currency !== $userCurrency) {
+                $amount = $this->currencyService->fromBase(
+                    $this->currencyService->toBase($amount, $t->currency),
+                    $userCurrency
+                );
+            }
+
+            if ($t->isTypeIncome()) {
+                $income += $amount;
+            } else {
+                $expense += $amount;
             }
         }
 
-        // Для транзакций конвертация отдельная, оставляем как было
+        $summary = [
+            'previousBalance' => number_format($previousBalance, 2, '.', ''),
+            'income' => number_format($income, 2, '.', ''),
+            'expense' => number_format($expense, 2, '.', ''),
+            'balance' => number_format($previousBalance + $income - $expense, 2, '.', ''),
+            'currency' => $userCurrency,
+        ];
+
         foreach ($dataProvider->models as $transaction) {
             $transactionCurrency = $transaction->currency ?? 'BYN';
             $displayAmount = $transaction->amount;
@@ -69,7 +110,6 @@ class TransactionController extends BaseController
                     $userCurrency
                 );
             }
-
             $transaction->display_amount = number_format($displayAmount, 2, '.', '');
             $transaction->display_currency = $userCurrency;
         }
@@ -81,7 +121,6 @@ class TransactionController extends BaseController
             'goals' => $goals,
         ]);
     }
-
 
     public function actionCreate(): array
     {

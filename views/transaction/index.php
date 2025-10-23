@@ -244,6 +244,10 @@ $createRecurringUrl = Url::to(['recurring-transaction/create']);
             <p style="color:#16a34a;"><?= number_format($summary['income'] ?? 0, 2) ?> <?= $currencySymbols[$userCurrency] ?? '' ?></p>
         </div>
         <div class="summary-card">
+            <h5>Остаток с прошлого месяца</h5>
+            <p><?= number_format($summary['previousBalance'] ?? 0, 2) ?> <?= $currencySymbols[$userCurrency] ?? '' ?></p>
+        </div>
+        <div class="summary-card">
             <h5>Расход</h5>
             <p style="color:#dc2626;"><?= number_format($summary['expense'] ?? 0, 2) ?> <?= $currencySymbols[$userCurrency] ?? '' ?></p>
         </div>

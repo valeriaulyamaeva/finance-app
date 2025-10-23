@@ -8,9 +8,6 @@ use yii\base\Exception;
 
 class UserSettingsService
 {
-    /**
-     * Обновление профиля пользователя.
-     */
     public function updateProfile(User $user, array $data): array
     {
         $transaction = Yii::$app->db->beginTransaction();
