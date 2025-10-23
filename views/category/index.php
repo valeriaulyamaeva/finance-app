@@ -60,6 +60,7 @@ $viewUrl   = Url::to(['category/view']);
 
         .content {
             padding: 2rem;
+            margin-left: 10rem;
         }
         .content h1 {
             font-size: 2.5rem;
@@ -136,6 +137,7 @@ $viewUrl   = Url::to(['category/view']);
 <div class="sidebar">
     <h2>PastelFinance</h2>
     <ul>
+        <li><a href="analytics">Аналитика</a></li>
         <li><a href="transaction">Транзакции</a></li>
         <li><a href="budget">Бюджеты</a></li>
         <li><a href="category">Категории</a></li>

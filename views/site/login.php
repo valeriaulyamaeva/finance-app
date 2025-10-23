@@ -131,6 +131,12 @@ $this->params['breadcrumbs'][] = $this->title;
 
     <?= Html::submitButton('Войти', ['class' => 'btn-login']) ?>
 
+    <?= Html::a(
+        'Войти через Google',
+        ['/site/google-login'],
+        ['class' => 'btn-login', 'style' => 'background-color: #DB4437; color: white;']
+    ) ?>
+
     <div class="register-link">
         Нет аккаунта? <?= Html::a('Зарегистрироваться', ['register']) ?>
     </div>

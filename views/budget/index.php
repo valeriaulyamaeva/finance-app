@@ -70,6 +70,7 @@ $currencySymbol = $currencySymbols[$userCurrency] ?? $userCurrency;
 
         .content {
             padding: 2rem;
+            margin-left: 10rem;
         }
         .content h1 {
             font-size: 2.5rem;
@@ -156,6 +157,10 @@ $currencySymbol = $currencySymbols[$userCurrency] ?? $userCurrency;
             background-color: #8da4a4;
             color: #fff;
         }
+        .btn-logout:hover {
+            background-color: #a3c9c9;
+            color: #222020;
+        }
         #formErrors {
             color: #dc2626;
             display: none;
@@ -167,7 +172,29 @@ $currencySymbol = $currencySymbols[$userCurrency] ?? $userCurrency;
 <body>
 <div class="sidebar">
     <h2>PastelFinance</h2>
+
+    <?php if (!Yii::$app->user->isGuest): ?>
+        <?= Html::beginForm(['/site/logout'], 'post', ['style' => 'margin-bottom:1.5rem;']) ?>
+        <?= Html::submitButton('🚪 Выйти', [
+            'class' => 'btn btn-logout',
+            'style' => '
+                    background-color:#4b453f;
+                    color:#fff;
+                    border:none;
+                    border-radius:20px;
+                    padding:0.5rem 1rem;
+                    width:100%;
+                    text-align:center;
+                    font-weight:500;
+                    cursor:pointer;
+                    transition:all 0.3s ease;
+                ',
+        ]) ?>
+        <?= Html::endForm() ?>
+    <?php endif; ?>
+
     <ul>
+        <li><a href="analytics">Аналитика</a></li>
         <li><a href="transaction">Транзакции</a></li>
         <li><a href="budget">Бюджеты</a></li>
         <li><a href="category">Категории</a></li>
@@ -332,7 +359,7 @@ $currencySymbol = $currencySymbols[$userCurrency] ?? $userCurrency;
                 .then(res => res.ok ? res.json() : res.text().then(t => { throw new Error(t); }))
                 .then(data => {
                     if (data.success && data.budget) {
-                        location.reload(); // можно заменить на динамическое обновление карточки
+                        location.reload();
                     } else {
                         formErrors.textContent = data.message || 'Ошибка при сохранении';
                         formErrors.style.display = 'block';

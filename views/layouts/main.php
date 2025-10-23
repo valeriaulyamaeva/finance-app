@@ -48,7 +48,6 @@ $bodyClass = $theme === 'dark' ? 'theme-dark' : 'theme-light';
             min-height: calc(100vh - 120px);
         }
 
-        /* --- Сайдбар --- */
         .sidebar {
             position: fixed;
             top: 0;
@@ -86,10 +85,9 @@ $bodyClass = $theme === 'dark' ? 'theme-dark' : 'theme-light';
         }
 
         main.with-sidebar {
-            margin-left: 20rem;
+            margin-left: 10rem;
         }
 
-        /* --- Общие карточки и блоки --- */
         .summary-cards {
             display: flex;
             gap: 1rem;
@@ -116,7 +114,6 @@ $bodyClass = $theme === 'dark' ? 'theme-dark' : 'theme-light';
             font-weight: 600;
         }
 
-        /* --- Карточки транзакций --- */
         .transactions-container {
             display: flex;
             flex-direction: column;
@@ -157,7 +154,6 @@ $bodyClass = $theme === 'dark' ? 'theme-dark' : 'theme-light';
             transition: color 0.3s;
         }
 
-        /* --- Кнопки и модальные окна --- */
         .btn-add {
             border: none;
             border-radius: 20px;
@@ -213,7 +209,20 @@ $bodyClass = $theme === 'dark' ? 'theme-dark' : 'theme-light';
             transition: background-color 0.3s ease, color 0.3s ease;
         }
 
-        /* ---------------- Светлая тема ---------------- */
+        :root {
+            --card-bg-light: #ffffff;
+            --card-bg-dark: #1f1f1f;
+        }
+
+        body.theme-light {
+            --card-bg: var(--card-bg-light);
+        }
+
+        body.theme-dark {
+            --card-bg: var(--card-bg-dark);
+        }
+
+
         body.theme-light {
             background-color: #f9f7f4;
             color: #4b453f;
@@ -274,7 +283,6 @@ $bodyClass = $theme === 'dark' ? 'theme-dark' : 'theme-light';
             color: #9ca3af;
         }
 
-        /* ---------------- Тёмная тема ---------------- */
         body.theme-dark {
             background-color: #121212;
             color: #e0e0e0;
@@ -310,13 +318,13 @@ $bodyClass = $theme === 'dark' ? 'theme-dark' : 'theme-light';
 
         body.theme-dark .btn-add,
         body.theme-dark .btn-primary {
-            background-color: #3aa6a6; /* Бирюзовый, подходящий под тёмную тему */
+            background-color: #3aa6a6;
             color: #fff;
         }
 
         body.theme-dark .btn-add:hover,
         body.theme-dark .btn-primary:hover {
-            background-color: #2c8888; /* Чуть темнее при наведении */
+            background-color: #2c8888;
         }
 
         body.theme-dark .btn-secondary {
@@ -357,7 +365,6 @@ $bodyClass = $theme === 'dark' ? 'theme-dark' : 'theme-light';
             outline: none;
         }
 
-        /* Disabled состояния */
         body.theme-dark .form-control:disabled,
         body.theme-dark .form-select:disabled,
         body.theme-dark textarea:disabled {

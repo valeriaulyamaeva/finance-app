@@ -59,6 +59,7 @@ $formInputBorder = $theme === 'dark' ? '#4b5563' : '#d1d5db';
 
         .content {
             padding: 2rem;
+            margin-left: 10rem;
         }
         .settings-form {
             background: <?= $formBg ?>;
@@ -99,6 +100,7 @@ $formInputBorder = $theme === 'dark' ? '#4b5563' : '#d1d5db';
 <div class="sidebar">
     <h2>PastelFinance</h2>
     <ul>
+        <li><a href="analytics">Аналитика</a></li>
         <li><a href="transaction">Транзакции</a></li>
         <li><a href="budget">Бюджеты</a></li>
         <li><a href="category">Категории</a></li>

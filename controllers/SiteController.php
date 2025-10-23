@@ -5,6 +5,8 @@ namespace app\controllers;
 use app\models\User;
 use app\services\UserService;
 use Yii;
+use yii\authclient\AuthAction;
+use yii\authclient\ClientInterface;
 use yii\db\Exception;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
@@ -59,6 +61,10 @@ class SiteController extends BaseController
         return [
             'error' => [
                 'class' => 'yii\web\ErrorAction',
+            ],
+            'auth' => [
+                'class' => AuthAction::class,
+                'successCallback' => [$this, 'onAuthSuccess'],
             ],
         ];
     }
@@ -116,6 +122,76 @@ class SiteController extends BaseController
         return $this->render('register', [
             'model' => $model,
         ]);
+    }
+
+    /**
+     * @throws \yii\base\Exception
+     * @throws Exception
+     */
+    public function actionGoogleLogin(): Response
+    {
+        $client = Yii::$app->authClientCollection->getClient('google');
+
+        try {
+            if ($this->request->get('code')) {
+                $token = $client->fetchAccessToken($this->request->get('code'));
+                if (!$token) {
+                    Yii::error('Failed to fetch access token: ' . json_encode($client->getErrors()), __METHOD__);
+                    Yii::$app->session->setFlash('error', 'Ошибка получения токена от Google.');
+                    return $this->redirect(['login']);
+                }
+                Yii::info('Access token: ' . json_encode($token), __METHOD__);
+
+                $attributes = $client->getUserAttributes();
+                Yii::info('Google user attributes: ' . json_encode($attributes), __METHOD__);
+
+                $email = $attributes['email'] ?? null;
+                $name = $attributes['name'] ?? 'Без имени';
+
+                if (!$email) {
+                    Yii::error('No email provided by Google', __METHOD__);
+                    Yii::$app->session->setFlash('error', 'Не удалось получить email от Google.');
+                    return $this->redirect(['login']);
+                }
+
+                $user = User::findOne(['email' => $email]);
+                if (!$user) {
+                    $user = new User([
+                        'username' => $name,
+                        'email' => $email,
+                        'auth_key' => Yii::$app->security->generateRandomString(),
+                        'password_hash' => Yii::$app->security->generatePasswordHash(Yii::$app->security->generateRandomString(10)),
+                    ]);
+                    if (!$user->save(false)) {
+                        Yii::error('Failed to save user: ' . json_encode($user->errors), __METHOD__);
+                        Yii::$app->session->setFlash('error', 'Ошибка при создании пользователя: ' . json_encode($user->errors));
+                        return $this->redirect(['login']);
+                    }
+                    Yii::info('User created: ' . $email, __METHOD__);
+                } else {
+                    Yii::info('User found: ' . $email, __METHOD__);
+                }
+
+                if (Yii::$app->user->login($user, 3600 * 24 * 30)) {
+                    $user->last_login = date('Y-m-d H:i:s');
+                    if (!$user->save(false)) {
+                        Yii::error('Failed to update last_login: ' . json_encode($user->errors), __METHOD__);
+                    }
+                    Yii::info('User logged in: ' . $email, __METHOD__);
+                    return $this->redirect(['/budget']);
+                } else {
+                    Yii::error('Failed to login user', __METHOD__);
+                    Yii::$app->session->setFlash('error', 'Ошибка при авторизации пользователя.');
+                    return $this->redirect(['login']);
+                }
+            }
+
+            return $this->redirect($client->buildAuthUrl());
+        } catch (\Exception $e) {
+            Yii::error('Google login error: ' . $e->getMessage(), __METHOD__);
+            Yii::$app->session->setFlash('error', 'Ошибка при авторизации через Google: ' . $e->getMessage());
+            return $this->redirect(['login']);
+        }
     }
 
     public function actionLogout(): Response

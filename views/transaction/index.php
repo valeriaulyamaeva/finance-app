@@ -65,6 +65,7 @@ $createRecurringUrl = Url::to(['recurring-transaction/create']);
         .sidebar ul li a:hover { color: #535353; }
         .content {
             padding: 2rem;
+            margin-left: 10rem;
         }
         .content h1 {
             font-size: 2.5rem;
@@ -225,6 +226,7 @@ $createRecurringUrl = Url::to(['recurring-transaction/create']);
 <div class="sidebar">
     <h2>PastelFinance</h2>
     <ul>
+        <li><a href="analytics">Аналитика</a></li>
         <li><a href="transaction">Транзакции</a></li>
         <li><a href="budget">Бюджеты</a></li>
         <li><a href="category">Категории</a></li>
@@ -365,30 +367,26 @@ $createRecurringUrl = Url::to(['recurring-transaction/create']);
             }
 
             if (target.classList.contains('js-delete')) {
-                if (!confirm('Удалить транзакцию?')) return;
                 const id = target.dataset.id;
+                if (!confirm('Удалить эту транзакцию?')) return;
 
-                fetch(deleteUrl, {
+                fetch(`${deleteUrl}?id=${id}`, {
                     method: 'POST',
                     headers: {
                         'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content,
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    },
-                    body: new URLSearchParams({ id })
+                        'Accept': 'application/json'
+                    }
                 })
-                    .then(res => res.ok ? res.json() : res.text().then(t => { throw new Error(t); }))
+                    .then(res => res.json())
                     .then(data => {
                         if (data.success) {
-                            location.reload();
+                            target.closest('.transaction-card').remove();
                         } else {
-                            formErrors.textContent = data.message || 'Ошибка при удалении';
-                            formErrors.style.display = 'block';
+                            alert('Ошибка при удалении: ' + (data.message || 'Неизвестная ошибка'));
                         }
                     })
                     .catch(err => {
-                        console.error('Delete error:', err);
-                        formErrors.textContent = 'Ошибка: ' + err.message;
-                        formErrors.style.display = 'block';
+                        alert('Ошибка сети: ' + err.message);
                     });
             }
         });
