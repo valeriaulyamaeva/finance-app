@@ -64,7 +64,7 @@ $transaction = new Transaction();
 
                 <div class="mb-3" id="nextDateWrapper" style="display:none;">
                     <label class="form-label">Следующая дата</label>
-                    <label for="recurringNextDate"></label><input type="date" id="recurringNextDate" name="RecurringTransaction[next_date]" class="form-control" required>
+                    <label for="recurringNextDate"></label><input type="date" id="recurringNextDate" name="RecurringTransaction[next_date]" class="form-control">
                 </div>
 
                 <div id="formErrors" class="text-danger mt-2"></div>

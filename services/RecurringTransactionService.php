@@ -43,16 +43,10 @@ class RecurringTransactionService
         }
 
         $userCurrency = $recurring->user->currency ?? 'BYN';
-        $amount = $recurring->amount;
-
-        if ($recurring->currency !== $userCurrency) {
-            $rate = $this->currencyService->getRate($recurring->currency, $userCurrency);
-            $amount = round($amount * $rate, 2);
-        }
 
         $transaction = new Transaction();
         $transaction->user_id = $recurring->user_id;
-        $transaction->amount = $amount;
+        $transaction->amount = $recurring->amount;
         $transaction->currency = $userCurrency;
         $transaction->category_id = $recurring->category_id;
         $transaction->budget_id = $recurring->budget_id;

@@ -103,4 +103,19 @@ document.addEventListener('DOMContentLoaded', () => {
             })
             .catch(err => { formErrors.textContent = 'Ошибка: ' + err.message; formErrors.style.display = 'block'; });
     });
+
+    const recurringFrequency = document.getElementById('recurringFrequency');
+    const nextDateWrapper = document.getElementById('nextDateWrapper');
+    const nextDateInput = document.getElementById('recurringNextDate');
+
+    recurringFrequency.addEventListener('change', () => {
+        if (recurringFrequency.value) {
+            nextDateWrapper.style.display = 'block';
+            nextDateInput.required = true;
+        } else {
+            nextDateWrapper.style.display = 'none';
+            nextDateInput.required = false;
+            nextDateInput.value = '';
+        }
+    });
 });

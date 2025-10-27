@@ -214,4 +214,11 @@ class Transaction extends ActiveRecord
     {
         return number_format($this->amount, 2, '.', '');
     }
+
+
+    public function getRecurringTransaction(): ActiveQuery
+    {
+        return $this->hasOne(RecurringTransaction::class, ['id' => 'recurring_id']);
+    }
+
 }

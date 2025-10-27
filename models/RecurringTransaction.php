@@ -2,6 +2,8 @@
 
 namespace app\models;
 
+use DateTime;
+use InvalidArgumentException;
 use yii\db\ActiveQuery;
 use yii\db\ActiveRecord;
 
@@ -44,7 +46,7 @@ class RecurringTransaction extends ActiveRecord
         return [
             [['category_id', 'budget_id', 'goal_id', 'description'], 'default', 'value' => null],
             [['active'], 'default', 'value' => 1],
-            [['user_id', 'amount', 'frequency', 'next_date'], 'required'],
+            [['user_id', 'amount', 'frequency'], 'required'],
             [['user_id', 'category_id', 'budget_id', 'goal_id', 'active'], 'integer'],
             [['amount'], 'number'],
             ['currency', 'string', 'max' => 3],
@@ -56,8 +58,6 @@ class RecurringTransaction extends ActiveRecord
             [['category_id'], 'exist', 'skipOnError' => true, 'targetClass' => Category::class, 'targetAttribute' => ['category_id' => 'id']],
             [['goal_id'], 'exist', 'skipOnError' => true, 'targetClass' => Goal::class, 'targetAttribute' => ['goal_id' => 'id']],
             [['user_id'], 'exist', 'skipOnError' => true, 'targetClass' => User::class, 'targetAttribute' => ['user_id' => 'id']],
-            ['currency', 'string', 'max' => 3],
-            ['currency', 'default', 'value' => 'BYN'],
         ];
     }
 
@@ -78,6 +78,23 @@ class RecurringTransaction extends ActiveRecord
             'created_at' => 'Создано',
             'updated_at' => 'Обновлено',
         ];
+    }
+
+    public function beforeSave($insert): bool
+    {
+        if (!parent::beforeSave($insert)) {
+            return false;
+        }
+
+        if ($this->frequency && empty($this->next_date)) {
+            $date = new DateTime();
+            $this->next_date = match ($this->frequency) {
+                self::FREQUENCY_DAILY, self::FREQUENCY_WEEKLY, self::FREQUENCY_MONTHLY => $date->format('Y-m-d'),
+                default => throw new InvalidArgumentException('Unknown frequency: ' . $this->frequency),
+            };
+        }
+
+        return true;
     }
 
     public function getBudget(): ActiveQuery

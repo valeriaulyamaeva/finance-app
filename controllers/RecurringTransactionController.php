@@ -41,20 +41,19 @@ class RecurringTransactionController extends BaseController
                 $this->request->post('Transaction', [])
             );
 
-            $currency = Yii::$app->user->identity->currency;
-            $originalAmount = $data['amount'] ?? 0;
+            // Валюта пользователя
+            $currency = Yii::$app->user->identity->currency ?? 'BYN';
+            $data['currency'] = $currency;
 
-            if ($currency !== 'BYN' && isset($data['amount'])) {
-                $rate = $this->currencyService->getRate($currency, 'BYN');
-                $data['amount'] *= $rate;
-            }
+            // НЕ конвертируем сумму
+            $originalAmount = $data['amount'] ?? 0;
 
             $model->load($data, '');
             if ($model->save()) {
                 return [
                     'success' => true,
                     'id' => $model->id,
-                    'amount' => $model->amount,
+                    'amount' => $model->amount, // сохраняем как ввел пользователь
                     'display_amount' => number_format($originalAmount, 2, '.', ''),
                     'category_name' => $model->category->name ?? null,
                     'description' => $model->description,
@@ -79,11 +78,8 @@ class RecurringTransactionController extends BaseController
         if ($this->request->isPost) {
             $data = $this->request->post('RecurringTransaction', []);
             $currency = Yii::$app->user->identity->currency;
+            $data['currency'] = $currency;
 
-            if ($currency !== 'BYN' && isset($data['amount'])) {
-                $rate = $this->currencyService->getRate($currency, 'BYN');
-                $data['amount'] *= $rate;
-            }
 
             if ($this->service->saveRecurringTransaction($model, $data)) {
                 return $this->redirect(['view', 'id' => $model->id]);
