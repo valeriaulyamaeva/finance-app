@@ -66,7 +66,6 @@ class TransactionService
      */
     private function resolveTypeByCategory(?int $categoryId, ?int $goalId): string
     {
-        // защитное приведение
         if ($goalId !== null && !is_int($goalId)) {
             $goalId = (int)$goalId;
         }
@@ -203,7 +202,6 @@ class TransactionService
         }
         $transaction->currency = $user->currency;
 
-        // Обработка бюджета
         if ($oldCategoryId) {
             $oldBudget = Budget::findOne(['category_id' => $oldCategoryId, 'user_id' => $transaction->user_id]);
             if ($oldBudget && $transaction->isTypeExpense()) {

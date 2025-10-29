@@ -6,8 +6,6 @@ use yii\db\ActiveQuery;
 use yii\db\ActiveRecord;
 
 /**
- * This is the model class for table "transaction".
- *
  * @property int $id
  * @property int $user_id
  * @property float $amount
@@ -30,10 +28,6 @@ use yii\db\ActiveRecord;
  */
 class Transaction extends ActiveRecord
 {
-
-    /**
-     * ENUM field values
-     */
     const TYPE_INCOME = 'income';
     const TYPE_EXPENSE = 'expense';
     const TYPE_GOAL = 'goal';
@@ -100,8 +94,6 @@ class Transaction extends ActiveRecord
     }
 
     /**
-     * Gets query for [[Budget]].
-     *
      * @return ActiveQuery
      */
     public function getBudget(): ActiveQuery
@@ -110,8 +102,6 @@ class Transaction extends ActiveRecord
     }
 
     /**
-     * Gets query for [[Category]].
-     *
      * @return ActiveQuery
      */
     public function getCategory(): ActiveQuery
@@ -120,8 +110,6 @@ class Transaction extends ActiveRecord
     }
 
     /**
-     * Gets query for [[Goal]].
-     *
      * @return ActiveQuery
      */
     public function getGoal(): ActiveQuery
@@ -130,8 +118,6 @@ class Transaction extends ActiveRecord
     }
 
     /**
-     * Gets query for [[Recurring]].
-     *
      * @return ActiveQuery
      */
     public function getRecurring(): ActiveQuery
@@ -140,8 +126,6 @@ class Transaction extends ActiveRecord
     }
 
     /**
-     * Gets query for [[User]].
-     *
      * @return ActiveQuery
      */
     public function getUser(): ActiveQuery
@@ -151,7 +135,6 @@ class Transaction extends ActiveRecord
 
 
     /**
-     * column type ENUM value labels
      * @return string[]
      */
     public static function optsType(): array

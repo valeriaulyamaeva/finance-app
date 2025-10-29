@@ -11,6 +11,8 @@ use yii\web\JqueryAsset;
 use yii\web\View;
 
 $this->title = 'Транзакции';
+$this->registerCssFile('@web/css/notifications.css');
+$this->registerJsFile('@web/js/notifications.js', ['depends' => [JqueryAsset::class]]);
 AppAsset::register($this);
 
 $currencySymbols = ['BYN'=>'Br','USD'=>'$','EUR'=>'€', 'RUB' => '₽'];
@@ -22,6 +24,10 @@ $urls = [
     'delete' => Url::to(['transaction/delete']),
     'view' => Url::to(['transaction/view']),
     'createRecurring' => Url::to(['recurring-transaction/create']),
+    'recurringList' => Url::to(['recurring-transaction/list']),
+    'recurringDelete' => Url::to(['recurring-transaction/delete']),
+    'recurringCreate' => Url::to(['recurring-transaction/create']),
+    'recurringUpdate' => Url::to(['recurring-transaction/update']),
 ];
 
 $this->registerJs('const transactionConfig = ' . json_encode([
@@ -68,8 +74,13 @@ $this->registerJsFile('@web/js/transaction.js', ['depends' => [JqueryAsset::clas
         </div>
     </div>
 
-    <button class="btn-add" id="createTransactionBtn" data-bs-toggle="modal" data-bs-target="#transactionModal">Создать транзакцию</button>
-    <button class="btn-add" id="createRecurringBtn" data-bs-toggle="modal" data-bs-target="#transactionModal">Создать повторяющуюся транзакцию</button>
+    <button class="btn-add" id="createTransactionBtn" data-bs-toggle="modal" data-bs-target="#transactionModal">
+        Создать транзакцию
+    </button>
+
+    <button class="btn-add" id="viewRecurringBtn" data-bs-toggle="modal" data-bs-target="#recurringModal">
+        Просмотреть регулярные платежи
+    </button>
 
     <div class="transactions-container">
         <?php if (isset($dataProvider) && $dataProvider->models): ?>

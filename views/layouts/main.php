@@ -30,7 +30,6 @@ $bodyClass = $theme === 'dark' ? 'theme-dark' : 'theme-light';
         <?= $this->render('_sidebar') ?>
     </div>
     <main class="with-sidebar">
-        <!-- Верхняя панель -->
         <div class="top-bar">
             <div class="top-bar-right">
                 <a href="javascript:void(0);" id="notificationBtn" class="notification-btn">
@@ -41,7 +40,7 @@ $bodyClass = $theme === 'dark' ? 'theme-dark' : 'theme-light';
                     <form action="<?= Yii::$app->urlManager->createUrl(['site/logout']) ?>" method="post" style="display: inline;">
                         <?= Html::hiddenInput(Yii::$app->request->csrfParam, Yii::$app->request->csrfToken) ?>
                         <button type="submit" class="logout-btn" style="background:none;border:none;padding:0;cursor:pointer;">
-                            <i class="fa fa-sign-out"></i>
+                            <i class="fas fa-sign-out-alt"></i>
                         </button>
                     </form>
                 <?php endif; ?>
@@ -52,7 +51,6 @@ $bodyClass = $theme === 'dark' ? 'theme-dark' : 'theme-light';
     </main>
 <?php endif; ?>
 
-<!-- Модальное окно уведомлений -->
 <div id="notificationModal" class="notification-modal">
     <div class="modal-content">
         <div class="modal-header">

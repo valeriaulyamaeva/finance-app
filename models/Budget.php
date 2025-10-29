@@ -27,10 +27,6 @@ use yii\db\ActiveRecord;
  */
 class Budget extends ActiveRecord
 {
-
-    /**
-     * ENUM field values
-     */
     const PERIOD_MONTHLY = 'monthly';
     const PERIOD_YEARLY = 'yearly';
 
@@ -88,8 +84,6 @@ class Budget extends ActiveRecord
     }
 
     /**
-     * Gets query for [[RecurringTransactions]].
-     *
      * @return ActiveQuery
      */
     public function getRecurringTransactions(): ActiveQuery
@@ -98,8 +92,6 @@ class Budget extends ActiveRecord
     }
 
     /**
-     * Gets query for [[Transactions]].
-     *
      * @return ActiveQuery
      */
     public function getTransactions(): ActiveQuery
@@ -108,8 +100,6 @@ class Budget extends ActiveRecord
     }
 
     /**
-     * Gets query for [[User]].
-     *
      * @return ActiveQuery
      */
     public function getUser(): ActiveQuery
@@ -119,7 +109,6 @@ class Budget extends ActiveRecord
 
 
     /**
-     * column period ENUM value labels
      * @return string[]
      */
     public static function optsPeriod(): array

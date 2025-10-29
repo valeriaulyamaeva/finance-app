@@ -6,8 +6,6 @@ use yii\db\ActiveQuery;
 use yii\db\ActiveRecord;
 
 /**
- * This is the model class for table "category".
- *
  * @property int $id
  * @property int $user_id
  * @property string $name
@@ -21,10 +19,6 @@ use yii\db\ActiveRecord;
  */
 class Category extends ActiveRecord
 {
-
-    /**
-     * ENUM field values
-     */
     const TYPE_INCOME = 'income';
     const TYPE_EXPENSE = 'expense';
     const TYPE_GOAL = 'goal';
@@ -70,8 +64,6 @@ class Category extends ActiveRecord
     }
 
     /**
-     * Gets query for [[RecurringTransactions]].
-     *
      * @return ActiveQuery
      */
     public function getRecurringTransactions(): ActiveQuery
@@ -80,8 +72,6 @@ class Category extends ActiveRecord
     }
 
     /**
-     * Gets query for [[Transactions]].
-     *
      * @return ActiveQuery
      */
     public function getTransactions(): ActiveQuery
@@ -90,8 +80,6 @@ class Category extends ActiveRecord
     }
 
     /**
-     * Gets query for [[User]].
-     *
      * @return ActiveQuery
      */
     public function getUser(): ActiveQuery
@@ -101,7 +89,6 @@ class Category extends ActiveRecord
 
 
     /**
-     * column type ENUM value labels
      * @return string[]
      */
     public static function optsType(): array

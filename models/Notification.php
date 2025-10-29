@@ -6,8 +6,6 @@ use yii\db\ActiveQuery;
 use yii\db\ActiveRecord;
 
 /**
- * This is the model class for table "notification".
- *
  * @property int $id
  * @property int $user_id
  * @property string $message

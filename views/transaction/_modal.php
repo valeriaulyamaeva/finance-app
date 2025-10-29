@@ -26,7 +26,7 @@ $transaction = new Transaction();
             <div class="modal-body">
                 <?php $form = ActiveForm::begin(['id' => 'transactionForm']); ?>
                 <?= Html::hiddenInput(Yii::$app->request->csrfParam, Yii::$app->request->csrfToken) ?>
-                <?= Html::activeHiddenInput($transaction, 'id') ?> <!-- Скрытое поле для ID -->
+                <?= Html::activeHiddenInput($transaction, 'id') ?>
 
                 <?= $form->field($transaction, 'amount')->textInput([
                     'placeholder' => 'Введите сумму',
@@ -75,6 +75,30 @@ $transaction = new Transaction();
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
                 <?= Html::button('Сохранить', ['class' => 'btn btn-primary saveTransaction']) ?>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="recurringModal" tabindex="-1" aria-labelledby="recurringModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="recurringModalLabel">Регулярные платежи</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+            </div>
+            <div class="modal-body">
+                <div id="recurringList" class="transactions-container">
+                </div>
+                <div id="recurringEmpty" class="text-center text-muted" style="display:none;">
+                    <p>Нет регулярных платежей.</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                <button type="button" class="btn btn-primary" id="createRecurringInModalBtn">
+                    Создать новый
+                </button>
             </div>
         </div>
     </div>

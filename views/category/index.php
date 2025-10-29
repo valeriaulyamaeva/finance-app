@@ -9,7 +9,6 @@ use yii\web\View;
 
 $this->title = 'Категории';
 
-// URL для операций
 $createUrl = Url::to(['category/create']);
 $updateUrl = Url::to(['category/update']);
 $deleteUrl = Url::to(['category/delete']);

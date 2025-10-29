@@ -2,10 +2,12 @@
 
 namespace app\controllers;
 
+use DateInterval;
+use DatePeriod;
+use DateTime;
 use yii\db\Expression;
 use yii\db\Query;
 use yii\web\Controller;
-use app\models\Budget;
 use app\models\Transaction;
 use app\services\CurrencyService;
 use Yii;
@@ -90,10 +92,10 @@ class AnalyticsController extends Controller
         $expenseValues = [];
         $incomeValues = [];
 
-        $period = new \DatePeriod(
-            new \DateTime($startYearMonth . '-01'),
-            new \DateInterval('P1M'),
-            (new \DateTime($currentMonth . '-01'))->modify('+1 month')
+        $period = new DatePeriod(
+            new DateTime($startYearMonth . '-01'),
+            new DateInterval('P1M'),
+            (new DateTime($currentMonth . '-01'))->modify('+1 month')
         );
 
         $monthlyIndexed = [];

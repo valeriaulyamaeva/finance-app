@@ -16,7 +16,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const nextDateWrapper = document.getElementById('nextDateWrapper');
     const nextDateInput = document.getElementById('recurringNextDate');
 
-    // Проверка наличия всех элементов
     if (!form || !formErrors || !categorySelect || !goalSelector || !goalSelect || !recurringFrequency || !nextDateWrapper || !nextDateInput) {
         console.error('Отсутствуют элементы формы:', { form, formErrors, categorySelect, goalSelector, goalSelect, recurringFrequency, nextDateWrapper, nextDateInput });
         return;
@@ -30,7 +29,6 @@ document.addEventListener('DOMContentLoaded', () => {
     currencyInput.name = 'Transaction[currency]';
     form.appendChild(currencyInput);
 
-    // Функция для проверки типа категории и показа/скрытия селектора целей
     function toggleGoalSelector() {
         const selectedId = categorySelect.value;
         if (!selectedId) {
@@ -40,7 +38,6 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // AJAX-запрос для проверки типа категории
         fetch('/category/type?id=' + selectedId, {
             headers: {
                 'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content,
@@ -67,14 +64,16 @@ document.addEventListener('DOMContentLoaded', () => {
             });
     }
 
-    // Привязываем событие изменения категории
     categorySelect.addEventListener('change', toggleGoalSelector);
 
-    // Обработка повторяющихся транзакций
     recurringFrequency.addEventListener('change', () => {
         if (recurringFrequency.value) {
             nextDateWrapper.style.display = 'block';
             nextDateInput.required = true;
+            if (!nextDateInput.value) {
+                const today = new Date().toISOString().slice(0, 10);
+                nextDateInput.value = today;
+            }
         } else {
             nextDateWrapper.style.display = 'none';
             nextDateInput.required = false;
@@ -82,7 +81,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Создание транзакции
     document.getElementById('createTransactionBtn').addEventListener('click', () => {
         currentAction = 'create';
         currentId = null;
@@ -91,24 +89,15 @@ document.addEventListener('DOMContentLoaded', () => {
         formErrors.textContent = '';
         formErrors.style.display = 'none';
         modalEl.querySelector('.modal-title').textContent = 'Создать транзакцию';
-        toggleGoalSelector(); // Проверяем начальное состояние
+        toggleGoalSelector();
+
+        recurringFrequency.value = '';
+        nextDateWrapper.style.display = 'none';
+        recurringFrequency.closest('.mb-3').style.display = 'none';
+
         modal.show();
     });
 
-    // Создание повторяющейся транзакции
-    document.getElementById('createRecurringBtn').addEventListener('click', () => {
-        currentAction = 'createRecurring';
-        currentId = null;
-        form.reset();
-        currencyInput.value = userCurrency;
-        formErrors.textContent = '';
-        formErrors.style.display = 'none';
-        modalEl.querySelector('.modal-title').textContent = 'Создать повторяющуюся транзакцию';
-        toggleGoalSelector(); // Проверяем начальное состояние
-        modal.show();
-    });
-
-    // Редактирование и удаление транзакций
     document.querySelector('.transactions-container').addEventListener('click', e => {
         const target = e.target;
 
@@ -130,7 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         formErrors.textContent = '';
                         formErrors.style.display = 'none';
                         modalEl.querySelector('.modal-title').textContent = 'Обновить транзакцию';
-                        toggleGoalSelector(); // Проверяем категорию при редактировании
+                        toggleGoalSelector();
                         modal.show();
                     } else {
                         formErrors.textContent = data.message || 'Ошибка при загрузке транзакции';
@@ -172,7 +161,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Сохранение транзакции с проверкой goal_id
     document.querySelector('.saveTransaction').addEventListener('click', () => {
         const selectedId = categorySelect.value;
         if (selectedId) {
@@ -201,9 +189,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Функция для отправки формы
     function saveTransaction() {
         currencyInput.value = form.querySelector('#currencySelector')?.value || userCurrency;
+
+        if (!recurringFrequency.value) {
+            nextDateInput.removeAttribute('name');
+        } else {
+            nextDateInput.setAttribute('name', 'RecurringTransaction[next_date]');
+        }
+
         const formData = new FormData(form);
         const url = currentAction === 'create' ? urls.create :
             currentAction === 'createRecurring' ? urls.createRecurring :
@@ -230,4 +224,91 @@ document.addEventListener('DOMContentLoaded', () => {
                 formErrors.style.display = 'block';
             });
     }
+
+    const recurringModalEl = document.getElementById('recurringModal');
+    if (!recurringModalEl) {
+        console.error('Модальное окно recurringModal не найдено');
+        return;
+    }
+    const recurringModal = new bootstrap.Modal(recurringModalEl);
+    const recurringList = document.getElementById('recurringList');
+    const recurringEmpty = document.getElementById('recurringEmpty');
+
+    function loadRecurring() {
+        fetch(urls.recurringList)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.data.length > 0) {
+                    recurringList.innerHTML = data.data.map(item => `
+                    <div class="transaction-card" data-id="${item.id}">
+                        <div class="transaction-info">
+                            <p><strong>Сумма:</strong> ${item.amount} ${currencySymbols[item.currency] || item.currency}</p>
+                            <p><strong>Частота:</strong> ${item.frequency}</p>
+                            <p><strong>Следующая дата:</strong> ${item.next_date}</p>
+                            <p><strong>Категория:</strong> ${item.category}</p>
+                            <p><strong>Описание:</strong> ${item.description}</p>
+                            <p><strong>Статус:</strong> <span style="color: ${item.active ? 'green' : 'red'}">
+                                ${item.active ? 'Активно' : 'Неактивно'}
+                            </span></p>
+                        </div>
+                        <div class="transaction-actions">
+                            <button class="deleteBtn js-delete-recurring" data-id="${item.id}">Удалить</button>
+                        </div>
+                    </div>
+                `).join('');
+                    recurringEmpty.style.display = 'none';
+                } else {
+                    recurringList.innerHTML = '';
+                    recurringEmpty.style.display = 'block';
+                }
+            })
+            .catch(err => {
+                console.error('Ошибка загрузки регулярных платежей:', err);
+                recurringEmpty.textContent = 'Ошибка загрузки';
+                recurringEmpty.style.display = 'block';
+            });
+    }
+
+    document.getElementById('viewRecurringBtn')?.addEventListener('click', () => {
+        loadRecurring();
+        recurringModal.show();
+    });
+
+    document.getElementById('createRecurringInModalBtn')?.addEventListener('click', () => {
+        recurringModal.hide();
+        currentAction = 'createRecurring';
+        currentId = null;
+        form.reset();
+        currencyInput.value = userCurrency;
+        formErrors.textContent = '';
+        formErrors.style.display = 'none';
+        modalEl.querySelector('.modal-title').textContent = 'Создать повторяющуюся транзакцию';
+        toggleGoalSelector();
+        recurringFrequency.closest('.mb-3').style.display = 'block';
+
+        modal.show();
+    });
+
+    recurringList?.addEventListener('click', e => {
+        if (e.target.classList.contains('js-delete-recurring')) {
+            if (!confirm('Удалить регулярный платеж?')) return;
+            const id = e.target.dataset.id;
+            fetch(`${urls.recurringDelete}?id=${id}`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content,
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: new URLSearchParams({ _csrf: document.querySelector('meta[name="csrf-token"]').content })
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        loadRecurring();
+                    } else {
+                        alert('Ошибка удаления');
+                    }
+                });
+        }
+    });
 });

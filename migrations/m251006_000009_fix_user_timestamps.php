@@ -2,9 +2,6 @@
 
 use yii\db\Migration;
 
-/**
- * Fix created_at and updated_at to be non-nullable in user table.
- */
 class m251006_000009_fix_user_timestamps extends Migration
 {
     public function safeUp(): void

@@ -7,8 +7,6 @@ use yii\db\ActiveQuery;
 use yii\db\ActiveRecord;
 
 /**
- * This is the model class for table "goal".
- *
  * @property int $id
  * @property int $user_id
  * @property string $name
@@ -26,10 +24,6 @@ use yii\db\ActiveRecord;
  */
 class Goal extends ActiveRecord
 {
-
-    /**
-     * ENUM field values
-     */
     const STATUS_ACTIVE = 'active';
     const STATUS_COMPLETED = 'completed';
     const STATUS_FAILED = 'failed';
@@ -86,8 +80,6 @@ class Goal extends ActiveRecord
     }
 
     /**
-     * Gets query for [[RecurringTransactions]].
-     *
      * @return ActiveQuery
      */
     public function getRecurringTransactions(): ActiveQuery
@@ -96,8 +88,6 @@ class Goal extends ActiveRecord
     }
 
     /**
-     * Gets query for [[Transactions]].
-     *
      * @return ActiveQuery
      */
     public function getTransactions(): ActiveQuery
@@ -106,8 +96,6 @@ class Goal extends ActiveRecord
     }
 
     /**
-     * Gets query for [[User]].
-     *
      * @return ActiveQuery
      */
     public function getUser(): ActiveQuery
@@ -115,9 +103,7 @@ class Goal extends ActiveRecord
         return $this->hasOne(User::class, ['id' => 'user_id']);
     }
 
-
     /**
-     * column status ENUM value labels
      * @return string[]
      */
     public static function optsStatus(): array

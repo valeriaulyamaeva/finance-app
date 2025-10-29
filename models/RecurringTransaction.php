@@ -8,8 +8,6 @@ use yii\db\ActiveQuery;
 use yii\db\ActiveRecord;
 
 /**
- * This is the model class for table "recurring_transaction".
- *
  * @property int $id
  * @property int $user_id
  * @property float $amount

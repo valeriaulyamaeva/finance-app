@@ -6,7 +6,6 @@ use app\models\RecurringTransaction;
 use app\services\CurrencyService;
 use app\services\RecurringTransactionService;
 use DateMalformedStringException;
-use Throwable;
 use Yii;
 use yii\db\Exception;
 use yii\web\Response;
@@ -41,11 +40,9 @@ class RecurringTransactionController extends BaseController
                 $this->request->post('Transaction', [])
             );
 
-            // Валюта пользователя
             $currency = Yii::$app->user->identity->currency ?? 'BYN';
             $data['currency'] = $currency;
 
-            // НЕ конвертируем сумму
             $originalAmount = $data['amount'] ?? 0;
 
             $model->load($data, '');
@@ -89,14 +86,39 @@ class RecurringTransactionController extends BaseController
         return $this->render('update', ['model' => $model]);
     }
 
-    public function actionDelete(int $id): Response
+    public function actionList(): array
     {
-        try {
-            $this->findModel($id)->delete();
-        } catch (Throwable) {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        $models = RecurringTransaction::find()
+            ->where(['user_id' => Yii::$app->user->id])
+            ->with(['category', 'budget', 'goal'])
+            ->all();
+
+        $list = [];
+        foreach ($models as $model) {
+            $list[] = [
+                'id' => $model->id,
+                'amount' => $model->amount,
+                'currency' => $model->currency,
+                'frequency' => $model->displayFrequency(),
+                'next_date' => $model->next_date,
+                'category' => $model->category->name ?? '-',
+                'description' => $model->description ?? '-',
+                'active' => $model->active,
+            ];
         }
 
-        return $this->redirect(['index']);
+        return ['success' => true, 'data' => $list];
+    }
+
+    public function actionDelete($id): array
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        $model = $this->findModel($id);
+        if ($model->delete()) {
+            return ['success' => true];
+        }
+        return ['success' => false, 'message' => 'Ошибка удаления'];
     }
 
     /**
@@ -124,4 +146,6 @@ class RecurringTransactionController extends BaseController
 
         return $this->asJson(['success' => true, 'count' => count($transactions)]);
     }
+
+
 }

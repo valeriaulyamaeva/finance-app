@@ -33,13 +33,8 @@ class CategoryController extends BaseController
         Yii::$app->response->format = Response::FORMAT_JSON;
         $userId = Yii::$app->user->id;
 
-        try {
-            $goals = $this->service->getByType($userId, 'goal');
-            return $this->asJson($goals);
-        } catch (Exception $e) {
-            Yii::$app->response->statusCode = 400;
-            return $this->asJson(['errors' => $e->getMessage()]);
-        }
+        $goals = $this->service->getByType($userId, 'goal');
+        return $this->asJson($goals);
     }
 
     public function actionCreate(): Response

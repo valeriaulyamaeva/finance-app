@@ -84,14 +84,12 @@ body {
     height: 25rem !important;
 }
 
-
 .chart-card h4 {
     margin-bottom: 1rem;
     font-size: 1.1rem;
     font-weight: 600;
 }
 
-/* Кнопка "отметить все как прочитанные" в виде галочки */
 .mark-all-read {
     background: transparent;
     border: none;
@@ -105,7 +103,6 @@ body {
     color: #1557b0;
 }
 
-/* Кнопка "Прочитано" на каждом уведомлении */
 .mark-read {
     background: transparent;
     border: none;
@@ -119,7 +116,6 @@ body {
     color: #1557b0;
 }
 
-/* Анимация исчезновения уведомления */
 .notification-list li.removed {
     opacity: 0;
     height: 0;
