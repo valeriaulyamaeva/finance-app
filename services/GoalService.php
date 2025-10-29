@@ -5,6 +5,7 @@ namespace app\services;
 use app\models\Goal;
 use Yii;
 use yii\db\Exception;
+use app\models\Notification;
 
 class GoalService
 {
@@ -68,8 +69,16 @@ class GoalService
     {
         $goal->current_amount += $amount;
 
-        if ($goal->current_amount >= $goal->target_amount) {
+        $wasCompleted = $goal->isStatusCompleted();
+
+        if ($goal->current_amount >= $goal->target_amount && !$wasCompleted) {
             $goal->setStatusToCompleted();
+
+            Notification::createForUser(
+                $goal->user_id,
+                "Цель '$goal->name' достигнута! Сумма: " . number_format($goal->current_amount, 2) . " $goal->currency",
+                Notification::TYPE_GOAL_REACHED
+            );
         }
 
         if (!$goal->save()) {

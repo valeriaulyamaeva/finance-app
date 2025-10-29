@@ -3,6 +3,7 @@
 namespace app\services;
 
 use app\models\Budget;
+use app\models\Notification;
 use app\models\Transaction;
 use RuntimeException;
 use Throwable;
@@ -104,6 +105,14 @@ class BudgetService
         }
 
         $remaining = $budget->amount - $spent;
+
+        if ($remaining < 0) {
+            Notification::createForUser(
+                $budget->user_id,
+                "Бюджет '$budget->name' превышен на " . number_format(abs($remaining), 2) . " $budget->currency",
+                Notification::TYPE_BUDGET_EXCEED
+            );
+        }
 
         return [
             'spent' => $spent,

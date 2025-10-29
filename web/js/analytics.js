@@ -8,40 +8,36 @@ document.addEventListener('DOMContentLoaded', () => {
         remaining,
         months,
         expenseValues,
-        incomeValues
+        incomeValues,
+        currencySymbol
     } = analyticsData;
 
-    const categoryLabels = categoryData.map(c => c.category);
-    const categoryValues = categoryData.map(c => parseFloat(c.total));
-
-    const averageLabels = averageData.map(a => a.category);
-    const averageValues = averageData.map(a => parseFloat(a.avg_amount));
-
-    const topLabels = topCategories.map(t => t.category);
-    const topValues = topCategories.map(t => parseFloat(t.total));
+    const currency = currencySymbol || '₽';
+    const formatValue = (val) => `${parseFloat(val).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currency}`;
 
     new Chart(document.getElementById('categoryChart'), {
         type: 'doughnut',
         data: {
-            labels: categoryLabels,
+            labels: categoryData.map(c => c.category),
             datasets: [{
-                data: categoryValues,
-                backgroundColor: ['#6fcf97','#56ccf2','#f2c94c','#eb5757','#a3c9c9','#8da4a4'],
+                data: categoryData.map(c => parseFloat(c.total)),
+                backgroundColor: ['#bdcdab','#FFDAC1','#C7CEEA','#FF9AA2','#E2F0CB','#B5CDA3'],
                 borderWidth: 2,
                 borderColor: '#fff'
             }]
         },
         options: {
             responsive: true,
+            maintainAspectRatio: false,
             cutout: '60%',
             plugins: {
                 legend: { position: 'bottom', labels: { boxWidth: 20, padding: 15 } },
-                tooltip: { callbacks: { label: ctx => `${ctx.label}: ${ctx.raw.toLocaleString()}₽` } }
+                tooltip: { callbacks: { label: ctx => `${ctx.label}: ${formatValue(ctx.raw)}` } }
             }
         }
     });
 
-    const monthlyChart = new Chart(document.getElementById('monthlyChart'), {
+    new Chart(document.getElementById('monthlyChart'), {
         type: 'line',
         data: {
             labels: months,
@@ -49,73 +45,123 @@ document.addEventListener('DOMContentLoaded', () => {
                 {
                     label: 'Расходы',
                     data: expenseValues,
-                    borderColor: '#eb5757',
-                    backgroundColor: ctx => {
-                        const gradient = ctx.chart.ctx.createLinearGradient(0,0,0,200);
-                        gradient.addColorStop(0, 'rgba(235,87,87,0.4)');
-                        gradient.addColorStop(1, 'rgba(235,87,87,0.05)');
+                    borderColor: '#FF9AA2',
+                    backgroundColor: (ctx) => {
+                        const gradient = ctx.chart.ctx.createLinearGradient(0, 0, 0, 200);
+                        gradient.addColorStop(0, 'rgba(255,154,162,0.3)');
+                        gradient.addColorStop(1, 'rgba(255,154,162,0.05)');
                         return gradient;
                     },
-                    tension: 0.3,
+                    tension: 0.35,
                     fill: true,
-                    pointRadius: 5,
+                    pointRadius: 4,
                     pointHoverRadius: 7
                 },
                 {
                     label: 'Доходы',
                     data: incomeValues,
-                    borderColor: '#6fcf97',
-                    backgroundColor: ctx => {
-                        const gradient = ctx.chart.ctx.createLinearGradient(0,0,0,200);
-                        gradient.addColorStop(0, 'rgba(111,207,151,0.4)');
-                        gradient.addColorStop(1, 'rgba(111,207,151,0.05)');
+                    borderColor: '#bdcdab',
+                    backgroundColor: (ctx) => {
+                        const gradient = ctx.chart.ctx.createLinearGradient(0, 0, 0, 200);
+                        gradient.addColorStop(0, 'rgba(181,234,215,0.4)');
+                        gradient.addColorStop(1, 'rgba(181,234,215,0.05)');
                         return gradient;
                     },
-                    tension: 0.3,
+                    tension: 0.35,
                     fill: true,
-                    pointRadius: 5,
+                    pointRadius: 4,
                     pointHoverRadius: 7
                 }
             ]
         },
         options: {
             responsive: true,
+            maintainAspectRatio: false,
             plugins: {
                 legend: { position: 'top' },
-                tooltip: { mode: 'index', intersect: false }
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    callbacks: { label: ctx => `${ctx.dataset.label}: ${formatValue(ctx.raw)}` }
+                }
             },
             interaction: { mode: 'nearest', axis: 'x', intersect: false },
-            scales: { y: { beginAtZero: true, ticks: { stepSize: 1000 } } }
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { callback: (value) => formatValue(value) }
+                }
+            }
         }
     });
 
     new Chart(document.getElementById('budgetChart'), {
         type: 'bar',
         data: {
-            labels: ['Бюджет','Потрачено','Остаток'],
+            labels: ['Доход', 'Потрачено', 'Остаток'],
             datasets: [{
-                data: [totalBudget,totalSpent,remaining],
-                backgroundColor: ['#6fcf97','#eb5757','#f2c94c'],
+                data: [totalBudget, totalSpent, remaining],
+                backgroundColor: ['#bdcdab', '#ec9ca3', '#efcd95'],
                 borderRadius: 8,
                 barPercentage: 0.6
             }]
         },
         options: {
             responsive: true,
-            plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${ctx.label}: ${ctx.raw.toLocaleString()}₽` } } },
-            scales: { y: { beginAtZero: true } }
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: ctx => `${ctx.label}: ${formatValue(ctx.raw)}` } }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { callback: (value) => formatValue(value) }
+                }
+            }
         }
     });
 
     new Chart(document.getElementById('averageChart'), {
         type: 'bar',
-        data: { labels: averageLabels, datasets: [{ label: 'Средний чек', data: averageValues, backgroundColor: '#a3c9c9', borderRadius: 6 }] },
-        options: { responsive: true, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${ctx.label}: ${ctx.raw.toLocaleString()}₽` } } }, scales: { y: { beginAtZero: true } } }
+        data: {
+            labels: averageData.map(a => a.category),
+            datasets: [{
+                label: 'Средний чек',
+                data: averageData.map(a => parseFloat(a.avg_amount)),
+                backgroundColor: '#abb5e4',
+                borderRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: ctx => `${ctx.label}: ${formatValue(ctx.raw)}` } }
+            },
+            scales: { y: { beginAtZero: true, ticks: { callback: (value) => formatValue(value) } } }
+        }
     });
 
     new Chart(document.getElementById('topCategoriesChart'), {
         type: 'pie',
-        data: { labels: topLabels, datasets: [{ data: topValues, backgroundColor: ['#6fcf97','#f2c94c','#56ccf2','#eb5757','#8da4a4'], borderColor:'#fff', borderWidth:2 }] },
-        options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { boxWidth: 20, padding: 15 } }, tooltip: { callbacks: { label: ctx => `${ctx.label}: ${ctx.raw.toLocaleString()}₽` } } } }
+        data: {
+            labels: topCategories.map(t => t.category),
+            datasets: [{
+                data: topCategories.map(t => parseFloat(t.total)),
+                backgroundColor: ['#bdcdab','#FFDAC1','#C7CEEA','#FF9AA2','#E2F0CB'],
+                borderColor: '#fff',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom', labels: { boxWidth: 20, padding: 15 } },
+                tooltip: { callbacks: { label: ctx => `${ctx.label}: ${formatValue(ctx.raw)}` } }
+            }
+        }
     });
 });

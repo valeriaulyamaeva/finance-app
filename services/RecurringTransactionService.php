@@ -2,6 +2,7 @@
 
 namespace app\services;
 
+use app\models\Notification;
 use app\models\RecurringTransaction;
 use app\models\Transaction;
 use DateMalformedStringException;
@@ -54,6 +55,17 @@ class RecurringTransactionService
         $transaction->description = $recurring->description;
         $transaction->recurring_id = $recurring->id;
         $transaction->date = $recurring->next_date;
+
+        if ($transaction->save()) {
+            Yii::$container->get(NotificationService::class)
+                ->createNotification(
+                    $recurring->user_id,
+                    "Создана транзакция на основе повторяющейся транзакции #$recurring->id",
+                    Notification::TYPE_REMINDER,
+                    'recurring_transaction',
+                    $recurring->id
+                );
+        }
 
         if (!$transaction->save()) {
             Yii::error('Failed to create transaction from recurring: ' . json_encode($transaction->errors));

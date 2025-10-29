@@ -53,7 +53,7 @@ class RecurringTransactionController extends BaseController
                 return [
                     'success' => true,
                     'id' => $model->id,
-                    'amount' => $model->amount, // сохраняем как ввел пользователь
+                    'amount' => $model->amount,
                     'display_amount' => number_format($originalAmount, 2, '.', ''),
                     'category_name' => $model->category->name ?? null,
                     'description' => $model->description,

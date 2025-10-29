@@ -3,6 +3,7 @@ use app\models\Category;
 use app\models\Transaction;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Html;
+use yii\helpers\Url;
 use yii\widgets\ActiveForm;
 
 $categories = ArrayHelper::map(
@@ -54,7 +55,7 @@ $transaction = new Transaction();
                 <h6>Повторяющаяся транзакция</h6>
                 <div class="mb-3">
                     <label class="form-label">Повторять</label>
-                    <label for="recurringFrequency"></label><select id="recurringFrequency" name="RecurringTransaction[frequency]" class="form-select">
+                    <select id="recurringFrequency" name="RecurringTransaction[frequency]" class="form-select">
                         <option value="">Никогда</option>
                         <option value="daily">Ежедневно</option>
                         <option value="weekly">Еженедельно</option>
@@ -64,7 +65,7 @@ $transaction = new Transaction();
 
                 <div class="mb-3" id="nextDateWrapper" style="display:none;">
                     <label class="form-label">Следующая дата</label>
-                    <label for="recurringNextDate"></label><input type="date" id="recurringNextDate" name="RecurringTransaction[next_date]" class="form-control">
+                    <input type="date" id="recurringNextDate" name="RecurringTransaction[next_date]" class="form-control" required>
                 </div>
 
                 <div id="formErrors" class="text-danger mt-2"></div>
@@ -78,3 +79,46 @@ $transaction = new Transaction();
         </div>
     </div>
 </div>
+
+<?php
+$checkTypeUrl = Url::to(['category/type']);
+$script = <<<JS
+$('#transaction-category_id').on('change', function() {
+    var categoryId = $(this).val();
+    var goalSelector = $('#goalSelector');
+    var goalInput = $('#transaction-goal_id');
+    
+    if (!categoryId) {
+        goalSelector.hide();
+        goalInput.val('').prop('required', false);
+        return;
+    }
+    
+    $.getJSON('$checkTypeUrl', {id: categoryId}, function(res) {
+        if (res.type === 'goal') {
+            goalSelector.show();
+            goalInput.prop('required', true);
+        } else {
+            goalSelector.hide();
+            goalInput.val('').prop('required', false);
+        }
+    }).fail(function() {
+        goalSelector.hide();
+        goalInput.val('').prop('required', false);
+    });
+});
+
+$('#recurringFrequency').on('change', function() {
+    var nextDateWrapper = $('#nextDateWrapper');
+    var nextDateInput = $('#recurringNextDate');
+    if ($(this).val()) {
+        nextDateWrapper.show();
+        nextDateInput.prop('required', true);
+    } else {
+        nextDateWrapper.hide();
+        nextDateInput.val('').prop('required', false);
+    }
+});
+JS;
+$this->registerJs($script);
+?>

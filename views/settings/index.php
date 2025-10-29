@@ -61,5 +61,6 @@ $saveUrl = Url::to(['settings/save']);
 $this->registerJs("const saveUrl = '$saveUrl'; const userTheme = '{$user->theme}';", View::POS_HEAD);
 
 $this->registerCssFile('@web/css/settings.css');
+$this->registerJsFile('@web/js/notifications.js', ['depends' => [JqueryAsset::class]]);
 $this->registerJsFile('@web/js/settings.js', ['depends' => [JqueryAsset::class]]);
 ?>

@@ -225,4 +225,23 @@ class TransactionController extends BaseController
 
         return ['success' => true, 'transaction' => $transactionArray];
     }
+
+    public function actionSummary(): array
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        $userId = Yii::$app->user->id;
+
+        $summary = $this->service->getSummary($userId);
+
+        return [
+            'success' => true,
+            'summary' => [
+                'previousBalance' => number_format($summary['previousBalance'] ?? 0, 2, '.', ''),
+                'income' => number_format($summary['income'] ?? 0, 2, '.', ''),
+                'expense' => number_format($summary['expense'] ?? 0, 2, '.', ''),
+                'balance' => number_format($summary['balance'] ?? 0, 2, '.', ''),
+                'currency' => $summary['currency'] ?? 'BYN',
+            ],
+        ];
+    }
 }

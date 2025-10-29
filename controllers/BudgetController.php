@@ -187,7 +187,7 @@ class BudgetController extends BaseController
         $budgetArray['display_amount'] = number_format($displayAmount, 2, '.', '');
         $budgetArray['display_spent'] = number_format($displaySpent, 2, '.', '');
         $budgetArray['display_remaining'] = number_format($displayRemaining, 2, '.', '');
-        $budgetArray['display_currency'] = $userCurrency; // валюта для отображения
+        $budgetArray['display_currency'] = $userCurrency;
         $budgetArray['display_period'] = $budget->displayPeriod();
         $budgetArray['category_name'] = $budget->category->name ?? '-';
 

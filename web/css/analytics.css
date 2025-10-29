@@ -44,7 +44,7 @@ body {
 .analytics-content {
     flex: 1;
     margin-left: 10rem;
-    padding: 2rem;
+    padding: 0 2rem;
 }
 
 .charts-grid {
@@ -68,6 +68,7 @@ body {
 .charts-grid > .chart-card:last-child {
     justify-self: center;
     max-width: 640px;
+    width: 100%;
 }
 
 .chart-card {
@@ -80,7 +81,7 @@ body {
 
 .chart-card canvas {
     max-width: 90%;
-    height: 240px !important;
+    height: 25rem !important;
 }
 
 
@@ -88,4 +89,41 @@ body {
     margin-bottom: 1rem;
     font-size: 1.1rem;
     font-weight: 600;
+}
+
+/* Кнопка "отметить все как прочитанные" в виде галочки */
+.mark-all-read {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    color: #1a73e8;
+    transition: color 0.25s;
+}
+
+.mark-all-read:hover {
+    color: #1557b0;
+}
+
+/* Кнопка "Прочитано" на каждом уведомлении */
+.mark-read {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    color: #1a73e8;
+    transition: color 0.25s;
+}
+
+.mark-read:hover {
+    color: #1557b0;
+}
+
+/* Анимация исчезновения уведомления */
+.notification-list li.removed {
+    opacity: 0;
+    height: 0;
+    margin: 0;
+    padding: 0;
+    transition: all 0.3s ease;
 }

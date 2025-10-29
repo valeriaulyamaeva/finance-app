@@ -114,6 +114,7 @@ $this->registerJsFile('@web/js/budget.js', ['depends' => [JqueryAsset::class]]);
 
 <?php
 $this->registerCssFile('https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css');
+$this->registerJsFile('@web/js/notifications.js', ['depends' => [JqueryAsset::class]]);
 $this->registerJsFile('https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js', [
     'depends' => [JqueryAsset::class],
 ]);

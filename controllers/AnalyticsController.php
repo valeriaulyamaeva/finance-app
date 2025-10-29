@@ -33,34 +33,29 @@ class AnalyticsController extends Controller
         $currentMonth = date('Y-m');
         $startYearMonth = date('Y-m', strtotime('-11 months'));
 
-        $totalSpent = Transaction::find()
+        $totalIncome = Transaction::find()
+            ->where(['user_id' => $userId, 'type' => 'income'])
+            ->andWhere(['like', 'date', $currentMonth])
+            ->sum('amount');
+
+        $totalExpense = Transaction::find()
             ->where(['user_id' => $userId, 'type' => 'expense'])
             ->andWhere(['like', 'date', $currentMonth])
             ->sum('amount');
 
-        $totalBudget = Budget::find()
-            ->where(['user_id' => $userId])
-            ->andWhere(['<=', 'start_date', date('Y-m-t')])
-            ->andWhere([
-                'or',
-                ['end_date' => null],
-                ['>=', 'end_date', date('Y-m-01')]
-            ])
-            ->sum('amount');
+        $remaining = $totalIncome - $totalExpense;
 
-        $remaining = $totalBudget - $totalSpent;
-
-        $totalBudgetDisplay = $this->currencyService->fromBase(
-            $this->currencyService->toBase($totalBudget, 'BYN'),
+        $totalIncomeDisplay = $this->currencyService->fromBase(
+            $this->currencyService->toBase($totalIncome, 'BYN'),
             $userCurrency
         );
 
-        $totalSpentDisplay = $this->currencyService->fromBase(
-            $this->currencyService->toBase($totalSpent, 'BYN'),
+        $totalExpenseDisplay = $this->currencyService->fromBase(
+            $this->currencyService->toBase($totalExpense, 'BYN'),
             $userCurrency
         );
 
-        $remainingDisplay = $totalBudgetDisplay - $totalSpentDisplay;
+        $remainingDisplay = $totalIncomeDisplay - $totalExpenseDisplay;
 
         $categoryData = (new Query())
             ->select(['c.name AS category', 'SUM(t.amount) AS total'])
@@ -94,14 +89,30 @@ class AnalyticsController extends Controller
         $months = [];
         $expenseValues = [];
         $incomeValues = [];
+
+        $period = new \DatePeriod(
+            new \DateTime($startYearMonth . '-01'),
+            new \DateInterval('P1M'),
+            (new \DateTime($currentMonth . '-01'))->modify('+1 month')
+        );
+
+        $monthlyIndexed = [];
         foreach ($monthlyDataQuery as $row) {
-            $months[] = $row['month'];
+            $monthlyIndexed[$row['month']] = $row;
+        }
+
+        foreach ($period as $date) {
+            $monthKey = $date->format('Y-m');
+            $months[] = $date->format('M Y');
+            $expense = $monthlyIndexed[$monthKey]['total_expense'] ?? 0;
+            $income = $monthlyIndexed[$monthKey]['total_income'] ?? 0;
+
             $expenseValues[] = $this->currencyService->fromBase(
-                $this->currencyService->toBase($row['total_expense'], 'BYN'),
+                $this->currencyService->toBase($expense, 'BYN'),
                 $userCurrency
             );
             $incomeValues[] = $this->currencyService->fromBase(
-                $this->currencyService->toBase($row['total_income'], 'BYN'),
+                $this->currencyService->toBase($income, 'BYN'),
                 $userCurrency
             );
         }
@@ -141,8 +152,8 @@ class AnalyticsController extends Controller
         }
 
         return $this->render('index', [
-            'totalBudget' => $totalBudgetDisplay,
-            'totalSpent' => $totalSpentDisplay,
+            'totalIncome' => $totalIncomeDisplay,
+            'totalExpense' => $totalExpenseDisplay,
             'remaining' => $remainingDisplay,
             'categoryData' => $categoryData,
             'months' => $months,
