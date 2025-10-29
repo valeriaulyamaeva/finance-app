@@ -120,7 +120,8 @@ class TransactionService
         if ($transaction->goal_id) {
             $goal = Goal::findOne($transaction->goal_id);
             if ($goal) {
-                $goal->current_amount = max(0, $goal->current_amount - $transaction->amount);
+                $convertedAmount = $this->convertToGoalCurrency($transaction->amount, $transaction->currency, $goal->currency);
+                $goal->current_amount = max(0, $goal->current_amount - $convertedAmount);
                 $goal->status = $goal->current_amount >= $goal->target_amount
                     ? Goal::STATUS_COMPLETED
                     : ($goal->current_amount > 0 ? Goal::STATUS_ACTIVE : Goal::STATUS_ACTIVE);
@@ -224,7 +225,8 @@ class TransactionService
         if ($oldGoalId) {
             $goal = Goal::findOne($oldGoalId);
             if ($goal) {
-                $goal->current_amount = max(0, $goal->current_amount - $oldAmount);
+                $convertedOldAmount = $this->convertToGoalCurrency($oldAmount, $transaction->currency, $goal->currency);
+                $goal->current_amount = max(0, $goal->current_amount - $convertedOldAmount);
                 $goal->status = $goal->current_amount >= $goal->target_amount ? Goal::STATUS_COMPLETED : Goal::STATUS_ACTIVE;
                 $goal->updated_at = date('Y-m-d H:i:s');
                 $goal->save(false);
@@ -234,11 +236,28 @@ class TransactionService
         if ($goalId) {
             $goal = Goal::findOne($goalId);
             if ($goal) {
-                $goal->current_amount += $transaction->amount;
-                $goal->status = $goal->current_amount >= $goal->target_amount ? Goal::STATUS_COMPLETED : Goal::STATUS_ACTIVE;
+                $convertedAmount = $this->convertToGoalCurrency($transaction->amount, $transaction->currency, $goal->currency);
+
+                $goal->current_amount += $convertedAmount;
+                $goal->status = $goal->current_amount >= $goal->target_amount
+                    ? Goal::STATUS_COMPLETED
+                    : Goal::STATUS_ACTIVE;
                 $goal->updated_at = date('Y-m-d H:i:s');
                 $goal->save(false);
             }
         }
+    }
+
+    /**
+     * @throws Exception|\Exception
+     */
+    private function convertToGoalCurrency(float $amount, string $fromCurrency, string $toCurrency): float
+    {
+        if ($fromCurrency === $toCurrency) {
+            return $amount;
+        }
+
+        $inByn = $this->currencyService->toBase($amount, $fromCurrency);
+        return $this->currencyService->fromBase($inByn, $toCurrency);
     }
 }

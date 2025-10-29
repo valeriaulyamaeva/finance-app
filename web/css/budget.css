@@ -33,7 +33,7 @@ body {
 .sidebar ul li a:hover { color: #535353; }
 
 .content {
-    padding: 2rem;
+    padding: 0 2rem;
     margin-left: 10rem;
 }
 .content h1 {

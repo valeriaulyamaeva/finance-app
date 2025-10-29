@@ -27,7 +27,7 @@ body {
 .sidebar ul li a { color: #1c1b1b; text-decoration: none; display: block; padding: 0.5rem 0; font-weight: 500; }
 .sidebar ul li a:hover { color: #535353; }
 
-.content { padding: 2rem; margin-left: 10rem; }
+.content { padding: 0 2rem; margin-left: 10rem; }
 
 .settings-form {
     background: var(--form-bg, #fff);
