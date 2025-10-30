@@ -23,6 +23,7 @@ body {
     padding: 0;
 }
 .sidebar ul li a {
+    font-size: 1.25rem;
     color: #1c1b1b;
     text-decoration: none;
     display: block;

@@ -63,6 +63,7 @@ $this->registerMetaTag(['name' => 'viewport', 'content' => 'width=device-width, 
     }
 
     .sidebar ul li a {
+        font-size: 1.25rem;
         display: block;
         padding: 0.5rem 0;
         font-weight: 500;
@@ -160,7 +161,6 @@ $this->registerMetaTag(['name' => 'viewport', 'content' => 'width=device-width, 
         margin: 2rem auto;
         border-radius: 16px;
         overflow: hidden;
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
     }
 
     .modal-header, .modal-body, .modal-footer {

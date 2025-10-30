@@ -106,13 +106,7 @@ class BudgetService
 
         $remaining = $budget->amount - $spent;
 
-        if ($remaining < 0) {
-            Notification::createForUser(
-                $budget->user_id,
-                "Бюджет '$budget->name' превышен на " . number_format(abs($remaining), 2) . " $budget->currency",
-                Notification::TYPE_BUDGET_EXCEED
-            );
-        }
+        $this->handleBudgetExceedNotification($budget, $remaining);
 
         return [
             'spent' => $spent,
@@ -137,10 +131,60 @@ class BudgetService
             $totalSpent += $sum['spent'];
         }
 
-return [
-    'total_budget' => $totalBudget,
-    'total_spent' => $totalSpent,
-    'remaining' => $totalBudget - $totalSpent,
-    ];
+        return [
+            'total_budget' => $totalBudget,
+            'total_spent' => $totalSpent,
+            'remaining' => $totalBudget - $totalSpent,
+            ];
+    }
+
+    private function handleBudgetExceedNotification(Budget $budget, float $remaining): void
+    {
+        $userId = $budget->user_id;
+        $budgetId = $budget->id;
+        $type = Notification::TYPE_BUDGET_EXCEED;
+
+        $existing = Notification::find()
+            ->where([
+                'user_id' => $userId,
+                'type' => $type,
+                'related_type' => 'budget',
+                'related_id' => $budgetId,
+            ])
+            ->one();
+
+        if ($remaining >= 0) {
+            if ($existing) {
+                $existing->delete();
+            }
+            return;
+        }
+
+        $exceedAmount = abs($remaining);
+        $newMessage = "Бюджет '$budget->name' превышен на " . number_format($exceedAmount, 2) . " $budget->currency";
+
+        if ($existing) {
+            $pattern = '/на\s+([\d\.,]+)\s+' . preg_quote($budget->currency, '/') . '/u';
+            $oldExceedMatch = preg_match($pattern, $existing->message, $matches);
+            $oldExceedAmount = $oldExceedMatch ? (float)str_replace(',', '', $matches[1]) : null;
+
+            $amountChanged = $oldExceedAmount === null || abs($oldExceedAmount - $exceedAmount) > 0.01;
+
+            $existing->message = $newMessage;
+
+            if ($amountChanged) {
+                $existing->read_status = 0;
+            }
+
+            $existing->save(false);
+        } else {
+            Notification::createForUser(
+                $userId,
+                $newMessage,
+                $type,
+                'budget',
+                $budgetId
+            );
+        }
     }
 }

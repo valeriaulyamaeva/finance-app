@@ -114,14 +114,16 @@ class Notification extends ActiveRecord
         $this->type = self::TYPE_OTHER;
     }
 
-    public static function createForUser(int $userId, string $message, string $type = self::TYPE_OTHER): self
+    public static function createForUser(int $userId, string $message, string $type, ?string $relatedType = null, ?int $relatedId = null): ?self
     {
         $notification = new self();
         $notification->user_id = $userId;
         $notification->message = $message;
         $notification->type = $type;
+        $notification->related_type = $relatedType;
+        $notification->related_id = $relatedId;
         $notification->read_status = 0;
-        $notification->save(false);
-        return $notification;
+
+        return $notification->save() ? $notification : null;
     }
 }

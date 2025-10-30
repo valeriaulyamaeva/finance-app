@@ -6,53 +6,58 @@ document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('budgetForm');
     const formErrors = document.getElementById('formErrors');
     const budgetCurrency = document.getElementById('budgetCurrency');
+    const modalTitle = document.getElementById('modalTitle');
     let currentAction = 'create';
     let currentId = null;
 
+    // === ОТКРЫТИЕ: Создать бюджет ===
     document.getElementById('addBudgetBtn').addEventListener('click', () => {
         currentAction = 'create';
         currentId = null;
         form.reset();
         budgetCurrency.value = userCurrency;
-        formErrors.textContent = '';
-        formErrors.style.display = 'none';
+        modalTitle.textContent = 'Создать бюджет';
+        hideError();
         modal.show();
     });
 
+    // === РЕДАКТИРОВАТЬ / УДАЛИТЬ ===
     document.querySelector('.cards-container').addEventListener('click', (e) => {
-        const target = e.target;
+        const target = e.target.closest('button');
+        if (!target) return;
 
+        // --- РЕДАКТИРОВАТЬ ---
         if (target.classList.contains('editBtn')) {
             const id = target.dataset.id;
             fetch(`${viewUrl}?id=${id}`)
-                .then(res => res.ok ? res.json() : res.text().then(t => { throw new Error(t); }))
+                .then(res => res.ok ? res.json() : Promise.reject(new Error('Network error')))
                 .then(data => {
                     if (data.success && data.budget) {
                         const b = data.budget;
-                        form.querySelector('[name="Budget[name]"]').value = b.name;
-                        form.querySelector('[name="Budget[amount]"]').value = b.display_amount;
-                        form.querySelector('[name="Budget[period]"]').value = b.period;
-                        form.querySelector('[name="Budget[category_id]"]').value = b.category_id;
-                        form.querySelector('[name="Budget[start_date]"]').value = b.start_date;
-                        form.querySelector('[name="Budget[end_date]"]').value = b.end_date;
+                        setField('Budget[name]', b.name);
+                        setField('Budget[amount]', parseFloat(b.display_amount.replace(/[^\d.-]/g, '')) || '');
+                        setField('Budget[period]', b.period || '');
+                        setField('Budget[category_id]', b.category_id || '');
+                        setField('Budget[start_date]', b.start_date || '');
+                        setField('Budget[end_date]', b.end_date || '');
                         budgetCurrency.value = b.display_currency || 'BYN';
+
                         currentAction = 'update';
                         currentId = id;
-                        formErrors.textContent = '';
-                        formErrors.style.display = 'none';
+                        modalTitle.textContent = 'Редактировать бюджет';
+                        hideError();
                         modal.show();
                     } else {
-                        formErrors.textContent = data.message || 'Ошибка при загрузке бюджета';
-                        formErrors.style.display = 'block';
+                        showError(data.message || 'Не удалось загрузить бюджет');
                     }
                 })
                 .catch(err => {
                     console.error('Edit error:', err);
-                    formErrors.textContent = `Ошибка: ${err.message}`;
-                    formErrors.style.display = 'block';
+                    showError('Ошибка загрузки: ' + err.message);
                 });
         }
 
+        // --- УДАЛИТЬ ---
         if (target.classList.contains('deleteBtn')) {
             if (!confirm('Удалить бюджет?')) return;
             const id = target.dataset.id;
@@ -65,26 +70,36 @@ document.addEventListener('DOMContentLoaded', () => {
                 },
                 body: new URLSearchParams({ id })
             })
-                .then(res => res.ok ? res.json() : res.text().then(t => { throw new Error(t); }))
+                .then(res => res.ok ? res.json() : Promise.reject(new Error('Network error')))
                 .then(data => {
                     if (data.success) {
                         location.reload();
                     } else {
-                        formErrors.textContent = data.message || 'Ошибка при удалении';
-                        formErrors.style.display = 'block';
+                        showError(data.message || 'Ошибка удаления');
                     }
                 })
                 .catch(err => {
                     console.error('Delete error:', err);
-                    formErrors.textContent = `Ошибка: ${err.message}`;
-                    formErrors.style.display = 'block';
+                    showError('Ошибка: ' + err.message);
                 });
         }
     });
 
+    // === СОХРАНЕНИЕ ===
     document.querySelector('.saveBudget').addEventListener('click', () => {
+        hideError();
+
         const formData = new FormData(form);
         formData.set('Budget[currency]', budgetCurrency.value);
+
+        // Валидация дат
+        const startDate = form.querySelector('[name="Budget[start_date]"]').value;
+        const endDate = form.querySelector('[name="Budget[end_date]"]').value;
+        if (endDate && startDate && endDate < startDate) {
+            showError('Дата окончания не может быть раньше начала');
+            return;
+        }
+
         const url = currentAction === 'create' ? createUrl : `${updateUrl}?id=${currentId}`;
 
         fetch(url, {
@@ -92,19 +107,33 @@ document.addEventListener('DOMContentLoaded', () => {
             body: formData,
             headers: { 'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content }
         })
-            .then(res => res.ok ? res.json() : res.text().then(t => { throw new Error(t); }))
+            .then(res => res.ok ? res.json() : Promise.reject(new Error('Network error')))
             .then(data => {
-                if (data.success && data.budget) {
+                if (data.success) {
                     location.reload();
                 } else {
-                    formErrors.textContent = data.message || 'Ошибка при сохранении';
-                    formErrors.style.display = 'block';
+                    showError(data.message || 'Ошибка сохранения');
                 }
             })
             .catch(err => {
                 console.error('Save error:', err);
-                formErrors.textContent = `Ошибка: ${err.message}`;
-                formErrors.style.display = 'block';
+                showError('Ошибка: ' + err.message);
             });
     });
+
+    // === ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ===
+    function setField(name, value) {
+        const el = form.querySelector(`[name="${name}"]`);
+        if (el) el.value = value;
+    }
+
+    function showError(message) {
+        formErrors.textContent = message;
+        formErrors.classList.remove('d-none');
+    }
+
+    function hideError() {
+        formErrors.classList.add('d-none');
+        formErrors.textContent = '';
+    }
 });

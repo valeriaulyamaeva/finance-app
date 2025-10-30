@@ -47,27 +47,26 @@ class BudgetController extends BaseController
         foreach ($dataProvider->models as $budget) {
             $budgetSummary = $this->service->calculateSummary($budget);
 
+            $rawAmount = $budget->amount;
+            $rawSpent = $budgetSummary['spent'];
+            $rawRemaining = $budgetSummary['remaining'];
+
             $displayAmount = $budget->currency !== $userCurrency
                 ? $this->currencyService->fromBase(
-                    $this->currencyService->toBase($budget->amount, $budget->currency),
+                    $this->currencyService->toBase($rawAmount, $budget->currency),
                     $userCurrency
                 )
-                : $budget->amount;
-
+                : $rawAmount;
 
             $displaySpent = $budget->currency !== $userCurrency
                 ? $this->currencyService->fromBase(
-                    $this->currencyService->toBase($budgetSummary['spent'], $budget->currency),
+                    $this->currencyService->toBase($rawSpent, $budget->currency),
                     $userCurrency
                 )
-                : $budgetSummary['spent'];
+                : $rawSpent;
 
-            $displayRemaining = $budget->currency !== $userCurrency
-                ? $this->currencyService->fromBase(
-                    $this->currencyService->toBase($budgetSummary['remaining'], $budget->currency),
-                    $userCurrency
-                )
-                : $budgetSummary['remaining'];
+            $displayRemaining = $displayAmount - $displaySpent;
+            $percent = $rawAmount > 0 ? min(100, ($rawSpent / $rawAmount) * 100) : 0;
 
             $budgetsWithDisplay[] = [
                 'model' => $budget,
@@ -77,6 +76,9 @@ class BudgetController extends BaseController
                 'display_currency' => $userCurrency,
                 'category_name' => $budget->category->name ?? '-',
                 'display_period' => $budget->displayPeriod(),
+                'raw_amount' => $rawAmount,
+                'raw_spent' => $rawSpent,
+                'percent' => $percent,
             ];
 
             $totalBudget += $displayAmount;

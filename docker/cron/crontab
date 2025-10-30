@@ -1,1 +1,2 @@
-0 12 * * * php /var/www/html/yii recurring-transaction/generate >> /var/www/html/runtime/logs/cron.log 2>&1
+0 12 * * * docker exec -t finance_app_php php /var/www/html/yii recurring-transaction/generate >> /var/www/html/runtime/logs/cron.log 2>&1
+0 1 * * * docker exec -t finance_app_php php /var/www/html/yii budget >> /var/log/budget.log 2>&1

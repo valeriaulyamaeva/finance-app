@@ -24,7 +24,7 @@ body {
 }
 .sidebar h2 { font-size: 2.5rem; color: #2c2929; margin-bottom: 2rem; font-weight: 600; }
 .sidebar ul { list-style: none; padding: 0; }
-.sidebar ul li a { color: #1c1b1b; text-decoration: none; display: block; padding: 0.5rem 0; font-weight: 500; }
+.sidebar ul li a { font-size: 1.25rem; color: #1c1b1b; text-decoration: none; display: block; padding: 0.5rem 0; font-weight: 500; }
 .sidebar ul li a:hover { color: #535353; }
 
 .content { padding: 0 2rem; margin-left: 10rem; }
