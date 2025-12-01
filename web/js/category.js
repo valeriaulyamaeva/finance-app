@@ -92,5 +92,33 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             })
             .catch(err => { document.getElementById('formErrors').textContent = err.message; });
+
+        document.getElementById('categoryModal').addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const modalTitle = document.getElementById('modalCategoryTitle');
+            const saveButtonText = document.getElementById('saveButtonText');
+            const form = document.getElementById('categoryForm');
+
+            if (button && button.classList.contains('editBtn')) {
+                const card = button.closest('.card');
+                const id = card.dataset.id;
+                const name = card.querySelector('h3').textContent.trim();
+                const type = card.querySelector('p').textContent.trim().toLowerCase();
+
+                document.getElementById('categoryId').value = id;
+                document.getElementById('categoryName').value = name;
+                document.getElementById('categoryType').value =
+                    type.includes('доход') ? 'income' :
+                        type.includes('цель') ? 'goal' : 'expense';
+
+                modalTitle.textContent = 'Редактировать категорию';
+                saveButtonText.textContent = 'Сохранить изменения';
+            } else {
+                form.reset();
+                document.getElementById('categoryId').value = '';
+                modalTitle.textContent = 'Новая категория';
+                saveButtonText.textContent = 'Создать категорию';
+            }
+        });
     });
 });

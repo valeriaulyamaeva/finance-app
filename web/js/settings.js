@@ -37,19 +37,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const themeSelect = document.getElementById('theme');
     function applyTheme(theme) {
         if (theme === 'dark') {
-            document.documentElement.style.setProperty('--body-bg', '#1f1f1f');
-            document.documentElement.style.setProperty('--body-color', '#f3f3f3');
-            document.documentElement.style.setProperty('--form-bg', '#2a2a2a');
-            document.documentElement.style.setProperty('--form-border', '#4b5563');
-            document.documentElement.style.setProperty('--input-bg', '#374151');
-            document.documentElement.style.setProperty('--input-color', '#f3f3f3');
+            document.body.classList.add('dark-theme');
         } else {
-            document.documentElement.style.setProperty('--body-bg', '#f9f7f4');
-            document.documentElement.style.setProperty('--body-color', '#4b453f');
-            document.documentElement.style.setProperty('--form-bg', '#fff');
-            document.documentElement.style.setProperty('--form-border', '#d1d5db');
-            document.documentElement.style.setProperty('--input-bg', '#fff');
-            document.documentElement.style.setProperty('--input-color', '#4b453f');
+            document.body.classList.remove('dark-theme');
         }
     }
     applyTheme(userTheme);

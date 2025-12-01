@@ -1,109 +1,119 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const modal = new bootstrap.Modal(document.getElementById('goalModal'));
-    let currentAction = 'create';
-
-    const goalForm = document.getElementById('goalForm');
+    const modalEl = document.getElementById('goalModal');
+    const modal = new bootstrap.Modal(modalEl);
+    const form = document.getElementById('goalForm');
     const formErrors = document.getElementById('formErrors');
-    const goalCurrency = document.getElementById('goalCurrency');
-    const goalCurrencyLabel = document.getElementById('goalCurrencyLabel');
+    const modalTitle = document.getElementById('goalModalTitle');
 
-    goalCurrency.value = userCurrency;
-    goalCurrencyLabel.textContent = userCurrency;
+    let currentAction = 'create';
+    let currentId = null;
 
     document.getElementById('addGoalBtn').addEventListener('click', () => {
         currentAction = 'create';
-        goalForm.reset();
-        formErrors.style.display = 'none';
-        goalCurrency.value = userCurrency;
-        goalCurrencyLabel.textContent = userCurrency;
+        currentId = null;
+        form.reset();
+        document.getElementById('goalId').value = '';
+        document.getElementById('goalCurrency').value = userCurrency;
+        modalTitle.textContent = 'Создать цель';
+        formErrors.classList.add('d-none');
         modal.show();
     });
 
     document.querySelectorAll('.editBtn').forEach(btn => {
         btn.addEventListener('click', () => {
             const id = btn.dataset.id;
-            fetch(`${goalUrls.view}?id=${id}`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            fetch(`${goalUrls.view}?id=${id}`, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
                 .then(res => res.json())
                 .then(data => {
                     if (data.success && data.goal) {
                         const g = data.goal;
                         document.getElementById('goalId').value = g.id;
                         document.getElementById('goalName').value = g.name;
-                        document.getElementById('goalTarget').value = parseFloat(g.display_target_amount ?? g.target_amount);
-                        document.getElementById('goalCurrent').value = parseFloat(g.display_current_amount ?? g.current_amount);
+                        document.getElementById('goalTarget').value = g.display_target_amount || g.target_amount;
+                        document.getElementById('goalCurrent').value = g.display_current_amount || g.current_amount || 0;
                         document.getElementById('goalDeadline').value = g.deadline;
                         document.getElementById('goalStatus').value = g.status;
-                        goalCurrency.value = userCurrency;
-                        goalCurrencyLabel.textContent = userCurrency;
+
                         currentAction = 'update';
-                        formErrors.style.display = 'none';
+                        currentId = g.id;
+                        modalTitle.textContent = 'Редактировать цель';
+                        formErrors.classList.add('d-none');
                         modal.show();
                     } else {
-                        formErrors.textContent = data.message || 'Ошибка загрузки данных';
-                        formErrors.style.display = 'block';
+                        showError(data.message || 'Не удалось загрузить цель');
                     }
                 })
-                .catch(error => {
-                    formErrors.textContent = 'Ошибка: ' + error.message;
-                    formErrors.style.display = 'block';
+                .catch(err => {
+                    console.error(err);
+                    showError('Ошибка загрузки данных');
                 });
         });
     });
 
     document.querySelectorAll('.deleteBtn').forEach(btn => {
         btn.addEventListener('click', () => {
-            if (!confirm('Удалить цель?')) return;
-            fetch(goalUrls.delete + '?id=' + btn.dataset.id, {
+            if (!confirm('Удалить цель навсегда?')) return;
+
+            fetch(`${goalUrls.delete}?id=${btn.dataset.id}`, {
                 method: 'POST',
-                headers: {'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content}
+                headers: {
+                    'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                }
             })
                 .then(res => res.json())
                 .then(data => {
-                    if (data.success) location.reload();
-                    else {
-                        formErrors.textContent = data.message || 'Ошибка удаления';
-                        formErrors.style.display = 'block';
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        showError(data.message || 'Ошибка удаления');
                     }
                 })
-                .catch(error => {
-                    formErrors.textContent = 'Ошибка: ' + error.message;
-                    formErrors.style.display = 'block';
-                });
+                .catch(() => showError('Ошибка сети'));
         });
     });
 
-    goalForm.addEventListener('submit', e => {
+    form.addEventListener('submit', function(e) {
         e.preventDefault();
-        const id = document.getElementById('goalId').value;
-        const formData = new FormData(goalForm);
+        formErrors.classList.add('d-none');
 
-        if (formData.get('Goal[target_amount]')) {
-            formData.set('Goal[target_amount]', parseFloat(formData.get('Goal[target_amount]')));
-        }
-        if (formData.get('Goal[current_amount]')) {
-            formData.set('Goal[current_amount]', parseFloat(formData.get('Goal[current_amount]')));
-        }
-
+        const formData = new FormData(form);
         formData.set('Goal[currency]', userCurrency);
 
-        const url = currentAction === 'create' ? goalUrls.create : `${goalUrls.update}?id=${id}`;
+        const target = formData.get('Goal[target_amount]');
+        const current = formData.get('Goal[current_amount]') || '0';
+        if (target) formData.set('Goal[target_amount]', parseFloat(target));
+        if (current) formData.set('Goal[current_amount]', parseFloat(current));
+
+        const url = currentAction === 'create'
+            ? goalUrls.create
+            : `${goalUrls.update}?id=${currentId}`;
 
         fetch(url, {
             method: 'POST',
             body: formData,
-            headers: { 'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content, 'X-Requested-With': 'XMLHttpRequest' }
+            headers: {
+                'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'X-Requested-With': 'XMLHttpRequest'
+            }
         })
             .then(res => res.json())
             .then(data => {
-                if (data.success) location.reload();
-                else {
-                    formErrors.textContent = data.message || 'Ошибка сохранения';
-                    formErrors.style.display = 'block';
+                if (data.success) {
+                    location.reload();
+                } else {
+                    showError(data.message || 'Ошибка сохранения');
                 }
             })
-            .catch(error => {
-                formErrors.textContent = 'Ошибка: ' + error.message;
-                formErrors.style.display = 'block';
+            .catch(err => {
+                console.error(err);
+                showError('Ошибка соединения');
             });
     });
+
+    function showError(message) {
+        formErrors.textContent = message;
+        formErrors.classList.remove('d-none');
+    }
 });

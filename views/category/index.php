@@ -60,34 +60,54 @@ $this->registerJsFile('@web/js/category.js', [
     </div>
 </div>
 
-<div class="modal fade" id="categoryModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <form id="categoryForm" class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Категория</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+<div class="modal fade" id="categoryModal" tabindex="-1" aria-labelledby="categoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow-lg border-0 rounded-4 overflow-hidden">
+            <div class="modal-header bg-gradient-primary text-white border-0 py-4">
+                <h5 class="modal-title fw-bold fs-5 d-flex align-items-center gap-3" id="categoryModalLabel">
+                    <i class="fas fa-tag"></i>
+                    <span id="modalCategoryTitle">Новая категория</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Закрыть"></button>
             </div>
-            <div class="modal-body">
+
+            <form id="categoryForm" class="modal-body p-4 p-lg-5">
                 <input type="hidden" id="categoryId">
-                <div class="mb-3">
-                    <label class="form-label">Название</label>
-                    <label for="categoryName"></label><input type="text" id="categoryName" class="form-control" required>
+
+                <div class="form-floating mb-4">
+                    <input type="text"
+                           class="form-control rounded-3"
+                           id="categoryName"
+                           placeholder="Название категории"
+                           required
+                           maxlength="100">
+                    <label for="categoryName">
+                    </label>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label">Тип</label>
-                    <label for="categoryType"></label><select id="categoryType" class="form-select">
-                        <option value="income">Доход</option>
+
+                <div class="form-floating mb-4">
+                    <select class="form-select rounded-3" id="categoryType" required>
                         <option value="expense">Расход</option>
+                        <option value="income">Доход</option>
                         <option value="goal">Цель</option>
                     </select>
+                    <label for="categoryType">
+                    </label>
                 </div>
-                <div id="formErrors" class="text-danger"></div>
+
+                <div id="formErrors" class="alert alert-danger mt-3 d-none"></div>
+            </form>
+
+            <div class="modal-footer bg-light border-0 p-4 justify-content-between">
+                <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">
+                    Отмена
+                </button>
+                <button type="submit" form="categoryForm" class="btn btn-primary rounded-pill px-5 shadow-sm">
+                    <i class="fas fa-save me-2"></i>
+                    <span id="saveButtonText">Сохранить</span>
+                </button>
             </div>
-            <div class="modal-footer">
-                <button type="submit" class="btn btn-primary">Сохранить</button>
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-            </div>
-        </form>
+        </div>
     </div>
 </div>
 

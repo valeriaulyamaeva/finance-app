@@ -28,32 +28,42 @@ $saveUrl = Url::to(['settings/save']);
 <div class="content">
     <h1><?= Html::encode($this->title) ?></h1>
 
-    <div class="settings-form">
-        <label>Имя</label>
-        <label for="username"></label><input type="text" id="username" value="<?= Html::encode($user->username) ?>">
+    <div class="settings-card">
+        <div class="form-group">
+            <label for="username">Имя</label>
+            <input type="text" id="username" value="<?= Html::encode($user->username) ?>">
+        </div>
 
-        <label>Электронная почта</label>
-        <label for="email"></label><input type="email" id="email" value="<?= Html::encode($user->email) ?>">
+        <div class="form-group">
+            <label for="email">Электронная почта</label>
+            <input type="email" id="email" value="<?= Html::encode($user->email) ?>">
+        </div>
 
-        <label>Пароль (оставьте пустым, если не нужно менять)</label>
-        <label for="password"></label><input type="password" id="password">
+        <div class="form-group">
+            <label for="password">Новый пароль <small>(оставьте пустым, если не хотите менять)</small></label>
+            <input type="password" id="password" placeholder="••••••••">
+        </div>
 
-        <label>Тема</label>
-        <label for="theme"></label><select id="theme">
-            <option value="light" <?= $user->theme === 'light' ? 'selected' : '' ?>>Светлая</option>
-            <option value="dark" <?= $user->theme === 'dark' ? 'selected' : '' ?>>Тёмная</option>
-        </select>
+        <div class="form-group">
+            <label for="theme">Тема интерфейса</label>
+            <select id="theme">
+                <option value="light" <?= $user->theme === 'light' ? 'selected' : '' ?>>Светлая</option>
+                <option value="dark" <?= $user->theme === 'dark' ? 'selected' : '' ?>>Тёмная</option>
+            </select>
+        </div>
 
-        <label>Валюта</label>
-        <label for="currency"></label><select id="currency">
-            <option value="BYN" <?= $user->currency === 'BYN' ? 'selected' : '' ?>>Бел. рубль (BYN)</option>
-            <option value="USD" <?= $user->currency === 'USD' ? 'selected' : '' ?>>Доллар (USD)</option>
-            <option value="EUR" <?= $user->currency === 'EUR' ? 'selected' : '' ?>>Евро (EUR)</option>
-            <option value="RUB" <?= $user->currency === 'RUB' ? 'selected' : '' ?>>Рубль (RUB)</option>
-        </select>
+        <div class="form-group">
+            <label for="currency">Основная валюта</label>
+            <select id="currency">
+                <option value="BYN" <?= $user->currency === 'BYN' ? 'selected' : '' ?>>Белорусский рубль (BYN)</option>
+                <option value="USD" <?= $user->currency === 'USD' ? 'selected' : '' ?>>Доллар США (USD)</option>
+                <option value="EUR" <?= $user->currency === 'EUR' ? 'selected' : '' ?>>Евро (EUR)</option>
+                <option value="RUB" <?= $user->currency === 'RUB' ? 'selected' : '' ?>>Российский рубль (RUB)</option>
+            </select>
+        </div>
 
-        <button class="btn-save" id="saveSettingsBtn">Сохранить</button>
-        <p class="message" id="saveMessage">Настройки сохранены</p>
+        <button class="btn-save" id="saveSettingsBtn">Сохранить изменения</button>
+        <div class="message" id="saveMessage">Настройки успешно сохранены!</div>
     </div>
 </div>
 

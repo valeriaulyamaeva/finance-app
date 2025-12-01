@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const nextDateInput = document.getElementById('recurringNextDate');
 
     if (!form || !formErrors || !categorySelect || !goalSelector || !goalSelect || !recurringFrequency || !nextDateWrapper || !nextDateInput) {
-        console.error('Отсутствуют элементы формы:', { form, formErrors, categorySelect, goalSelector, goalSelect, recurringFrequency, nextDateWrapper, nextDateInput });
+        console.error('Отсутствуют элементы формы:' , { form, formErrors, categorySelect, goalSelector, goalSelect, recurringFrequency, nextDateWrapper, nextDateInput });
         return;
     }
 

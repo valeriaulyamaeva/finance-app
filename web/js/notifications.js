@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target.classList.contains('mark-read')) markAsRead(id, li);
     });
 
-    markAllReadBtn.textContent = '✓'; // делаем галочку
+    markAllReadBtn.textContent = '✓';
     markAllReadBtn.style.background = 'transparent';
     markAllReadBtn.style.border = 'none';
     markAllReadBtn.style.cursor = 'pointer';

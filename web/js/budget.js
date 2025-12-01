@@ -10,7 +10,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentAction = 'create';
     let currentId = null;
 
-    // === ОТКРЫТИЕ: Создать бюджет ===
     document.getElementById('addBudgetBtn').addEventListener('click', () => {
         currentAction = 'create';
         currentId = null;
@@ -21,12 +20,10 @@ document.addEventListener('DOMContentLoaded', () => {
         modal.show();
     });
 
-    // === РЕДАКТИРОВАТЬ / УДАЛИТЬ ===
     document.querySelector('.cards-container').addEventListener('click', (e) => {
         const target = e.target.closest('button');
         if (!target) return;
 
-        // --- РЕДАКТИРОВАТЬ ---
         if (target.classList.contains('editBtn')) {
             const id = target.dataset.id;
             fetch(`${viewUrl}?id=${id}`)
@@ -57,7 +54,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
         }
 
-        // --- УДАЛИТЬ ---
         if (target.classList.contains('deleteBtn')) {
             if (!confirm('Удалить бюджет?')) return;
             const id = target.dataset.id;
@@ -85,14 +81,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // === СОХРАНЕНИЕ ===
     document.querySelector('.saveBudget').addEventListener('click', () => {
         hideError();
 
         const formData = new FormData(form);
         formData.set('Budget[currency]', budgetCurrency.value);
 
-        // Валидация дат
         const startDate = form.querySelector('[name="Budget[start_date]"]').value;
         const endDate = form.querySelector('[name="Budget[end_date]"]').value;
         if (endDate && startDate && endDate < startDate) {
@@ -121,7 +115,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
     });
 
-    // === ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ===
     function setField(name, value) {
         const el = form.querySelector(`[name="${name}"]`);
         if (el) el.value = value;

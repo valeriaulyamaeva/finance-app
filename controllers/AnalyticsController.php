@@ -45,6 +45,9 @@ class AnalyticsController extends Controller
             ->andWhere(['like', 'date', $currentMonth])
             ->sum('amount');
 
+        $totalIncome = (float) ($totalIncome ?? 0);
+        $totalExpense = (float) ($totalExpense ?? 0);
+
         $remaining = $totalIncome - $totalExpense;
 
         $totalIncomeDisplay = $this->currencyService->fromBase(

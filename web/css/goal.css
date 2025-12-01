@@ -5,6 +5,7 @@ body {
     padding: 0;
     color: #4b453f;
 }
+
 .sidebar {
     width: 20rem;
     background-color: #b6b6b6;
@@ -12,17 +13,21 @@ body {
     padding: 2rem 1rem;
     height: 100vh;
     position: fixed;
+    z-index: 1000;
 }
+
 .sidebar h2 {
     font-size: 2.5rem;
     color: #2c2929;
     margin-bottom: 2rem;
     font-weight: 600;
 }
+
 .sidebar ul {
     list-style: none;
     padding: 0;
 }
+
 .sidebar ul li a {
     font-size: 1.25rem;
     color: #1c1b1b;
@@ -30,74 +35,112 @@ body {
     display: block;
     padding: 0.5rem 0;
     font-weight: 500;
+    transition: color 0.2s;
 }
+
 .sidebar ul li a:hover { color: #535353; }
+
 .content {
-    padding: 0 2rem;
     margin-left: 10rem;
+    padding: 1rem;
+    min-height: 100vh;
 }
+
 .content h1 {
     font-size: 2.5rem;
     font-weight: 600;
-    margin-bottom: 0.5rem;
+    margin-bottom: 1.5rem;
+    color: #2c2929;
 }
+
 .cards-container {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(22rem, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
     gap: 1.5rem;
-    margin-top: 1.5rem;
 }
+
 .card {
     background: #fff;
-    padding: 1.25rem 1.5rem;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border-radius: 16px;
+    width: 25rem;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+    padding: 1.5rem;
+    transition: all 0.3s ease;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
 }
+
 .card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+    transform: translateY(-6px);
+    box-shadow: 0 12px 25px rgba(0,0,0,0.12);
 }
+
 .card h3 {
-    margin: 0;
-    font-size: 1.3rem;
+    font-size: 1.4rem;
+    margin: 0 0 1rem;
+    color: #2c2929;
+}
+
+.goal-progress-bar {
+    height: 14px;
+    background: #e5e7eb;
+    border-radius: 8px;
+    overflow: hidden;
+    margin: 0.75rem 0;
+}
+
+.goal-progress-fill {
+    height: 100%;
+    border-radius: 8px;
+    transition: width 0.6s ease;
+}
+
+.goal-progress-text {
+    font-size: 0.95rem;
     color: #4b453f;
-}
-.card p {
-    margin: 0.25rem 0;
-    color: #6b7280;
-}
-.actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 0.75rem;
-}
-.actions button {
-    border: none;
-    background: none;
-    cursor: pointer;
-    color: #6b7280;
-    font-size: 1rem;
-}
-.actions button:hover { color: #171716; }
-.btn-add {
-    background-color: #a3c9c9;
-    color: #222020;
-    border: none;
-    border-radius: 20px;
-    padding: 0.6rem 1.2rem;
-    cursor: pointer;
     font-weight: 500;
-    transition: all 0.3s ease;
-    margin-bottom: 1rem;
 }
+
+.btn-add {
+    color: white;
+    border: none;
+    font-weight: 600;
+    transition: all 0.3s;
+}
+
 .btn-add:hover {
-    background-color: #8da4a4;
-    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(94,94,94,0.3);
+    color: white;
 }
-#formErrors {
-    display: none;
+
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #8da4a4 0%, #758888 100%);
+}
+
+.form-floating > .form-control:focus ~ label,
+.form-floating > .form-control:not(:empty) ~ label {
+    color: #8da4a4;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: #8da4a4;
+    box-shadow: 0 0 0 0.25rem rgba(141, 164, 164, 0.25);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #8da4a4 0%, #758888 100%);
+    border: none;
+    font-weight: 600;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(94,94,94,0.4);
+}
+
+.actions button {
+    font-size: 0.9rem;
 }

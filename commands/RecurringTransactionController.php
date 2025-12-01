@@ -8,6 +8,7 @@ use app\models\User;
 use app\services\RecurringTransactionService;
 use Exception;
 use Yii;
+use yii\base\InvalidConfigException;
 use yii\console\Controller;
 use yii\console\ExitCode;
 
@@ -27,14 +28,13 @@ class RecurringTransactionController extends Controller
             $transactions = $this->service->getDueRecurringTransactions();
             $count = count($transactions);
             $this->stdout("Найдено $count повторяющихся транзакций для обработки.\n");
-
             foreach ($transactions as $recurring) {
                 $transaction = $this->service->createTransactionFromRecurring($recurring);
                 if ($transaction) {
-                    $this->stdout("Создана транзакция для повторяющейся транзакции ID $recurring->id\n");
-                    $this->sendNotification($recurring->user, $transaction);
+                    $this->stdout("Создана транзакция для повторяющейся транзакции ID {$recurring->id}\n");
+                    $this->sendNotification($recurring->user, $transaction, $recurring->id);
                 } else {
-                    $this->stderr("Ошибка при создании транзакции для ID $recurring->id: " . json_encode($recurring->errors) . "\n");
+                    $this->stderr("Ошибка при создании транзакции для ID {$recurring->id}: " . json_encode($recurring->errors) . "\n");
                 }
             }
             $this->stdout("Обработано $count повторяющихся транзакций.\n");
@@ -49,19 +49,53 @@ class RecurringTransactionController extends Controller
     /**
      * @param User $user
      * @param Transaction $transaction
-     * @throws \yii\db\Exception
+     * @param int $recurringId
+     * @throws \yii\db\Exception|InvalidConfigException
      */
-    private function sendNotification(User $user, Transaction $transaction): void
+    private function sendNotification(User $user, Transaction $transaction, int $recurringId): void
     {
-        $notification = new Notification();
-        $notification->user_id = $user->id;
-        $notification->message = "Создана повторяющаяся транзакция: $transaction->amount $user->currency ($transaction->description)";
-        $notification->type = Notification::TYPE_REMINDER;
-        $notification->read_status = 0;
+        $today = date('Y-m-d');
+
+        $exists = Notification::find()
+            ->where([
+                'user_id'       => $user->id,
+                'type'          => Notification::TYPE_REMINDER,
+                'related_type'  => 'recurring_transaction',
+                'related_id'    => $recurringId,
+            ])
+            ->andWhere(['>=', 'created_at', $today . ' 00:00:00'])
+            ->exists();
+
+        if ($exists) {
+            return;
+        }
+
+        $isIncome = $transaction->category && $transaction->category->type === 'income';
+        $isExpense = $transaction->category && $transaction->category->type === 'expense';
+
+        $amountFormatted = number_format(abs($transaction->amount), 2);
+        $categoryName = $transaction->category->name ?? 'Без категории';
+
+        // Красивые русские сообщения
+        $message = match (true) {
+            $isIncome  => "Зачислено по автоплатежу\n+{$amountFormatted} {$user->currency}\n{$categoryName}",
+            $isExpense => "Списано по автоплатежу\n–{$amountFormatted} {$user->currency}\n{$categoryName}",
+            default    => "Автоматическая транзакция\n{$amountFormatted} {$user->currency}\n{$categoryName}",
+        };
+
+        $message .= "\n" . Yii::$app->formatter->asDate('now', 'd MMMM');
+
+        $notification = new Notification([
+            'user_id'       => $user->id,
+            'message'       => $message,
+            'type'          => Notification::TYPE_REMINDER,
+            'related_type'  => 'recurring_transaction',
+            'related_id'    => $recurringId,
+            'read_status'   => 0,
+        ]);
+
         if (!$notification->save()) {
-            Yii::error("Ошибка сохранения уведомления: " . json_encode($notification->errors), __METHOD__);
-        } else {
-            Yii::info("Уведомление создано для пользователя $user->id: $notification->message", __METHOD__);
+            Yii::error('Не удалось создать уведомление: ' . json_encode($notification->errors), __METHOD__);
         }
     }
 }
