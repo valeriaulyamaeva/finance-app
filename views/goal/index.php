@@ -25,65 +25,79 @@ $this->registerCssFile('@web/css/goal.css?v=2');
 $this->registerJsFile('@web/js/goal.js?v=2', ['depends' => [JqueryAsset::class], 'position' => View::POS_END]);
 ?>
 
-    <div class="sidebar">
-        <h2>PastelFinance</h2>
-        <ul>
-            <li><a href="analytics">Аналитика</a></li>
-            <li><a href="transaction">Транзакции</a></li>
-            <li><a href="budget">Бюджеты</a></li>
-            <li><a href="category">Категории</a></li>
-            <li><a href="goal">Цели</a></li>
-            <li><a href="settings">Настройки</a></li>
-        </ul>
-    </div>
+    <button class="sidebar-toggle d-lg-none" id="sidebarToggle">
+        <i class="fas fa-bars fa-2x"></i>
+    </button>
 
-    <div class="content">
-        <h1>Цели</h1>
+    <div class="goal-page">
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header d-flex justify-content-between align-items-center d-lg-none">
+                <h2>PastelFinance</h2>
+                <button class="sidebar-close" id="sidebarClose">
+                    <i class="fas fa-times fa-lg"></i>
+                </button>
+            </div>
 
-        <button class="btn-add rounded-pill px-5" id="addGoalBtn" data-bs-toggle="modal" data-bs-target="#goalModal">
-            <i class="fas fa-plus me-2"></i> Добавить цель
-        </button>
+            <h2 class="d-none d-lg-block">PastelFinance</h2>
 
-        <div class="cards-container mt-4">
-            <?php if ($dataProvider && $dataProvider->getModels()): ?>
-                <?php foreach ($dataProvider->getModels() as $goal):
-                    $target = $goal->display_target_amount ?? $goal->target_amount;
-                    $current = $goal->display_current_amount ?? $goal->current_amount;
-                    $percent = $target > 0 ? min(100, round(($current / $target) * 100, 1)) : 0;
-                    $progressColor = $percent >= 100 ? '#16a34a' : ($percent >= 75 ? '#facc15' : '#8da4a4');
-                    $statusColor = $goal->status === 'completed' ? '#16a34a' : ($goal->status === 'failed' ? '#dc2626' : '#8da4a4');
-                    ?>
-                    <div class="card shadow-sm" data-id="<?= $goal->id ?>">
-                        <div>
-                            <h3 class="mb-3"><?= Html::encode($goal->name) ?></h3>
+            <ul>
+                <li><a href="/analytics">Аналитика</a></li>
+                <li><a href="/transaction">Транзакции</a></li>
+                <li><a href="/budget">Бюджеты</a></li>
+                <li><a href="/category">Категории</a></li>
+                <li><a href="/goal" class="active">Цели</a></li>
+                <li><a href="/settings">Настройки</a></li>
+            </ul>
+        </div>
 
-                            <p><strong>Срок:</strong> <?= Yii::$app->formatter->asDate($goal->deadline, 'd MMMM yyyy') ?></p>
-                            <p>
-                                <strong>Статус:</strong>
-                                <span style="color: <?= $statusColor ?>; font-weight: 600;">
-                                <?= Html::encode($goal->displayStatus()) ?>
-                            </span>
-                            </p>
+        <div class="goal-content" id="mainContent">
+            <h1>Цели</h1>
 
-                            <div class="goal-progress-bar mb-3">
-                                <div class="goal-progress-fill" style="width: <?= $percent ?>%; background-color: <?= $progressColor ?>;"></div>
+            <div class="actions mb-4">
+                <button class="btn-add" id="addGoalBtn" data-bs-toggle="modal" data-bs-target="#goalModal">
+                    Добавить цель
+                </button>
+            </div>
+
+            <div class="cards-container">
+                <?php if ($dataProvider && $dataProvider->getModels()): ?>
+                    <?php foreach ($dataProvider->getModels() as $goal):
+                        $target = $goal->display_target_amount ?? $goal->target_amount;
+                        $current = $goal->display_current_amount ?? $goal->current_amount;
+                        $percent = $target > 0 ? min(100, round(($current / $target) * 100, 1)) : 0;
+                        $progressColor = $percent >= 100 ? '#16a34a' : ($percent >= 75 ? '#facc15' : '#8da4a4');
+                        $statusColor = $goal->status === 'completed' ? '#16a34a' : ($goal->status === 'failed' ? '#dc2626' : '#8da4a4');
+                        ?>
+                        <div class="card" data-id="<?= $goal->id ?>">
+                            <div class="card-body">
+                                <h3><?= Html::encode($goal->name) ?></h3>
+
+                                <p><strong>Срок:</strong> <?= Yii::$app->formatter->asDate($goal->deadline, 'd MMMM yyyy') ?></p>
+                                <p>
+                                    <strong>Статус:</strong>
+                                    <span style="color: <?= $statusColor ?>; font-weight: 600;">
+                                    <?= Html::encode($goal->displayStatus()) ?>
+                                </span>
+                                </p>
+
+                                <div class="goal-progress-bar">
+                                    <div class="goal-progress-fill" style="width: <?= $percent ?>%; background: <?= $progressColor ?>;"></div>
+                                </div>
+                                <p class="goal-progress-text">
+                                    <strong><?= $percent ?>%</strong> накоплено — <?= number_format($current, 2) ?> из <?= number_format($target, 2) ?> <?= $currencySymbol ?>
+                                </p>
                             </div>
-                            <p class="goal-progress-text mb-3">
-                                <strong><?= $percent ?>%</strong> накоплено — <?= number_format($current, 2) ?> из <?= number_format($target, 2) ?> <?= $currencySymbol ?>
-                            </p>
-                        </div>
 
-                        <div class="actions">
-                            <button class="editBtn btn btn-sm" data-id="<?= $goal->id ?>">✏️</button>
-                            <button class="deleteBtn btn btn-sm" data-id="<?= $goal->id ?>">🗑️</button>
+                            <div class="card-actions">
+                                <button class="editBtn" data-id="<?= $goal->id ?>">✏️</button>
+                                <button class="deleteBtn" data-id="<?= $goal->id ?>">🗑️</button>
+                            </div>
                         </div>
-                    </div>
-                <?php endforeach; ?>
-            <?php else: ?>
-                <div class="text-center py-5">
-                    <p class="text-muted">У вас пока нет целей. Создайте первую!</p>
-                </div>
-            <?php endif; ?>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <p class="text-center text-muted py-5 fs-4">У вас пока нет целей. Создайте первую!</p>
+                <?php endif; ?>
+            </div>
         </div>
     </div>
 
@@ -146,4 +160,5 @@ $this->registerCssFile('https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bo
 $this->registerCssFile('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
 $this->registerJsFile('https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js');
 $this->registerJsFile('@web/js/notifications.js', ['depends' => [JqueryAsset::class]]);
+$this->registerJsFile('@web/js/sidebar.js', ['depends' => JqueryAsset::class]);
 ?>

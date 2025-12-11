@@ -70,16 +70,6 @@ $this->registerMetaTag(['name' => 'viewport', 'content' => 'width=device-width, 
         transition: color 0.3s;
     }
 
-    .sidebar a.active {
-        font-weight: 600;
-        border-left: 3px solid currentColor;
-        padding-left: 0.5rem;
-    }
-
-    main.with-sidebar {
-        margin-left: 10rem;
-    }
-
     .summary-cards {
         display: flex;
         gap: 1rem;

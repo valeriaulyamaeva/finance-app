@@ -24,39 +24,59 @@ $this->registerJsFile('@web/js/category.js', [
 
 ?>
 
-<div class="sidebar">
-    <h2>PastelFinance</h2>
-    <ul>
-        <li><a href="analytics">Аналитика</a></li>
-        <li><a href="transaction">Транзакции</a></li>
-        <li><a href="budget">Бюджеты</a></li>
-        <li><a href="category">Категории</a></li>
-        <li><a href="goal">Цели</a></li>
-        <li><a href="settings">Настройки</a></li>
-    </ul>
-</div>
+<button class="sidebar-toggle d-lg-none" id="sidebarToggle">
+    <i class="fas fa-bars fa-2x"></i>
+</button>
 
-<div class="content">
-    <h1><?= Html::encode($this->title) ?></h1>
-    <p>Управляйте своими категориями доходов и расходов</p>
+<div class="category-page">
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header d-flex justify-content-between align-items-center d-lg-none">
+            <h2>PastelFinance</h2>
+            <button class="sidebar-close" id="sidebarClose">
+                <i class="fas fa-times fa-lg"></i>
+            </button>
+        </div>
 
-    <button class="btn-add mb-3" id="addCategoryBtn" data-bs-toggle="modal" data-bs-target="#categoryModal">
-        Добавить категорию
-    </button>
+        <h2 class="d-none d-lg-block">PastelFinance</h2>
 
-    <div class="cards-container">
-        <?php foreach ($categories as $category): ?>
-            <div class="card" data-id="<?= $category->id ?>">
-                <div>
-                    <h3><?= Html::encode($category->name) ?></h3>
-                    <p><?= Html::encode($category->displayType()) ?></p>
-                </div>
-                <div class="actions">
-                    <button class="editBtn" title="Редактировать">✏️</button>
-                    <button class="deleteBtn" title="Удалить">🗑️</button>
-                </div>
-            </div>
-        <?php endforeach; ?>
+        <ul>
+            <li><a href="/analytics">Аналитика</a></li>
+            <li><a href="/transaction">Транзакции</a></li>
+            <li><a href="/budget">Бюджеты</a></li>
+            <li><a href="/category" class="active">Категории</a></li>
+            <li><a href="/goal">Цели</a></li>
+            <li><a href="/settings">Настройки</a></li>
+        </ul>
+    </div>
+
+    <div class="category-content" id="mainContent">
+        <h1><?= Html::encode($this->title) ?></h1>
+        <p class="text-muted mb-4">Управляйте своими категориями доходов и расходов</p>
+
+        <div class="actions mb-4">
+            <button class="btn-add" id="addCategoryBtn" data-bs-toggle="modal" data-bs-target="#categoryModal">
+                Добавить категорию
+            </button>
+        </div>
+
+        <div class="cards-container">
+            <?php if ($categories): ?>
+                <?php foreach ($categories as $category): ?>
+                    <div class="card" data-id="<?= $category->id ?>">
+                        <div class="card-body">
+                            <h3><?= Html::encode($category->name) ?></h3>
+                            <p class="text-muted"><?= Html::encode($category->displayType()) ?></p>
+                        </div>
+                        <div class="card-actions">
+                            <button class="editBtn" title="Редактировать">✏️</button>
+                            <button class="deleteBtn" title="Удалить">🗑️</button>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <p class="text-center text-muted py-5 fs-4">Категории ещё не созданы</p>
+            <?php endif; ?>
+        </div>
     </div>
 </div>
 
@@ -123,4 +143,5 @@ $this->registerJsFile('@web/js/notifications.js', ['depends' => [JqueryAsset::cl
 $this->registerJsFile('https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js', [
     'depends' => [JqueryAsset::class],
 ]);
+$this->registerJsFile('@web/js/sidebar.js', ['depends' => JqueryAsset::class]);
 ?>

@@ -64,7 +64,7 @@ class TransactionService
     /**
      * @throws Exception
      */
-    private function resolveTypeByCategory(?int $categoryId, ?int $goalId): string
+    public function resolveTypeByCategory(?int $categoryId, ?int $goalId): string
     {
         if ($goalId !== null && !is_int($goalId)) {
             $goalId = (int)$goalId;

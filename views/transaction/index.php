@@ -40,71 +40,86 @@ $this->registerCssFile('@web/css/transaction.css');
 $this->registerJsFile('@web/js/transaction.js', ['depends' => [JqueryAsset::class]]);
 ?>
 
-<div class="sidebar">
-    <h2>PastelFinance</h2>
+<button class="sidebar-toggle d-lg-none" id="sidebarToggle">
+    <i class="fas fa-bars fa-2x"></i>
+</button>
+
+<div class="sidebar" id="sidebar">
+    <div class="sidebar-header d-flex justify-content-between align-items-center d-lg-none">
+        <h2>PastelFinance</h2>
+        <button class="sidebar-close" id="sidebarClose">
+            <i class="fas fa-times fa-lg"></i>
+        </button>
+    </div>
+
+    <h2 class="d-none d-lg-block">PastelFinance</h2>
+
     <ul>
-        <li><a href="analytics">Аналитика</a></li>
-        <li><a href="transaction">Транзакции</a></li>
-        <li><a href="budget">Бюджеты</a></li>
-        <li><a href="category">Категории</a></li>
-        <li><a href="goal">Цели</a></li>
-        <li><a href="settings">Настройки</a></li>
+        <li><a href="/analytics">Аналитика</a></li>
+        <li><a href="/transaction">Транзакции</a></li>
+        <li><a href="/budget">Бюджеты</a></li>
+        <li><a href="/category">Категории</a></li>
+        <li><a href="/goal">Цели</a></li>
+        <li><a href="/settings">Настройки</a></li>
     </ul>
 </div>
 
-<div class="content">
-    <h1><?= Html::encode($this->title) ?></h1>
+    <div class="transaction-content" id="mainContent">
+        <h1><?= Html::encode($this->title) ?></h1>
 
-    <div class="summary-cards">
-        <div class="summary-card">
-            <h5>Доход</h5>
-            <p style="color:#16a34a;"><?= number_format($summary['income'] ?? 0, 2) ?> <?= $currencySymbols[$userCurrency] ?? '' ?></p>
+        <div class="summary-cards">
+            <div class="summary-card">
+                <h5>Доход</h5>
+                <p style="color:#16a34a;"><?= number_format($summary['income'] ?? 0, 2) ?> <?= $currencySymbols[$userCurrency] ?? '' ?></p>
+            </div>
+            <div class="summary-card">
+                <h5>Остаток с прошлого месяца</h5>
+                <p><?= number_format($summary['previousBalance'] ?? 0, 2) ?> <?= $currencySymbols[$userCurrency] ?? '' ?></p>
+            </div>
+            <div class="summary-card">
+                <h5>Расход</h5>
+                <p style="color:#dc2626;"><?= number_format($summary['expense'] ?? 0, 2) ?> <?= $currencySymbols[$userCurrency] ?? '' ?></p>
+            </div>
+            <div class="summary-card">
+                <h5>Баланс</h5>
+                <p><?= number_format($summary['balance'] ?? 0, 2) ?> <?= $currencySymbols[$userCurrency] ?? '' ?></p>
+            </div>
         </div>
-        <div class="summary-card">
-            <h5>Остаток с прошлого месяца</h5>
-            <p><?= number_format($summary['previousBalance'] ?? 0, 2) ?> <?= $currencySymbols[$userCurrency] ?? '' ?></p>
-        </div>
-        <div class="summary-card">
-            <h5>Расход</h5>
-            <p style="color:#dc2626;"><?= number_format($summary['expense'] ?? 0, 2) ?> <?= $currencySymbols[$userCurrency] ?? '' ?></p>
-        </div>
-        <div class="summary-card">
-            <h5>Баланс</h5>
-            <p><?= number_format($summary['balance'] ?? 0, 2) ?> <?= $currencySymbols[$userCurrency] ?? '' ?></p>
-        </div>
-    </div>
 
-    <button class="btn-add" id="createTransactionBtn" data-bs-toggle="modal" data-bs-target="#transactionModal">
-        Создать транзакцию
-    </button>
+        <div class="actions mb-4">
+            <button class="btn-add" id="createTransactionBtn" data-bs-toggle="modal" data-bs-target="#transactionModal">
+                Создать транзакцию
+            </button>
+            <button class="btn-add" id="viewRecurringBtn" data-bs-toggle="modal" data-bs-target="#recurringModal">
+                Регулярные платежи
+            </button>
+        </div>
 
-    <button class="btn-add" id="viewRecurringBtn" data-bs-toggle="modal" data-bs-target="#recurringModal">
-        Просмотреть регулярные платежи
-    </button>
-
-    <div class="transactions-container">
-        <?php if (isset($dataProvider) && $dataProvider->models): ?>
-            <?php foreach ($dataProvider->models as $transaction): ?>
-                <div class="transaction-card" data-id="<?= $transaction->id ?>">
-                    <div class="transaction-info">
-                        <p><strong>Дата:</strong> <?= Html::encode($transaction->date) ?></p>
-                        <p><strong>Сумма:</strong> <?= Html::encode($transaction->display_amount ?? number_format($transaction->amount, 2)) ?> <?= $currencySymbols[$transaction->display_currency ?? $transaction->currency ?? $userCurrency] ?? '' ?></p>
-                        <p><strong>Тип:</strong> <?= Html::encode($transaction->category->type ?? '-') ?></p>
-                        <p><strong>Категория:</strong> <?= Html::encode($transaction->category->name ?? '-') ?></p>
-                        <p><strong>Описание:</strong> <?= Html::encode($transaction->description ?? '-') ?></p>
-                        <?php if ($transaction->recurring_id): ?>
-                            <p><strong>Повтор:</strong> <?= Html::encode($transaction->recurringTransaction->displayFrequency()) ?></p>
-                        <?php endif; ?>
+        <div class="transactions-container">
+            <?php if ($dataProvider->models): ?>
+                <?php foreach ($dataProvider->models as $transaction): ?>
+                    <div class="transaction-card" data-id="<?= $transaction->id ?>">
+                        <div class="transaction-info">
+                            <p><strong>Дата:</strong> <?= Html::encode($transaction->date) ?></p>
+                            <p><strong>Сумма:</strong> <?= Html::encode($transaction->display_amount ?? number_format($transaction->amount, 2)) ?>
+                                <?= $currencySymbols[$transaction->display_currency ?? $transaction->currency ?? $userCurrency] ?? '' ?></p>
+                            <p><strong>Тип:</strong> <?= Html::encode($transaction->category->type ?? '-') ?></p>
+                            <p><strong>Категория:</strong> <?= Html::encode($transaction->category->name ?? '-') ?></p>
+                            <p><strong>Описание:</strong> <?= Html::encode($transaction->description ?? '-') ?></p>
+                            <?php if ($transaction->recurring_id): ?>
+                                <p><strong>Повтор:</strong> <?= Html::encode($transaction->recurringTransaction->displayFrequency()) ?></p>
+                            <?php endif; ?>
+                        </div>
+                        <div class="transaction-actions">
+                            <button class="editBtn js-update" data-id="<?= $transaction->id ?>">✏️</button>
+                            <button class="deleteBtn js-delete" data-id="<?= $transaction->id ?>">🗑️</button>
+                        </div>
                     </div>
-                    <div class="transaction-actions">
-                        <button class="editBtn js-update" data-id="<?= $transaction->id ?>">✏️</button>
-                        <button class="deleteBtn js-delete" data-id="<?= $transaction->id ?>">🗑️</button>
-                    </div>
-                </div>
-            <?php endforeach; ?>
-        <?php else: ?>
-            <p>Нет доступных транзакций.</p>
-        <?php endif; ?>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <p class="text-muted text-center py-5">Нет транзакций за выбранный период</p>
+            <?php endif; ?>
+        </div>
     </div>
 </div>
 
@@ -116,4 +131,5 @@ $this->registerJsFile('@web/js/notifications.js', ['depends' => [JqueryAsset::cl
 $this->registerJsFile('https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js', [
     'depends' => [JqueryAsset::class],
 ]);
+$this->registerJsFile('@web/js/sidebar.js', ['depends' => JqueryAsset::class]);
 ?>

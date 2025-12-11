@@ -26,22 +26,36 @@ $this->registerCssFile('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.
 
     <head>
         <?= Html::csrfMetaTags() ?>
-        <title></title></head>
+        <title><?= Html::encode($this->title) ?> | PastelFinance</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+    </head>
 
-    <div class="analytics-page">
-        <div class="sidebar">
+    <button class="sidebar-toggle d-lg-none" id="sidebarToggle">
+        <i class="fas fa-bars fa-2x"></i>
+    </button>
+
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header d-flex justify-content-between align-items-center d-lg-none">
             <h2>PastelFinance</h2>
-            <ul>
-                <li><a href="analytics">Аналитика</a></li>
-                <li><a href="transaction">Транзакции</a></li>
-                <li><a href="budget">Бюджеты</a></li>
-                <li><a href="category">Категории</a></li>
-                <li><a href="goal">Цели</a></li>
-                <li><a href="settings">Настройки</a></li>
-            </ul>
+            <button class="sidebar-close" id="sidebarClose">
+                <i class="fas fa-times fa-lg"></i>
+            </button>
         </div>
 
-        <div class="analytics-content">
+        <h2 class="d-none d-lg-block">PastelFinance</h2>
+
+        <ul>
+            <li><a href="/analytics">Аналитика</a></li>
+            <li><a href="/transaction">Транзакции</a></li>
+            <li><a href="/budget">Бюджеты</a></li>
+            <li><a href="/category">Категории</a></li>
+            <li><a href="/goal">Цели</a></li>
+            <li><a href="/settings">Настройки</a></li>
+        </ul>
+    </div>
+
+        <div class="analytics-content" id="mainContent">
             <h1>Аналитика и статистика</h1>
 
             <div class="summary-cards">
@@ -118,4 +132,5 @@ $this->registerJs('
 ', View::POS_HEAD);
 
 $this->registerJsFile('https://cdn.jsdelivr.net/npm/chart.js', ['position' => View::POS_HEAD]);
+$this->registerJsFile('@web/js/sidebar.js', ['depends' => JqueryAsset::class]);
 ?>
