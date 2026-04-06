@@ -67,6 +67,8 @@ $config = [
                 'register' => 'user/register',
                 'settings' => 'settings/index',
                 'settings/save' => 'settings/save',
+                'import' => 'import/index',
+                'import/<action:\w+>' => 'import/<action>',
 
                 '<controller:\w+>/<action:\w+>/<id:\d+>' => '<controller>/<action>',
                 '<controller:\w+>/<action:\w+>' => '<controller>/<action>',

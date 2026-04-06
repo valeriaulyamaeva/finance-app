@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git:*)",
+      "Bash(xargs grep:*)",
+      "Bash(ls:*)",
+      "Bash(grep -E \"\\\\.php$\")",
+      "Read(//mnt/c/Java/**)",
+      "Bash(composer update:*)",
+      "Bash(docker-compose exec:*)",
+      "Bash(docker-compose up:*)"
+    ]
+  }
+}

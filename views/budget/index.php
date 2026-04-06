@@ -60,6 +60,7 @@ $this->registerJsFile('@web/js/budget.js', ['depends' => [JqueryAsset::class]]);
                 <li><a href="/budget" class="active">Бюджеты</a></li>
                 <li><a href="/category">Категории</a></li>
                 <li><a href="/goal">Цели</a></li>
+                <li><a href="/import">Импорт выписки</a></li>
                 <li><a href="/settings">Настройки</a></li>
             </ul>
         </div>

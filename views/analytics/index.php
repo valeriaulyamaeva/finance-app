@@ -51,6 +51,7 @@ $this->registerCssFile('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.
             <li><a href="/budget">Бюджеты</a></li>
             <li><a href="/category">Категории</a></li>
             <li><a href="/goal">Цели</a></li>
+            <li><a href="/import">Импорт выписки</a></li>
             <li><a href="/settings">Настройки</a></li>
         </ul>
     </div>

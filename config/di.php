@@ -7,6 +7,7 @@ use app\services\GoalService;
 use app\services\TransactionService;
 use app\services\RecurringTransactionService;
 use app\services\CurrencyService;
+use app\services\ImportService;
 
 return [
     'definitions' => [
@@ -25,6 +26,7 @@ return [
         GoalService::class => GoalService::class,
         TransactionService::class => TransactionService::class,
         RecurringTransactionService::class => RecurringTransactionService::class,
+        ImportService::class => ImportService::class,
     ],
     'singletons' => [
         CurrencyService::class => CurrencyService::class,

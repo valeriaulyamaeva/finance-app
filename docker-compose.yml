@@ -37,6 +37,17 @@ services:
     depends_on:
       - php
 
+  parser:
+    build: ./services/parser
+    container_name: finance_app_parser
+    ports:
+      - "8001:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
   cron:
     build:
       context: .
