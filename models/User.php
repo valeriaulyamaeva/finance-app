@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace app\models;
 
 use Yii;
-use yii\base\Exception;
 use yii\db\ActiveQuery;
 use yii\db\ActiveRecord;
 use yii\web\IdentityInterface;
+use Override;
 
 /**
  * @property int $id
@@ -22,86 +24,76 @@ use yii\web\IdentityInterface;
  * @property int $status
  * @property string $created_at
  * @property string $updated_at
- * @property string|null $password Virtual attribute for registration/login
- * @property string|null $password_repeat Virtual attribute for password confirmation
+ *
+ * @property-read Budget[] $budgets
+ * @property-read Category[] $categories
+ * @property-read Goal[] $goals
+ * @property-read Transaction[] $transactions
  */
 class User extends ActiveRecord implements IdentityInterface
 {
-    const THEME_LIGHT = 'light';
-    const THEME_DARK = 'dark';
-    const STATUS_ACTIVE = 1;
-    const STATUS_DELETED = 0;
+    public const string THEME_LIGHT = 'light';
+    public const string THEME_DARK  = 'dark';
 
-    public ?string $password = null;
-    public ?string $password_repeat = null;
+    public const int STATUS_ACTIVE  = 1;
+    public const int STATUS_DELETED = 0;
 
+    public const string CURRENCY_BYN = 'BYN';
+    public const string CURRENCY_USD = 'USD';
+    public const string CURRENCY_EUR = 'EUR';
+    public const string CURRENCY_RUB = 'RUB';
+
+    #[Override]
     public static function tableName(): string
     {
-        return 'user';
+        return '{{%user}}';
     }
 
+    #[Override]
     public function rules(): array
     {
         return [
-            [['username', 'email', 'password', 'password_repeat'], 'required', 'on' => 'create'],
-            [['password_repeat'], 'compare', 'compareAttribute' => 'password', 'on' => 'create'],
-            [['password'], 'string', 'min' => 6, 'on' => 'create'],
-            [['email'], 'email', 'on' => 'create'],
-            [['email'], 'unique', 'on' => 'create'],
-            [['email', 'password'], 'required', 'on' => 'login'],
-            [['email'], 'email', 'on' => 'login'],
-            [['password'], 'string', 'min' => 6, 'on' => 'login'],
-            [['access_token', 'avatar', 'last_login'], 'default', 'value' => null],
-            [['theme'], 'default', 'value' => self::THEME_LIGHT],
-            [['currency'], 'default', 'value' => 'BYN'],
-            [['status'], 'default', 'value' => self::STATUS_ACTIVE],
-            [['created_at', 'updated_at'], 'default', 'value' => date('Y-m-d H:i:s')],
             [['username', 'email', 'password_hash', 'auth_key'], 'required'],
-            [['theme'], 'string'],
-            [['last_login', 'created_at', 'updated_at'], 'safe'],
-            [['status'], 'integer'],
-            [['username', 'email', 'password_hash', 'access_token', 'avatar'], 'string', 'max' => 255],
-            [['auth_key'], 'string', 'max' => 32],
-            [['currency'], 'string', 'max' => 3],
+            ['email', 'email'],
+            ['email', 'unique'],
+            ['status', 'integer'],
+            ['status', 'default', 'value' => self::STATUS_ACTIVE],
             ['theme', 'in', 'range' => array_keys(self::optsTheme())],
+            ['currency', 'in', 'range' => array_keys(self::optsCurrency())],
+            [['username', 'email', 'password_hash', 'access_token', 'avatar'], 'string', 'max' => 255],
+            ['auth_key', 'string', 'max' => 32],
+            ['currency', 'string', 'max' => 3],
+            [['last_login', 'created_at', 'updated_at'], 'safe'],
         ];
     }
 
-    public function scenarios(): array
-    {
-        return [
-            'create' => ['username', 'email', 'password', 'password_repeat', 'theme', 'currency', 'status', 'created_at', 'updated_at'],
-            'login' => ['email', 'password'],
-            self::SCENARIO_DEFAULT => ['username', 'email', 'password_hash', 'auth_key', 'access_token', 'theme', 'currency', 'avatar', 'last_login', 'status', 'created_at', 'updated_at'],
-        ];
-    }
-
+    #[Override]
     public function attributeLabels(): array
     {
         return [
-            'id' => 'ID',
-            'username' => 'Имя',
-            'email' => 'Электронная почта',
-            'password' => 'Пароль',
-            'password_repeat' => 'Подтверждение пароля',
+            'id'            => 'ID',
+            'username'      => 'Имя',
+            'email'         => 'Email',
             'password_hash' => 'Хэш пароля',
-            'auth_key' => 'Ключ авторизации',
-            'access_token' => 'Токен доступа',
-            'theme' => 'Тема',
-            'currency' => 'Валюта',
-            'avatar' => 'Аватар',
-            'last_login' => 'Последний вход',
-            'status' => 'Статус',
-            'created_at' => 'Создано',
-            'updated_at' => 'Обновлено',
+            'auth_key'      => 'Ключ авторизации',
+            'access_token'  => 'Токен доступа',
+            'theme'         => 'Тема',
+            'currency'      => 'Валюта',
+            'avatar'        => 'Аватар',
+            'last_login'    => 'Последний вход',
+            'status'        => 'Статус',
+            'created_at'    => 'Создано',
+            'updated_at'    => 'Обновлено',
         ];
     }
 
+    #[Override]
     public static function findIdentity($id): ?static
     {
         return static::findOne(['id' => $id, 'status' => self::STATUS_ACTIVE]);
     }
 
+    #[Override]
     public static function findIdentityByAccessToken($token, $type = null): ?static
     {
         return static::findOne(['access_token' => $token, 'status' => self::STATUS_ACTIVE]);
@@ -111,20 +103,23 @@ class User extends ActiveRecord implements IdentityInterface
     {
         return static::find()
             ->where(['status' => self::STATUS_ACTIVE])
-            ->andWhere('LOWER(email) = :email', [':email' => strtolower(trim($email))])
+            ->andWhere(['LOWER(email)' => strtolower(trim($email))])
             ->one();
     }
 
-    public function getId(): int
+    #[Override]
+    public function getId(): int|string
     {
         return $this->id;
     }
 
+    #[Override]
     public function getAuthKey(): string
     {
         return $this->auth_key;
     }
 
+    #[Override]
     public function validateAuthKey($authKey): bool
     {
         return $this->auth_key === $authKey;
@@ -135,12 +130,32 @@ class User extends ActiveRecord implements IdentityInterface
         return Yii::$app->security->validatePassword($password, $this->password_hash);
     }
 
-    /**
-     * @throws Exception
-     */
     public function setPassword(string $password): void
     {
         $this->password_hash = Yii::$app->security->generatePasswordHash($password);
+    }
+
+    public function generateAuthKey(): void
+    {
+        $this->auth_key = Yii::$app->security->generateRandomString();
+    }
+
+    public static function optsTheme(): array
+    {
+        return [
+            self::THEME_LIGHT => 'Светлая',
+            self::THEME_DARK  => 'Тёмная',
+        ];
+    }
+
+    public static function optsCurrency(): array
+    {
+        return [
+            self::CURRENCY_BYN => 'BYN',
+            self::CURRENCY_USD => 'USD',
+            self::CURRENCY_EUR => 'EUR',
+            self::CURRENCY_RUB => 'RUB',
+        ];
     }
 
     public function getBudgets(): ActiveQuery
@@ -158,60 +173,8 @@ class User extends ActiveRecord implements IdentityInterface
         return $this->hasMany(Goal::class, ['user_id' => 'id']);
     }
 
-    public function getNotifications(): ActiveQuery
-    {
-        return $this->hasMany(Notification::class, ['user_id' => 'id']);
-    }
-
-    public function getRecurringTransactions(): ActiveQuery
-    {
-        return $this->hasMany(RecurringTransaction::class, ['user_id' => 'id']);
-    }
-
     public function getTransactions(): ActiveQuery
     {
         return $this->hasMany(Transaction::class, ['user_id' => 'id']);
     }
-
-    public static function optsTheme(): array
-    {
-        return [
-            self::THEME_LIGHT => 'Светлая',
-            self::THEME_DARK => 'Темная',
-        ];
-    }
-
-    public function displayTheme(): string
-    {
-        return self::optsTheme()[$this->theme];
-    }
-
-    public function isThemeLight(): bool
-    {
-        return $this->theme === self::THEME_LIGHT;
-    }
-
-    public function setThemeToLight(): void
-    {
-        $this->theme = self::THEME_LIGHT;
-    }
-
-    public function isThemeDark(): bool
-    {
-        return $this->theme === self::THEME_DARK;
-    }
-
-    public function setThemeToDark(): void
-    {
-        $this->theme = self::THEME_DARK;
-    }
-
-    /**
-     * @throws Exception
-     */
-    public function generateAuthKey(): void
-    {
-        $this->auth_key = Yii::$app->security->generateRandomString();
-    }
-
 }

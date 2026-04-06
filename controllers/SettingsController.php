@@ -1,29 +1,32 @@
 <?php
 
+declare(strict_types=1);
+
 namespace app\controllers;
 
+use app\models\forms\UserProfileForm;
 use app\models\User;
-use app\services\CurrencyService;
-use Exception;
-use Throwable;
+use app\services\UserService;
 use Yii;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
 use yii\web\Response;
+use Throwable;
 
 class SettingsController extends BaseController
 {
-    public CurrencyService $currencyService;
-
-    public function __construct($id, $module, CurrencyService $currencyService, $config = [])
-    {
-        $this->currencyService = $currencyService;
+    public function __construct(
+        $id,
+        $module,
+        private readonly UserService $userService,
+        $config = []
+    ) {
         parent::__construct($id, $module, $config);
     }
 
     public function behaviors(): array
     {
-        return array_merge(parent::behaviors(), [
+        return [
             'verbs' => [
                 'class' => VerbFilter::class,
                 'actions' => [
@@ -47,15 +50,13 @@ class SettingsController extends BaseController
                     return Yii::$app->response->redirect(['site/login']);
                 },
             ],
-        ]);
+        ];
     }
 
     public function actionIndex(): string
     {
-        $user = Yii::$app->user->identity;
-
         return $this->render('index', [
-            'user' => $user,
+            'user' => Yii::$app->user->identity,
         ]);
     }
 
@@ -63,41 +64,23 @@ class SettingsController extends BaseController
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
 
+        /** @var User $user */
         $user = Yii::$app->user->identity;
-        $data = Yii::$app->request->post('User', []);
 
-        try {
-            if (isset($data['username']) && $data['username'] !== $user->username) {
-                $user->username = $data['username'];
+        $form = new UserProfileForm($user);
+
+        if ($form->load(Yii::$app->request->post()) && $form->validate()) {
+            try {
+                $this->userService->updateProfile($user, $form);
+                return ['success' => true, 'message' => 'Настройки сохранены'];
+            } catch (Throwable $e) {
+                return ['success' => false, 'message' => $e->getMessage()];
             }
-
-            if (isset($data['email']) && $data['email'] !== $user->email) {
-                if (User::findOne(['email' => $data['email']])) {
-                    throw new Exception('Email уже используется');
-                }
-                $user->email = $data['email'];
-            }
-
-            if (!empty($data['password'])) {
-                $user->setPassword($data['password']);
-                $user->generateAuthKey();
-            }
-
-            if (isset($data['theme']) && in_array($data['theme'], ['light', 'dark'])) {
-                $user->theme = $data['theme'];
-            }
-
-            if (isset($data['currency']) && in_array($data['currency'], ['BYN', 'USD', 'EUR', 'RUB'])) {
-                $user->currency = $data['currency'];
-            }
-
-            if (!$user->save()) {
-                throw new Exception(implode(', ', $user->firstErrors));
-            }
-
-            return ['success' => true];
-        } catch (Throwable $e) {
-            return ['success' => false, 'message' => $e->getMessage()];
         }
+
+        return [
+            'success' => false,
+            'errors' => $form->getErrors()
+        ];
     }
 }

@@ -1,163 +1,127 @@
 <?php
 
+declare(strict_types=1);
+
 namespace app\models;
 
-
+use app\models\queries\BudgetQuery;
+use Yii;
+use yii\behaviors\AttributeTypecastBehavior;
+use yii\behaviors\TimestampBehavior;
 use yii\db\ActiveQuery;
 use yii\db\ActiveRecord;
+use yii\db\Expression;
 
 /**
  * @property int $id
  * @property int $user_id
+ * @property int|null $category_id
  * @property string $name
  * @property float $amount
  * @property string $currency
  * @property string $period
  * @property string $start_date
  * @property string|null $end_date
+ * @property float $spent
  * @property string|null $created_at
  * @property string|null $updated_at
- * @property int|null $category_id
- * @property float $spent
  *
- * @property RecurringTransaction[] $recurringTransactions
- * @property Transaction[] $transactions
  * @property User $user
- * @property Category $category
+ * @property Category|null $category
  */
-class Budget extends ActiveRecord
+final class Budget extends ActiveRecord
 {
-    const PERIOD_MONTHLY = 'monthly';
-    const PERIOD_YEARLY = 'yearly';
+    public const PERIOD_DAILY = 'daily';
+    public const PERIOD_WEEKLY = 'weekly';
+    public const PERIOD_MONTHLY = 'monthly';
+    public const PERIOD_YEARLY = 'yearly';
 
-    /**
-     * {@inheritdoc}
-     */
     public static function tableName(): string
     {
         return 'budget';
     }
 
-    /**
-     * {@inheritdoc}
-     */
+    public function behaviors(): array
+    {
+        return [
+            'timestamp' => [
+                'class' => TimestampBehavior::class,
+                'value' => new Expression('NOW()'),
+            ],
+            'typecast' => [
+                'class' => AttributeTypecastBehavior::class,
+                'attributeTypes' => [
+                    'amount' => AttributeTypecastBehavior::TYPE_FLOAT,
+                    'spent' => AttributeTypecastBehavior::TYPE_FLOAT,
+                    'user_id' => AttributeTypecastBehavior::TYPE_INTEGER,
+                    'category_id' => AttributeTypecastBehavior::TYPE_INTEGER,
+                ],
+                'typecastAfterFind' => true,
+            ],
+        ];
+    }
+
     public function rules(): array
     {
         return [
-            [['end_date'], 'default', 'value' => null],
-            [['period'], 'default', 'value' => 'monthly'],
+            [['user_id', 'name', 'amount', 'start_date', 'currency'], 'required'],
             [['user_id', 'category_id'], 'integer'],
-            [['category_id'], 'exist', 'skipOnError' => true, 'targetClass' => Category::class, 'targetAttribute' => ['category_id' => 'id']],
-            [['user_id', 'name', 'amount', 'start_date', 'category_id'], 'required'],
-            [['amount'], 'number'],
-            ['currency', 'string', 'max' => 3],
-            ['currency', 'default', 'value' => 'BYN'],
-            [['currency'], 'safe'],
-            [['period'], 'string'],
-            [['start_date', 'end_date', 'created_at', 'updated_at'], 'safe'],
+            [['amount', 'spent'], 'number', 'min' => 0],
+            [['start_date', 'end_date'], 'date', 'format' => 'php:Y-m-d'],
             [['name'], 'string', 'max' => 255],
-            ['period', 'in', 'range' => array_keys(self::optsPeriod())],
-            [['user_id'], 'exist', 'skipOnError' => true, 'targetClass' => User::class, 'targetAttribute' => ['user_id' => 'id']],
+            [['currency'], 'string', 'max' => 3],
+            ['period', 'in', 'range' => array_keys(self::getPeriods())],
+            [['category_id'], 'exist', 'targetClass' => Category::class, 'targetAttribute' => ['category_id' => 'id']],
+            [['user_id'], 'exist', 'targetClass' => User::class, 'targetAttribute' => ['user_id' => 'id']],
         ];
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function attributeLabels(): array
+    public static function getPeriods(): array
     {
         return [
-            'id' => 'ID',
-            'user_id' => 'User ID',
-            'name' => 'Name',
-            'amount' => 'Amount',
-            'currency' => 'Currency',
-            'category_id' => 'Category',
-            'period' => 'Period',
-            'start_date' => 'Start Date',
-            'end_date' => 'End Date',
-            'created_at' => 'Created At',
-            'updated_at' => 'Updated At',
-            'spent' => 'Потрачено',
-
+            self::PERIOD_DAILY => Yii::t('app', 'День'),
+            self::PERIOD_WEEKLY => Yii::t('app', 'Неделя'),
+            self::PERIOD_MONTHLY => Yii::t('app', 'Месяц'),
+            self::PERIOD_YEARLY => Yii::t('app', 'Год'),
         ];
     }
 
-    /**
-     * @return ActiveQuery
-     */
-    public function getRecurringTransactions(): ActiveQuery
-    {
-        return $this->hasMany(RecurringTransaction::class, ['budget_id' => 'id']);
-    }
-
-    /**
-     * @return ActiveQuery
-     */
-    public function getTransactions(): ActiveQuery
-    {
-        return $this->hasMany(Transaction::class, ['budget_id' => 'id']);
-    }
-
-    /**
-     * @return ActiveQuery
-     */
     public function getUser(): ActiveQuery
     {
         return $this->hasOne(User::class, ['id' => 'user_id']);
     }
 
-
-    /**
-     * @return string[]
-     */
-    public static function optsPeriod(): array
-    {
-        return [
-            'daily' => 'День',
-            'weekly' => 'Неделя',
-            'monthly' => 'Месяц',
-            'yearly' => 'Год',
-        ];
-    }
-
-
-    /**
-     * @return string
-     */
-    public function displayPeriod(): string
-    {
-        return self::optsPeriod()[$this->period];
-    }
-
-    /**
-     * @return bool
-     */
-    public function isPeriodMonthly(): bool
-    {
-        return $this->period === self::PERIOD_MONTHLY;
-    }
-
-    public function setPeriodToMonthly(): void
-    {
-        $this->period = self::PERIOD_MONTHLY;
-    }
-
-    /**
-     * @return bool
-     */
-    public function isPeriodYearly(): bool
-    {
-        return $this->period === self::PERIOD_YEARLY;
-    }
-
-    public function setPeriodToYearly(): void
-    {
-        $this->period = self::PERIOD_YEARLY;
-    }
-
     public function getCategory(): ActiveQuery
     {
         return $this->hasOne(Category::class, ['id' => 'category_id']);
+    }
+
+    public function getProgressPercentage(): float
+    {
+        if ($this->amount <= 0) {
+            return 0;
+        }
+        $percentage = ($this->spent / $this->amount) * 100;
+        return round(min($percentage, 100), 2);
+    }
+
+    public function getRemainingAmount(): float
+    {
+        return max(0, $this->amount - $this->spent);
+    }
+
+    public function isExceeded(): bool
+    {
+        return $this->spent > $this->amount;
+    }
+
+    public static function find(): BudgetQuery
+    {
+        return new BudgetQuery(get_called_class());
+    }
+
+    public function displayPeriod(): string
+    {
+        return self::getPeriods()[$this->period] ?? $this->period;
     }
 }

@@ -1,103 +1,95 @@
 <?php
 
+declare(strict_types=1);
+
 namespace app\services;
 
 use app\models\Goal;
-use Yii;
-use yii\db\Exception;
+use app\models\forms\GoalForm;
 use app\models\Notification;
+use DomainException;
 
-class GoalService
+final class GoalService
 {
-    /**
-     * @param array $data
-     * @param int $userId
-     * @return Goal
-     * @throws Exception
-     */
-    public function create(array $data, int $userId): Goal
+    public function create(int $userId, GoalForm $form, string $defaultCurrency): Goal
     {
         $goal = new Goal();
         $goal->user_id = $userId;
-        $goal->name = $data['name'] ?? '';
-        $goal->target_amount = $data['target_amount'] ?? 0;
-        $goal->current_amount = $data['current_amount'] ?? 0;
-        $goal->deadline = $data['deadline'] ?? date('Y-m-d');
-        $goal->status = $data['status'] ?? Goal::STATUS_ACTIVE;
+        $this->mapFormToModel($form, $goal);
 
-        $goal->currency = $data['currency'] ?? Yii::$app->user->identity->currency;
+        $goal->currency = $form->currency ?: $defaultCurrency;
+        $goal->current_amount = 0;
 
         if (!$goal->save()) {
-            Yii::error('Goal validation errors: ' . json_encode($goal->errors, JSON_UNESCAPED_UNICODE), __METHOD__);
-            throw new Exception('Failed to create goal: ' . json_encode($goal->errors, JSON_UNESCAPED_UNICODE));
+            throw new DomainException('Ошибка при создании цели: ' . json_encode($goal->errors));
         }
 
         return $goal;
     }
 
-    /**
-     * @throws Exception
-     */
-    public function update(Goal $goal, array $data): Goal
+    public function update(int $id, int $userId, GoalForm $form): Goal
     {
-        $goal->name = $data['name'] ?? $goal->name;
-        $goal->target_amount = $data['target_amount'] ?? $goal->target_amount;
-        $goal->current_amount = $data['current_amount'] ?? $goal->current_amount;
-        $goal->deadline = $data['deadline'] ?? $goal->deadline;
-        $goal->status = $data['status'] ?? $goal->status;
+        $goal = $this->findById($id, $userId);
+        $this->mapFormToModel($form, $goal);
 
-        if (isset($data['currency'])) {
-            $goal->currency = $data['currency'];
-        }
+        $goal->updateStatus();
 
         if (!$goal->save()) {
-            Yii::error('Goal update errors: ' . json_encode($goal->errors, JSON_UNESCAPED_UNICODE), __METHOD__);
-            throw new Exception('Failed to update goal: ' . json_encode($goal->errors, JSON_UNESCAPED_UNICODE));
+            throw new DomainException('Ошибка при обновлении цели.');
         }
 
         return $goal;
     }
 
-
-    /**
-     * @param Goal $goal
-     * @param float $amount
-     * @return Goal
-     * @throws Exception
-     */
-    public function addProgress(Goal $goal, float $amount): Goal
+    public function addProgress(int $goalId, int $userId, float $amount): Goal
     {
+        $goal = $this->findById($goalId, $userId);
         $goal->current_amount += $amount;
 
-        $wasCompleted = $goal->isStatusCompleted();
+        $wasCompleted = $goal->isCompleted();
+        $goal->updateStatus();
 
-        if ($goal->current_amount >= $goal->target_amount && !$wasCompleted) {
-            $goal->setStatusToCompleted();
+        if (!$goal->save()) {
+            throw new DomainException('Не удалось обновить прогресс цели.');
+        }
 
+        if ($goal->isCompleted() && !$wasCompleted) {
             Notification::createForUser(
                 $goal->user_id,
-                "Цель '$goal->name' достигнута! Сумма: " . number_format($goal->current_amount, 2) . " $goal->currency",
+                "Цель «{$goal->name}» достигнута! Накоплено: {$goal->current_amount} {$goal->currency}",
                 Notification::TYPE_GOAL_REACHED
             );
         }
 
-        if (!$goal->save()) {
-            throw new Exception('Failed to add progress: ' . json_encode($goal->errors));
+        return $goal;
+    }
+
+    public function delete(int $id, int $userId): void
+    {
+        $goal = $this->findById($id, $userId);
+        if (!$goal->delete()) {
+            throw new DomainException('Ошибка при удалении цели.');
+        }
+    }
+
+    public function findById(int $id, int $userId): Goal
+    {
+        $goal = Goal::find()->forUser($userId)->andWhere(['id' => $id])->one();
+
+        if (!$goal) {
+            throw new DomainException('Цель не найдена или доступ запрещен.');
         }
 
         return $goal;
     }
 
-    /**
-     * @param Goal $goal
-     * @return float
-     */
-    public function getProgressPercent(Goal $goal): float
+    private function mapFormToModel(GoalForm $form, Goal $goal): void
     {
-        if ($goal->target_amount == 0) {
-            return 0;
+        $goal->name = $form->name;
+        $goal->target_amount = $form->target_amount;
+        $goal->deadline = $form->deadline;
+        if ($form->currency) {
+            $goal->currency = $form->currency;
         }
-
-        return min(100, ($goal->current_amount / $goal->target_amount) * 100);
     }
 }

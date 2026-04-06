@@ -1,220 +1,132 @@
 <?php
 
+declare(strict_types=1);
+
 namespace app\controllers;
 
 use app\models\Budget;
+use app\models\forms\BudgetForm;
 use app\services\BudgetService;
+use app\services\CategoryService;
 use app\services\CurrencyService;
-use Exception;
-use Throwable;
 use Yii;
-use yii\data\ActiveDataProvider;
 use yii\web\Response;
+use yii\filters\ContentNegotiator;
+use DomainException;
 
-class BudgetController extends BaseController
+final class BudgetController extends BaseController
 {
-    private BudgetService $service;
-    private CurrencyService $currencyService;
-
-    public function __construct($id, $module, BudgetService $budgetService, CurrencyService $currencyService, $config = [])
-    {
-        $this->service = $budgetService;
-        $this->currencyService = $currencyService;
+    public function __construct(
+        $id, $module,
+        private readonly BudgetService $service,
+        private readonly CategoryService $categoryService,
+        private readonly CurrencyService $currencyService,
+        $config = []
+    ) {
         parent::__construct($id, $module, $config);
     }
 
-    /**
-     * @throws Exception
-     */
-    public function actionIndex(): string
+    public function behaviors(): array
     {
+        $behaviors = parent::behaviors();
+        $behaviors['contentNegotiator'] = [
+            'class' => ContentNegotiator::class,
+            'only' => ['create', 'update', 'delete', 'view'],
+            'formats' => ['application/json' => Response::FORMAT_JSON],
+        ];
+        return $behaviors;
+    }
+
+    public function actionIndex(?string $month = null, ?string $year = null): string
+    {
+        $userId = (int)Yii::$app->user->id;
         $user = Yii::$app->user->identity;
-        $userId = $user->id;
-        $userCurrency = $user->currency ?? 'BYN';
 
-        $dataProvider = new ActiveDataProvider([
-            'query' => Budget::find()
-                ->where(['user_id' => $userId])
-                ->with('category'),
-            'pagination' => ['pageSize' => 10],
-            'sort' => ['defaultOrder' => ['start_date' => SORT_DESC]],
-        ]);
+        $targetMonth = $month ?? date('m');
+        $targetYear = $year ?? date('Y');
 
-        $budgetsWithDisplay = [];
+        $startDate = "$targetYear-$targetMonth-01";
+        $endDate = date('Y-m-t', strtotime($startDate));
+
+        $budgets = Budget::find()
+            ->forUser($userId)
+            ->with('category')
+            ->andWhere([
+                'or',
+                ['between', 'start_date', $startDate, $endDate],
+                ['between', 'end_date', $startDate, $endDate],
+                [
+                    'and',
+                    ['<=', 'start_date', $startDate],
+                    ['or', ['>=', 'end_date', $endDate], ['end_date' => null]]
+                ]
+            ])
+            ->orderBy(['start_date' => SORT_DESC])
+            ->all();
+
         $totalBudget = 0;
         $totalSpent = 0;
-
-        foreach ($dataProvider->models as $budget) {
-            $budgetSummary = $this->service->calculateSummary($budget);
-
-            $rawAmount = $budget->amount;
-            $rawSpent = $budgetSummary['spent'];
-            $rawRemaining = $budgetSummary['remaining'];
-
-            $displayAmount = $budget->currency !== $userCurrency
-                ? $this->currencyService->fromBase(
-                    $this->currencyService->toBase($rawAmount, $budget->currency),
-                    $userCurrency
-                )
-                : $rawAmount;
-
-            $displaySpent = $budget->currency !== $userCurrency
-                ? $this->currencyService->fromBase(
-                    $this->currencyService->toBase($rawSpent, $budget->currency),
-                    $userCurrency
-                )
-                : $rawSpent;
-
-            $displayRemaining = $displayAmount - $displaySpent;
-            $percent = $rawAmount > 0 ? min(100, ($rawSpent / $rawAmount) * 100) : 0;
-
-            $budgetsWithDisplay[] = [
-                'model' => $budget,
-                'display_amount' => number_format($displayAmount, 2, '.', ''),
-                'display_spent' => number_format($displaySpent, 2, '.', ''),
-                'display_remaining' => number_format($displayRemaining, 2, '.', ''),
-                'display_currency' => $userCurrency,
-                'category_name' => $budget->category->name ?? '-',
-                'display_period' => $budget->displayPeriod(),
-                'raw_amount' => $rawAmount,
-                'raw_spent' => $rawSpent,
-                'percent' => $percent,
-            ];
-
-            $totalBudget += $displayAmount;
-            $totalSpent += $displaySpent;
+        foreach ($budgets as $budget) {
+            $totalBudget += $this->currencyService->convert($budget->amount, $budget->currency, $user->currency);
+            $totalSpent += $this->currencyService->convert($budget->spent, $budget->currency, $user->currency);
         }
 
-        $summary = [
-            'total_budget' => number_format($totalBudget, 2, '.', ''),
-            'total_spent' => number_format($totalSpent, 2, '.', ''),
-            'remaining' => number_format($totalBudget - $totalSpent, 2, '.', ''),
-        ];
-
         return $this->render('index', [
+            'budgets' => $budgets,
             'user' => $user,
-            'dataProvider' => $dataProvider,
-            'budgetsWithDisplay' => $budgetsWithDisplay,
-            'summary' => $summary,
+            'selectedMonth' => $targetMonth,
+            'selectedYear' => $targetYear,
+            'summary' => [
+                'total_budget' => $totalBudget,
+                'total_spent' => $totalSpent,
+                'remaining' => $totalBudget - $totalSpent,
+            ],
         ]);
     }
 
     public function actionCreate(): array
     {
-        Yii::$app->response->format = Response::FORMAT_JSON;
-
-        try {
-            $data = Yii::$app->request->post();
-            $user = Yii::$app->user->identity;
-
-            $data['user_id'] = $user->id;
-            $data['currency'] = $user->currency ?? 'BYN';
-
-            $originalAmount = (float)($data['Budget']['amount'] ?? 0);
-
-            $budget = $this->service->create($data, $user->id);
-
-            $budgetArray = $budget->toArray();
-            $budgetArray['display_amount'] = number_format($originalAmount, 2, '.', '');
-            $budgetArray['display_currency'] = $data['currency'];
-            $budgetArray['category_name'] = $budget->category->name ?? '-';
-
-            return ['success' => true, 'budget' => $budgetArray];
-        } catch (Throwable $e) {
-            Yii::error('Ошибка при создании бюджета: ' . $e->getMessage(), __METHOD__);
-            return ['success' => false, 'message' => $e->getMessage()];
+        $form = new BudgetForm();
+        if ($form->load(Yii::$app->request->post(), 'Budget')) {
+            try {
+                $this->service->create((int)Yii::$app->user->id, $form);
+                return ['success' => true];
+            } catch (DomainException $e) {
+                return ['success' => false, 'message' => $e->getMessage()];
+            }
         }
+        return ['success' => false, 'message' => 'Ошибка загрузки данных в форму'];
     }
 
     public function actionUpdate(int $id): array
     {
-        Yii::$app->response->format = Response::FORMAT_JSON;
-
-        try {
-            $data = Yii::$app->request->post();
-            $user = Yii::$app->user->identity;
-
-            $data['currency'] = $user->currency ?? 'BYN';
-
-            $budget = $this->service->update($id, $data);
-
-            $budgetArray = $budget->toArray();
-            $amount = $data['Budget']['amount'] ?? $budget->amount;
-            $budgetArray['display_amount'] = number_format((float)$amount, 2, '.', '');
-            $budgetArray['display_currency'] = $data['currency'];
-            $budgetArray['category_name'] = $budget->category->name ?? '-';
-
-            return ['success' => true, 'budget' => $budgetArray];
-        } catch (Throwable $e) {
-            Yii::error('Ошибка при обновлении бюджета: ' . $e->getMessage(), __METHOD__);
-            return ['success' => false, 'message' => $e->getMessage()];
+        $form = new BudgetForm();
+        if ($form->load(Yii::$app->request->post(), 'Budget')) {
+            try {
+                $this->service->update($id, (int)Yii::$app->user->id, $form);
+                return ['success' => true];
+            } catch (DomainException $e) {
+                return ['success' => false, 'message' => $e->getMessage()];
+            }
         }
+        return ['success' => false, 'message' => 'Ошибка загрузки данных'];
     }
 
-    /**
-     * @throws Exception
-     */
     public function actionView(int $id): array
     {
-        Yii::$app->response->format = Response::FORMAT_JSON;
-
-        $budget = Budget::findOne(['id' => $id, 'user_id' => Yii::$app->user->id]);
-        if (!$budget) {
-            return ['success' => false, 'message' => 'Бюджет не найден'];
-        }
-
-        $budgetSummary = $this->service->calculateSummary($budget);
-
-        $userCurrency = Yii::$app->user->identity->currency ?? 'BYN';
-        $displayAmount = $budget->amount;
-        $displaySpent = $budgetSummary['spent'];
-        $displayRemaining = $budgetSummary['remaining'];
-
-        if ($budget->currency !== $userCurrency) {
-            $displayAmount = $this->currencyService->fromBase(
-                $this->currencyService->toBase($budget->amount, $budget->currency),
-                $userCurrency
-            );
-            $displaySpent = $this->currencyService->fromBase(
-                $this->currencyService->toBase($budgetSummary['spent'], $budget->currency),
-                $userCurrency
-            );
-            $displayRemaining = $this->currencyService->fromBase(
-                $this->currencyService->toBase($budgetSummary['remaining'], $budget->currency),
-                $userCurrency
-            );
-        }
-
-        $budgetArray = $budget->toArray();
-        $budgetArray['display_amount'] = number_format($displayAmount, 2, '.', '');
-        $budgetArray['display_spent'] = number_format($displaySpent, 2, '.', '');
-        $budgetArray['display_remaining'] = number_format($displayRemaining, 2, '.', '');
-        $budgetArray['display_currency'] = $userCurrency;
-        $budgetArray['display_period'] = $budget->displayPeriod();
-        $budgetArray['category_name'] = $budget->category->name ?? '-';
-
-        return ['success' => true, 'budget' => $budgetArray];
+        $budget = $this->service->findById($id, (int)Yii::$app->user->id);
+        return [
+            'success' => true,
+            'budget' => $budget->toArray(),
+        ];
     }
 
-    public function actionDelete(): array
+    public function actionDelete(int $id): array
     {
-        Yii::$app->response->format = Response::FORMAT_JSON;
-
         try {
-            $id = (int)Yii::$app->request->post('id');
-            if (!$id) {
-                return ['success' => false, 'message' => 'ID бюджета не указан'];
-            }
-
-            $budget = Budget::findOne(['id' => $id, 'user_id' => Yii::$app->user->id]);
-            if (!$budget) {
-                return ['success' => false, 'message' => 'Бюджет не найден или принадлежит другому пользователю'];
-            }
-
-            $budget->delete();
+            $this->service->delete($id, (int)Yii::$app->user->id);
             return ['success' => true];
-        } catch (Throwable $e) {
-            Yii::error("Ошибка при удалении бюджета: {$e->getMessage()}", __METHOD__);
+        } catch (DomainException $e) {
             return ['success' => false, 'message' => $e->getMessage()];
         }
     }

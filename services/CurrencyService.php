@@ -1,137 +1,98 @@
 <?php
 
+declare(strict_types=1);
+
 namespace app\services;
 
 use Exception;
 use Yii;
-use yii\base\InvalidConfigException;
+use yii\base\Component;
 use yii\caching\Cache;
 
-class CurrencyService
+final class CurrencyService extends Component
 {
     private string $apiKey = 'e8c2f4afec9e1abf33fd661d';
     private string $baseUrl = 'https://v6.exchangerate-api.com/v6';
+    private const CACHE_DURATION = 3600;
 
-    /**
-     * @throws Exception
-     */
+    public function convertTo(float $amount, string $from, string $to): float
+    {
+        return $this->convert($amount, $from, $to);
+    }
+
+    public function convert(float $amount, ?string $from, ?string $to): float
+    {
+        if (!$from || !$to || $from === $to || abs($amount) < 0.00001) {
+            return $amount;
+        }
+
+        try {
+            $rate = $this->getRate($from, $to);
+            return round($amount * $rate, 2);
+        } catch (Exception $e) {
+            Yii::error("Conversion error: " . $e->getMessage(), __METHOD__);
+            return $amount;
+        }
+    }
+
     public function getRate(string $from, string $to): float
     {
         if ($from === $to) {
             return 1.0;
         }
 
-        $cacheKey = "currency_rate_{$from}_$to";
-        $cached = $this->getFromCache($cacheKey);
+        $rates = $this->getRatesForCurrency($from);
 
-        if ($cached !== null && $cached > 0) {
-            Yii::info("Retrieved rate from cache: $cached for $from to $to", __METHOD__);
+        if (!isset($rates[$to])) {
+            Yii::error("Rate for $to not found for base $from", __METHOD__);
+            throw new Exception("Курс для валюты $to не найден.");
+        }
+
+        return (float)$rates[$to];
+    }
+
+    private function getRatesForCurrency(string $base): array
+    {
+        $cacheKey = "currency_rates_v2_$base";
+        $cache = Yii::$app->cache;
+
+        if ($cache instanceof Cache && ($cached = $cache->get($cacheKey)) !== false) {
             return $cached;
         }
 
-        $url = "$this->baseUrl/$this->apiKey/latest/$from";
-
-        $context = stream_context_create([
-            'http' => [
-                'timeout' => 10,
-                'method' => 'GET',
-                'header' => [
-                    'User-Agent: Mozilla/5.0 (compatible; CurrencyBot/1.0)'
-                ]
-            ]
-        ]);
-
-        $json = @file_get_contents($url, false, $context);
-
-        if ($json === false) {
-            $error = error_get_last();
-            Yii::error("Failed to fetch data from API for $from: " . ($error['message'] ?? 'Unknown error'), __METHOD__);
-            throw new Exception("Не удалось получить данные с API для валюты $from");
-        }
-
-        $data = json_decode($json, true);
-
-        if (json_last_error() !== JSON_ERROR_NONE || !is_array($data)) {
-            Yii::error("Invalid API response format for $from: " . json_last_error_msg(), __METHOD__);
-            throw new Exception("Неверный формат ответа API для валюты $from");
-        }
-
-        if (!isset($data['conversion_rates'][$to])) {
-            Yii::error("Conversion rate for $to not found in API response: " . json_encode($data), __METHOD__);
-            throw new Exception("Не удалось получить курс для $to из $from");
-        }
-
-        $rate = (float) $data['conversion_rates'][$to];
-
-        if ($rate <= 0 || $rate > 10000) {
-            Yii::error("Invalid exchange rate $rate for $from to $to", __METHOD__);
-            throw new Exception("Некорректный курс валюты: $rate");
-        }
-
-        Yii::info("Fetched rate from API: $rate for $from to $to", __METHOD__);
-        $this->setToCache($cacheKey, $rate);
-        return $rate;
-    }
-
-    /**
-     * @throws InvalidConfigException
-     */
-    private function getFromCache(string $key)
-    {
-        if (!Yii::$app->has('cache') || !($cache = Yii::$app->get('cache')) instanceof Cache) {
-            Yii::warning("Cache component not available", __METHOD__);
-            return null;
-        }
+        $url = "$this->baseUrl/$this->apiKey/latest/$base";
 
         try {
-            $value = $cache->get($key);
-            if ($value === false) {
-                Yii::info("Cache miss for key: $key", __METHOD__);
-                return null;
+            $response = @file_get_contents($url);
+            if (!$response) {
+                throw new Exception("API request failed for $base");
             }
-            return $value;
+
+            $data = json_decode($response, true);
+            if (($data['result'] ?? '') !== 'success') {
+                throw new Exception($data['error-type'] ?? 'Unknown API error');
+            }
+
+            $rates = $data['conversion_rates'] ?? [];
+
+            if ($cache instanceof Cache) {
+                $cache->set($cacheKey, $rates, self::CACHE_DURATION);
+            }
+
+            return $rates;
         } catch (Exception $e) {
-            Yii::warning("Cache retrieval error: " . $e->getMessage(), __METHOD__);
-            return null;
+            Yii::error("Currency API Error: " . $e->getMessage(), __METHOD__);
+            return [];
         }
     }
 
-    /**
-     * @throws InvalidConfigException
-     */
-    private function setToCache(string $key, float $value): void
-    {
-        if (!Yii::$app->has('cache') || !($cache = Yii::$app->get('cache')) instanceof Cache) {
-            Yii::warning("Cache component not available for storing", __METHOD__);
-            return;
-        }
-
-        try {
-            $cache->set($key, $value, 3600);
-            Yii::info("Cached rate for key: $key, value: $value", __METHOD__);
-        } catch (Exception $e) {
-            Yii::warning("Cache storage error: " . $e->getMessage(), __METHOD__);
-        }
-    }
-
-    /**
-     * @throws Exception
-     */
     public function toBase(float $amount, string $userCurrency): float
     {
-        return $userCurrency === 'BYN'
-            ? $amount
-            : $amount * $this->getRate($userCurrency, 'BYN');
+        return $this->convert($amount, $userCurrency, 'BYN');
     }
 
-    /**
-     * @throws Exception
-     */
     public function fromBase(float $amount, string $userCurrency): float
     {
-        return $userCurrency === 'BYN'
-            ? $amount
-            : $amount * $this->getRate('BYN', $userCurrency);
+        return $this->convert($amount, 'BYN', $userCurrency);
     }
-
 }

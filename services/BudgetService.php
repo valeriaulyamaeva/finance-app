@@ -1,190 +1,129 @@
 <?php
 
+declare(strict_types=1);
+
 namespace app\services;
 
 use app\models\Budget;
-use app\models\Notification;
+use app\models\forms\BudgetForm;
 use app\models\Transaction;
-use RuntimeException;
-use Throwable;
-use yii\db\Exception;
-use yii\db\StaleObjectException;
+use yii\db\Connection;
+use yii\web\NotFoundHttpException;
+use DomainException;
 
-class BudgetService
+final readonly class BudgetService
 {
-    private CurrencyService $currencyService;
+    public function __construct(
+        private Connection $db,
+        private CurrencyService $currencyService,
+        private CategoryService $categoryService
+    ) {}
 
-    public function __construct(CurrencyService $currencyService)
+    public function create(int $userId, BudgetForm $form): Budget
     {
-        $this->currencyService = $currencyService;
-    }
+        if (!$form->validate()) {
+            throw new DomainException('Ошибка валидации: ' . implode(', ', $form->getErrorSummary(true)));
+        }
 
-    /**
-     * @throws Exception
-     */
-    public function create(array $data, int $userId): Budget
-    {
+        $this->categoryService->findById((int)$form->category_id, $userId);
+
         $budget = new Budget();
-        $budget->load($data);
         $budget->user_id = $userId;
-        $budget->currency = $data['currency'] ?? 'BYN';
-
-        if (empty($budget->category_id) || !is_numeric($budget->category_id)) {
-            throw new RuntimeException('Категория не выбрана.');
-        }
+        $this->fillModel($budget, $form);
 
         if (!$budget->save()) {
-            throw new RuntimeException('Ошибка при создании бюджета: ' . json_encode($budget->errors, JSON_UNESCAPED_UNICODE));
+            throw new DomainException('Не удалось сохранить бюджет.');
         }
+
+        $this->refreshSpentAmount($budget);
 
         return $budget;
     }
 
-    /**
-     * @throws Exception
-     */
-    public function update(int $id, array $data): Budget
+    public function update(int $id, int $userId, BudgetForm $form): Budget
     {
-        $budget = Budget::findOne($id);
-        if (!$budget) {
-            throw new RuntimeException('Бюджет не найден');
+        $budget = $this->findById($id, $userId);
+
+        if (!$form->validate()) {
+            throw new DomainException('Ошибка валидации.');
         }
 
-        $budget->load($data);
-
-        $budget->currency = $data['currency'] ?? ($data['Budget']['currency'] ?? 'BYN');
-
-        if (empty($budget->category_id) || !is_numeric($budget->category_id)) {
-            throw new RuntimeException('Категория не выбрана.');
-        }
+        $this->fillModel($budget, $form);
 
         if (!$budget->save()) {
-            throw new RuntimeException('Ошибка при обновлении: ' . json_encode($budget->errors, JSON_UNESCAPED_UNICODE));
+            throw new DomainException('Не удалось обновить бюджет.');
         }
+
+        $this->refreshSpentAmount($budget);
 
         return $budget;
     }
 
-    public function delete(int $id): void
+    public function delete(int $id, int $userId): void
     {
-        $budget = Budget::findOne($id);
-        try {
-            if ($budget && !$budget->delete()) {
-                throw new RuntimeException('Ошибка при удалении бюджета');
-            }
-        } catch (StaleObjectException|Throwable) {
+        $budget = $this->findById($id, $userId);
+        if (!$budget->delete()) {
+            throw new DomainException('Ошибка при удалении бюджета.');
         }
     }
 
-    /**
-     * @throws \Exception
-     */
-    public function calculateSummary(Budget $budget): array
+    public function refreshSpentAmount(Budget $budget): void
     {
-        $query = Transaction::find()
-            ->where(['budget_id' => $budget->id])
-            ->andWhere(['type' => ['expense', 'goal']]);
+        $transactions = Transaction::find()
+            ->where(['category_id' => $budget->category_id, 'user_id' => $budget->user_id])
+            ->andWhere(['>=', 'date', $budget->start_date])
+            ->andFilterWhere(['<=', 'date', $budget->end_date])
+            ->all();
 
-        $query->andWhere(['>=', 'date', $budget->start_date]);
-        if ($budget->end_date) {
-            $query->andWhere(['<=', 'date', $budget->end_date]);
-        }
+        $totalSpent = 0.0;
+        foreach ($transactions as $transaction) {
+            $amount = (float)$transaction->amount;
 
-        $transactions = $query->all();
-
-        $spent = 0;
-        foreach ($transactions as $t) {
-            $amount = $t->amount;
-            if ($t->currency !== $budget->currency) {
-                $amount = $this->currencyService->fromBase(
-                    $this->currencyService->toBase($amount, $t->currency),
+            if ($transaction->currency !== $budget->currency) {
+                $amount = $this->currencyService->convert(
+                    $amount,
+                    $transaction->currency,
                     $budget->currency
                 );
             }
-            $spent += $amount;
+            $totalSpent += $amount;
         }
 
-        $remaining = $budget->amount - $spent;
-
-        $this->handleBudgetExceedNotification($budget, $remaining);
-
-        return [
-            'spent' => $spent,
-            'remaining' => $remaining,
-            'total' => $budget->amount,
-        ];
+        $budget->updateAttributes(['spent' => $totalSpent]);
     }
 
-    /**
-     * @throws \Exception
-     */
-    public function getUserSummary(int $userId): array
+    public function findById(int $id, int $userId): Budget
     {
-        $budgets = Budget::find()->where(['user_id' => $userId])->all();
-
-        $totalBudget = 0;
-        $totalSpent = 0;
-
-        foreach ($budgets as $budget) {
-            $sum = $this->calculateSummary($budget);
-            $totalBudget += $sum['total'];
-            $totalSpent += $sum['spent'];
+        $model = Budget::find()->forUser($userId)->andWhere(['id' => $id])->one();
+        if (!$model) {
+            throw new NotFoundHttpException('Бюджет не найден.');
         }
-
-        return [
-            'total_budget' => $totalBudget,
-            'total_spent' => $totalSpent,
-            'remaining' => $totalBudget - $totalSpent,
-            ];
+        return $model;
     }
 
-    private function handleBudgetExceedNotification(Budget $budget, float $remaining): void
+    private function fillModel(Budget $budget, BudgetForm $form): void
     {
-        $userId = $budget->user_id;
-        $budgetId = $budget->id;
-        $type = Notification::TYPE_BUDGET_EXCEED;
+        $budget->name = $form->name;
+        $budget->amount = $form->amount;
+        $budget->currency = $form->currency;
+        $budget->category_id = $form->category_id;
+        $budget->period = $form->period;
+        $budget->start_date = $form->start_date;
+        $budget->end_date = $form->end_date;
+    }
 
-        $existing = Notification::find()
-            ->where([
-                'user_id' => $userId,
-                'type' => $type,
-                'related_type' => 'budget',
-                'related_id' => $budgetId,
-            ])
+    private function checkBudgetNotification(Budget $budget): void
+    {
+        $remaining = $budget->getRemainingAmount();
+
+    }
+
+    public function findActiveForCategory(int $categoryId, int $userId): ?Budget
+    {
+        return Budget::find()
+            ->forUser($userId)
+            ->forCategory($categoryId)
+            ->active()
             ->one();
-
-        if ($remaining >= 0) {
-            if ($existing) {
-                $existing->delete();
-            }
-            return;
-        }
-
-        $exceedAmount = abs($remaining);
-        $newMessage = "Бюджет '$budget->name' превышен на " . number_format($exceedAmount, 2) . " $budget->currency";
-
-        if ($existing) {
-            $pattern = '/на\s+([\d\.,]+)\s+' . preg_quote($budget->currency, '/') . '/u';
-            $oldExceedMatch = preg_match($pattern, $existing->message, $matches);
-            $oldExceedAmount = $oldExceedMatch ? (float)str_replace(',', '', $matches[1]) : null;
-
-            $amountChanged = $oldExceedAmount === null || abs($oldExceedAmount - $exceedAmount) > 0.01;
-
-            $existing->message = $newMessage;
-
-            if ($amountChanged) {
-                $existing->read_status = 0;
-            }
-
-            $existing->save(false);
-        } else {
-            Notification::createForUser(
-                $userId,
-                $newMessage,
-                $type,
-                'budget',
-                $budgetId
-            );
-        }
     }
 }

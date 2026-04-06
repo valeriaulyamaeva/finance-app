@@ -1,151 +1,106 @@
 <?php
 
+declare(strict_types=1);
+
 namespace app\controllers;
 
 use app\models\RecurringTransaction;
-use app\services\CurrencyService;
 use app\services\RecurringTransactionService;
-use DateMalformedStringException;
 use Yii;
-use yii\db\Exception;
 use yii\web\Response;
-use yii\web\NotFoundHttpException;
+use Throwable;
 
-class RecurringTransactionController extends BaseController
+final class RecurringTransactionController extends BaseController
 {
-    private RecurringTransactionService $service;
-    private CurrencyService $currencyService;
-
-    public function __construct($id, $module, RecurringTransactionService $service, CurrencyService $currencyService, $config = [])
-    {
-        $this->service = $service;
-        $this->currencyService = $currencyService;
+    public function __construct(
+        $id,
+        $module,
+        private readonly RecurringTransactionService $service,
+        $config = []
+    ) {
         parent::__construct($id, $module, $config);
     }
 
-    /**
-     * @throws Exception
-     * @throws \Exception
-     */
-    public function actionCreate(): Response|array
+    public function actionCreate(): array
     {
-        $model = new RecurringTransaction();
-        $model->user_id = Yii::$app->user->id;
-
         Yii::$app->response->format = Response::FORMAT_JSON;
 
-        if ($this->request->isPost) {
-            $data = array_merge(
-                $this->request->post('RecurringTransaction', []),
-                $this->request->post('Transaction', [])
-            );
-
-            $currency = Yii::$app->user->identity->currency ?? 'BYN';
-            $data['currency'] = $currency;
-
-            $originalAmount = $data['amount'] ?? 0;
-
-            $model->load($data, '');
-            if ($model->save()) {
-                return [
-                    'success' => true,
-                    'id' => $model->id,
-                    'amount' => $model->amount,
-                    'display_amount' => number_format($originalAmount, 2, '.', ''),
-                    'category_name' => $model->category->name ?? null,
-                    'description' => $model->description,
-                    'type' => $model->frequency,
-                    'date' => $model->next_date,
-                ];
+        try {
+            $data = Yii::$app->request->post();
+            if (empty($data['currency'])) {
+                $data['currency'] = Yii::$app->user->identity->currency ?? 'BYN';
             }
-        }
 
-        return ['success' => false, 'errors' => $model->errors];
+            $model = $this->service->save($data, null, (int)Yii::$app->user->id);
+
+            return [
+                'success' => true,
+                'id' => $model->id,
+                'message' => 'Шаблон успешно создан'
+            ];
+        } catch (Throwable $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
     }
 
-    /**
-     * @throws Exception
-     * @throws NotFoundHttpException
-     * @throws \Exception
-     */
-    public function actionUpdate(int $id): Response|string
+    public function actionUpdate(int $id): array
     {
-        $model = $this->findModel($id);
+        Yii::$app->response->format = Response::FORMAT_JSON;
 
-        if ($this->request->isPost) {
-            $data = $this->request->post('RecurringTransaction', []);
-            $currency = Yii::$app->user->identity->currency;
-            $data['currency'] = $currency;
+        try {
+            $data = Yii::$app->request->post();
+            $this->service->save($data, $id, (int)Yii::$app->user->id);
 
-
-            if ($this->service->saveRecurringTransaction($model, $data)) {
-                return $this->redirect(['view', 'id' => $model->id]);
-            }
+            return ['success' => true];
+        } catch (Throwable $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
         }
-
-        return $this->render('update', ['model' => $model]);
     }
 
     public function actionList(): array
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
+
         $models = RecurringTransaction::find()
-            ->where(['user_id' => Yii::$app->user->id])
-            ->with(['category', 'budget', 'goal'])
+            ->forUser((int)Yii::$app->user->id)
+            ->with(['category'])
             ->all();
 
-        $list = [];
-        foreach ($models as $model) {
-            $list[] = [
-                'id' => $model->id,
-                'amount' => $model->amount,
-                'currency' => $model->currency,
-                'frequency' => $model->displayFrequency(),
-                'next_date' => $model->next_date,
-                'category' => $model->category->name ?? '-',
-                'description' => $model->description ?? '-',
-                'active' => $model->active,
-            ];
-        }
+        $data = array_map(fn(RecurringTransaction $m) => [
+            'id' => $m->id,
+            'amount' => $m->amount,
+            'currency' => $m->currency,
+            'frequency_label' => RecurringTransaction::optsFrequency()[$m->frequency] ?? $m->frequency,
+            'next_date' => $m->next_date,
+            'category' => $m->category->name ?? '-',
+            'description' => $m->description ?? '',
+            'active' => (bool)$m->active,
+        ], $models);
 
-        return ['success' => true, 'data' => $list];
+        return ['success' => true, 'data' => $data];
     }
 
-    public function actionDelete($id): array
+    public function actionDelete(int $id): array
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
-        $model = $this->findModel($id);
-        if ($model->delete()) {
+
+        try {
+            $this->service->delete($id);
             return ['success' => true];
+        } catch (Throwable $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
         }
-        return ['success' => false, 'message' => 'Ошибка удаления'];
     }
 
-    /**
-     * @throws NotFoundHttpException
-     */
-    protected function findModel(int $id): RecurringTransaction
+    public function actionProcess(): array
     {
-        $model = RecurringTransaction::findOne($id);
-        if (!$model || $model->user_id !== Yii::$app->user->id) {
-            throw new NotFoundHttpException('The requested page does not exist.');
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        try {
+            $count = $this->service->runScheduledTasks();
+            return ['success' => true, 'processed' => $count];
+        } catch (Throwable $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
         }
-        return $model;
     }
-
-    /**
-     * @throws DateMalformedStringException
-     * @throws Exception
-     */
-    public function actionGenerate(): Response
-    {
-        $transactions = $this->service->getDueRecurringTransactions();
-        foreach ($transactions as $recurring) {
-            $this->service->createTransactionFromRecurring($recurring);
-        }
-
-        return $this->asJson(['success' => true, 'count' => count($transactions)]);
-    }
-
-
 }

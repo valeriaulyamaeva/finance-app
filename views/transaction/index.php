@@ -121,7 +121,6 @@ $this->registerJsFile('@web/js/transaction.js', ['depends' => [JqueryAsset::clas
             <?php endif; ?>
         </div>
     </div>
-</div>
 
 <?= $this->render('_modal', ['goals' => $goals]) ?>
 

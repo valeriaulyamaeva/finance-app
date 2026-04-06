@@ -1,10 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace app\models;
 
-
+use app\models\queries\GoalQuery;
+use yii\behaviors\TimestampBehavior;
 use yii\db\ActiveQuery;
 use yii\db\ActiveRecord;
+use yii\db\Expression;
 
 /**
  * @property int $id
@@ -18,147 +22,106 @@ use yii\db\ActiveRecord;
  * @property string|null $created_at
  * @property string|null $updated_at
  *
- * @property RecurringTransaction[] $recurringTransactions
  * @property Transaction[] $transactions
  * @property User $user
  */
-class Goal extends ActiveRecord
+final class Goal extends ActiveRecord
 {
-    const STATUS_ACTIVE = 'active';
-    const STATUS_COMPLETED = 'completed';
-    const STATUS_FAILED = 'failed';
-    /**
-     * @var float|mixed|null
-     */
-    public mixed $progress;
+    public const STATUS_ACTIVE = 'active';
+    public const STATUS_COMPLETED = 'completed';
+    public const STATUS_FAILED = 'failed';
 
-    /**
-     * {@inheritdoc}
-     */
     public static function tableName(): string
     {
-        return 'goal';
+        return '{{%goal}}';
     }
 
-    /**
-     * {@inheritdoc}
-     */
+    public function behaviors(): array
+    {
+        return [
+            'timestamp' => [
+                'class' => TimestampBehavior::class,
+                'value' => new Expression('NOW()'),
+            ],
+        ];
+    }
+
     public function rules(): array
     {
         return [
-            [['current_amount'], 'default', 'value' => 0.00],
-            [['status'], 'default', 'value' => 'active'],
             [['user_id', 'name', 'target_amount', 'deadline'], 'required'],
             [['user_id'], 'integer'],
-            [['target_amount', 'current_amount'], 'number'],
-            [['deadline', 'created_at', 'updated_at'], 'safe'],
+            [['target_amount', 'current_amount'], 'number', 'min' => 0],
+            [['deadline'], 'date', 'format' => 'php:Y-m-d'],
             [['status'], 'string'],
             [['name'], 'string', 'max' => 255],
-            ['status', 'in', 'range' => array_keys(self::optsStatus())],
+            [['currency'], 'string', 'max' => 3],
+            [['currency'], 'default', 'value' => 'BYN'],
+            [['status'], 'default', 'value' => self::STATUS_ACTIVE],
+            [['status'], 'in', 'range' => array_keys(self::getStatuses())],
             [['user_id'], 'exist', 'skipOnError' => true, 'targetClass' => User::class, 'targetAttribute' => ['user_id' => 'id']],
-            ['currency', 'string', 'max' => 3],
-            ['currency', 'default', 'value' => 'BYN'],
         ];
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function attributeLabels(): array
+    public function getProgress(): float
+    {
+        if ($this->target_amount <= 0) {
+            return 0;
+        }
+        $percentage = ($this->current_amount / $this->target_amount) * 100;
+        return round(min($percentage, 100), 2);
+    }
+
+    public function isCompleted(): bool
+    {
+        return $this->status === self::STATUS_COMPLETED;
+    }
+
+    public function updateStatus(): void
+    {
+        if ($this->current_amount >= $this->target_amount) {
+            $this->status = self::STATUS_COMPLETED;
+        } elseif ($this->status === self::STATUS_COMPLETED) {
+            $this->status = self::STATUS_ACTIVE;
+        }
+    }
+
+    public static function getStatuses(): array
     {
         return [
-            'id' => 'ID',
-            'user_id' => 'User ID',
-            'name' => 'Name',
-            'target_amount' => 'Target Amount',
-            'deadline' => 'Deadline',
-            'current_amount' => 'Current Amount',
-            'status' => 'Status',
-            'created_at' => 'Created At',
-            'updated_at' => 'Updated At',
+            self::STATUS_ACTIVE => 'Активна',
+            self::STATUS_COMPLETED => 'Выполнена',
+            self::STATUS_FAILED => 'Провалена',
         ];
     }
 
-    /**
-     * @return ActiveQuery
-     */
-    public function getRecurringTransactions(): ActiveQuery
+    public function getStatusLabel(): string
     {
-        return $this->hasMany(RecurringTransaction::class, ['goal_id' => 'id']);
+        return self::getStatuses()[$this->status] ?? $this->status;
     }
 
-    /**
-     * @return ActiveQuery
-     */
+    public function getStatusColor(): string
+    {
+        return match ($this->status) {
+            self::STATUS_ACTIVE => 'primary',
+            self::STATUS_COMPLETED => 'success',
+            self::STATUS_FAILED => 'danger',
+            default => 'secondary',
+        };
+    }
+
     public function getTransactions(): ActiveQuery
     {
         return $this->hasMany(Transaction::class, ['goal_id' => 'id']);
     }
 
-    /**
-     * @return ActiveQuery
-     */
     public function getUser(): ActiveQuery
     {
         return $this->hasOne(User::class, ['id' => 'user_id']);
     }
 
-    /**
-     * @return string[]
-     */
-    public static function optsStatus(): array
+    public static function find(): GoalQuery
     {
-        return [
-            self::STATUS_ACTIVE => 'active',
-            self::STATUS_COMPLETED => 'completed',
-            self::STATUS_FAILED => 'failed',
-        ];
-    }
-
-    /**
-     * @return string
-     */
-    public function displayStatus(): string
-    {
-        return self::optsStatus()[$this->status];
-    }
-
-    /**
-     * @return bool
-     */
-    public function isStatusActive(): bool
-    {
-        return $this->status === self::STATUS_ACTIVE;
-    }
-
-    public function setStatusToActive(): void
-    {
-        $this->status = self::STATUS_ACTIVE;
-    }
-
-    /**
-     * @return bool
-     */
-    public function isStatusCompleted(): bool
-    {
-        return $this->status === self::STATUS_COMPLETED;
-    }
-
-    public function setStatusToCompleted(): void
-    {
-        $this->status = self::STATUS_COMPLETED;
-    }
-
-    /**
-     * @return bool
-     */
-    public function isStatusFailed(): bool
-    {
-        return $this->status === self::STATUS_FAILED;
-    }
-
-    public function setStatusToFailed(): void
-    {
-        $this->status = self::STATUS_FAILED;
+        return new GoalQuery(get_called_class());
     }
 }

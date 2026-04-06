@@ -11,6 +11,7 @@ $config = [
         '@bower' => '@vendor/bower-asset',
         '@npm' => '@vendor/npm-asset',
     ],
+    'container' => require __DIR__ . '/di.php',
     'components' => [
         'request' => [
             'cookieValidationKey' => 'fVLhdUkDMa9mEaqUdkr1toumhJ_aj-ss',
@@ -21,11 +22,11 @@ $config = [
             'cachePath' => '@runtime/cache',
             'keyPrefix' => 'pastelfinance_',
         ],
-        'container' => require __DIR__ . '/di.php',
         'user' => [
             'identityClass' => 'app\models\User',
             'enableAutoLogin' => true,
             'class' => 'yii\web\User',
+            'loginUrl' => ['user/login'],
         ],
         'recurringTransactionService' => [
             'class' => 'app\services\RecurringTransactionService',
@@ -60,9 +61,13 @@ $config = [
             'showScriptName' => false,
             'rules' => [
                 '' => 'site/index',
-                'login' => 'site/login',
-                'logout' => 'site/logout',
-                'register' => 'site/register',
+
+                'login' => 'user/login',
+                'logout' => 'user/logout',
+                'register' => 'user/register',
+                'settings' => 'settings/index',
+                'settings/save' => 'settings/save',
+
                 '<controller:\w+>/<action:\w+>/<id:\d+>' => '<controller>/<action>',
                 '<controller:\w+>/<action:\w+>' => '<controller>/<action>',
             ],

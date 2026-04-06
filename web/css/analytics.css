@@ -14,8 +14,8 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 52px;
-    height: 52px;
+    width: 3.25rem;
+    height: 3.25rem;
     background: #8da4a4;
     color: white;
     border: none;
@@ -189,7 +189,7 @@ body.sidebar-open::before {
 }
 
 .chart-card {
-    height: 420px;
+    height: 28rem;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -210,7 +210,7 @@ body.sidebar-open::before {
 
 .chart-card canvas {
     width: 100% !important;
-    height: 340px !important;
+    height: 21rem !important;
     max-width: none !important;
 }
 
@@ -219,38 +219,15 @@ body.sidebar-open::before {
 }
 
 .chart-card:last-child canvas {
-    height: 300px !important;
+    height: 19rem !important;
 }
 
 @media (max-width: 767.98px) {
     .chart-card {
-        height: 360px;
+        height: 25rem;
         padding: 1.5rem;
     }
     .chart-card canvas {
-        height: 280px !important;
+        height: 19rem !important;
     }
-}
-
-.mark-all-read,
-.mark-read {
-    background: transparent;
-    border: none;
-    color: #1a73e8;
-    cursor: pointer;
-    transition: color 0.25s;
-}
-
-.mark-all-read { font-size: 18px; }
-.mark-read     { font-size: 14px; }
-
-.mark-all-read:hover,
-.mark-read:hover { color: #1557b0; }
-
-.notification-list li.removed {
-    opacity: 0;
-    height: 0;
-    margin: 0;
-    padding: 0;
-    transition: all 0.3s ease;
 }

@@ -1,102 +1,110 @@
 <?php
 
+declare(strict_types=1);
+
 namespace app\controllers;
 
-use app\models\Category;
 use app\services\CategoryService;
-use Throwable;
+use app\models\forms\CategoryForm;
+use DomainException;
 use Yii;
-use yii\db\Exception;
-use yii\web\NotFoundHttpException;
 use yii\web\Response;
+use yii\filters\ContentNegotiator;
 
-class CategoryController extends BaseController
+final class CategoryController extends BaseController
 {
-    private CategoryService $service;
-
-    public function __construct($id, $module, CategoryService $service, $config = [])
-    {
+    public function __construct(
+        $id,
+        $module,
+        private readonly CategoryService $service,
+        $config = []
+    ) {
         parent::__construct($id, $module, $config);
-        $this->service = $service;
+    }
+
+    public function behaviors(): array
+    {
+        $behaviors = parent::behaviors();
+        $behaviors['contentNegotiator'] = [
+            'class' => ContentNegotiator::class,
+            'only' => ['create', 'update', 'delete', 'goals', 'type'],
+            'formats' => [
+                'application/json' => Response::FORMAT_JSON,
+            ],
+        ];
+        return $behaviors;
     }
 
     public function actionIndex(): string
     {
-        $userId = Yii::$app->user->id;
-        $categories = $this->service->getAllByUser($userId);
-
-        return $this->render('index', compact('categories'));
+        return $this->render('index', [
+            'categories' => $this->service->getAllByUser($this->getUserId()),
+        ]);
     }
 
-    public function actionGoals(): Response
+    public function actionGoals(): array
     {
-        Yii::$app->response->format = Response::FORMAT_JSON;
-        $userId = Yii::$app->user->id;
-
-        $goals = $this->service->getByType($userId, 'goal');
-        return $this->asJson($goals);
+        return $this->service->getMapByType($this->getUserId(), 'goal');
     }
 
-    public function actionCreate(): Response
+    public function actionCreate(): array|Response
     {
-        Yii::$app->response->format = Response::FORMAT_JSON;
-        $userId = Yii::$app->user->id;
-        $data = Yii::$app->request->post('Category', []);
+        $form = new CategoryForm();
 
-        try {
-            $category = $this->service->create($userId, $data);
-            return $this->asJson($category->toArray());
-        } catch (Exception $e) {
-            Yii::$app->response->statusCode = 400;
-            return $this->asJson(['errors' => $e->getMessage()]);
+        if ($form->load(Yii::$app->request->post())) {
+            try {
+                $category = $this->service->create($this->getUserId(), $form);
+                return $category->toArray();
+            } catch (DomainException $e) {
+                Yii::$app->response->statusCode = 422;
+                return ['error' => $e->getMessage()];
+            }
         }
+
+        Yii::$app->response->statusCode = 400;
+        return ['error' => 'Данные не получены'];
     }
 
-    /**
-     * @throws NotFoundHttpException
-     */
-    public function actionUpdate(int $id): Response
+    public function actionUpdate(int $id): array|Response
     {
-        Yii::$app->response->format = Response::FORMAT_JSON;
-        $userId = Yii::$app->user->id;
-        $data = Yii::$app->request->post('Category', []);
+        $form = new CategoryForm();
 
-        try {
-            $category = $this->service->update($id, $userId, $data);
-            return $this->asJson($category->toArray());
-        } catch (Exception $e) {
-            Yii::$app->response->statusCode = 400;
-            return $this->asJson(['errors' => $e->getMessage()]);
+        if ($form->load(Yii::$app->request->post())) {
+            try {
+                $category = $this->service->update($id, $this->getUserId(), $form);
+                return $category->toArray();
+            } catch (DomainException $e) {
+                Yii::$app->response->statusCode = 422;
+                return ['error' => $e->getMessage()];
+            }
         }
+
+        Yii::$app->response->statusCode = 400;
+        return ['error' => 'Данные для обновления не получены'];
     }
 
-    /**
-     * @throws Throwable
-     * @throws NotFoundHttpException
-     */
-    public function actionDelete(int $id): Response
+    public function actionDelete(int $id): array
     {
-        Yii::$app->response->format = Response::FORMAT_JSON;
-        $userId = Yii::$app->user->id;
-
         try {
-            $this->service->delete($id, $userId);
-            return $this->asJson(['success' => true]);
-        } catch (Exception $e) {
+            $this->service->delete($id, $this->getUserId());
+            return ['success' => true];
+        } catch (DomainException $e) {
             Yii::$app->response->statusCode = 400;
-            return $this->asJson(['errors' => $e->getMessage()]);
+            return ['success' => false, 'error' => $e->getMessage()];
         }
     }
 
     public function actionType(int $id): array
     {
-        Yii::$app->response->format = Response::FORMAT_JSON;
+        $category = $this->service->findById($id, $this->getUserId());
+        return [
+            'success' => true,
+            'type' => $category->type
+        ];
+    }
 
-        $category = Category::findOne($id);
-        if (!$category) {
-            return ['success' => false, 'message' => 'Категория не найдена'];
-        }
-
-        return ['success' => true, 'type' => $category->type];
+    private function getUserId(): int
+    {
+        return (int)Yii::$app->user->id;
     }
 }

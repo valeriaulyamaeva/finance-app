@@ -1,11 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace app\models;
 
-use DateTime;
-use InvalidArgumentException;
+use app\models\queries\RecurringTransactionQuery;
+use yii\behaviors\AttributeTypecastBehavior;
+use yii\behaviors\TimestampBehavior;
 use yii\db\ActiveQuery;
 use yii\db\ActiveRecord;
+use yii\db\Expression;
 
 /**
  * @property int $id
@@ -19,85 +23,66 @@ use yii\db\ActiveRecord;
  * @property int|null $goal_id
  * @property string|null $description
  * @property int $active
- * @property string|null $created_at
- * @property string|null $updated_at
- *
- * @property Budget $budget
- * @property Category $category
- * @property Goal $goal
- * @property Transaction[] $transactions
- * @property User $user
+ * @property string $created_at
+ * @property string $updated_at
  */
-class RecurringTransaction extends ActiveRecord
+final class RecurringTransaction extends ActiveRecord
 {
-    const FREQUENCY_DAILY = 'daily';
-    const FREQUENCY_WEEKLY = 'weekly';
-    const FREQUENCY_MONTHLY = 'monthly';
+    public const FREQUENCY_DAILY = 'daily';
+    public const FREQUENCY_WEEKLY = 'weekly';
+    public const FREQUENCY_MONTHLY = 'monthly';
 
     public static function tableName(): string
     {
         return 'recurring_transaction';
     }
 
+    public function behaviors(): array
+    {
+        return [
+            'timestamp' => [
+                'class' => TimestampBehavior::class,
+                'value' => new Expression('NOW()'),
+            ],
+            'typecast' => [
+                'class' => AttributeTypecastBehavior::class,
+                'attributeTypes' => [
+                    'amount' => AttributeTypecastBehavior::TYPE_FLOAT,
+                    'active' => AttributeTypecastBehavior::TYPE_INTEGER,
+                    'category_id' => AttributeTypecastBehavior::TYPE_INTEGER,
+                    'goal_id' => AttributeTypecastBehavior::TYPE_INTEGER,
+                ],
+                'typecastAfterFind' => true,
+            ],
+        ];
+    }
+
     public function rules(): array
     {
         return [
+            [['user_id', 'amount', 'currency', 'frequency', 'next_date'], 'required'],
+            [['user_id', 'category_id', 'budget_id', 'goal_id', 'active'], 'integer'],
             [['category_id', 'budget_id', 'goal_id', 'description'], 'default', 'value' => null],
             [['active'], 'default', 'value' => 1],
-            [['user_id', 'amount', 'frequency'], 'required'],
-            [['user_id', 'category_id', 'budget_id', 'goal_id', 'active'], 'integer'],
-            [['amount'], 'number'],
-            ['currency', 'string', 'max' => 3],
-            [['currency'], 'safe'],
-            [['frequency', 'description'], 'string'],
-            [['next_date', 'created_at', 'updated_at'], 'safe'],
-            ['frequency', 'in', 'range' => array_keys(self::optsFrequency())],
-            [['budget_id'], 'exist', 'skipOnError' => true, 'targetClass' => Budget::class, 'targetAttribute' => ['budget_id' => 'id']],
-            [['category_id'], 'exist', 'skipOnError' => true, 'targetClass' => Category::class, 'targetAttribute' => ['category_id' => 'id']],
-            [['goal_id'], 'exist', 'skipOnError' => true, 'targetClass' => Goal::class, 'targetAttribute' => ['goal_id' => 'id']],
-            [['user_id'], 'exist', 'skipOnError' => true, 'targetClass' => User::class, 'targetAttribute' => ['user_id' => 'id']],
+            [['amount'], 'number', 'min' => 0.01],
+            [['currency'], 'string', 'max' => 3],
+            [['frequency'], 'in', 'range' => array_keys(self::optsFrequency())],
+            [['next_date'], 'date', 'format' => 'php:Y-m-d'],
+            [['description'], 'string', 'max' => 500],
+
+            [['user_id'], 'exist', 'targetClass' => User::class, 'targetAttribute' => 'id'],
+            [['category_id'], 'exist', 'targetClass' => Category::class, 'targetAttribute' => 'id'],
+            [['goal_id'], 'exist', 'targetClass' => Goal::class, 'targetAttribute' => 'id'],
         ];
     }
 
-    public function attributeLabels(): array
+    public static function optsFrequency(): array
     {
         return [
-            'id' => 'ID',
-            'user_id' => 'Пользователь',
-            'amount' => 'Сумма',
-            'currency' => 'Валюта',
-            'frequency' => 'Частота',
-            'next_date' => 'Следующая дата',
-            'category_id' => 'Категория',
-            'budget_id' => 'Бюджет',
-            'goal_id' => 'Цель',
-            'description' => 'Описание',
-            'active' => 'Активно',
-            'created_at' => 'Создано',
-            'updated_at' => 'Обновлено',
+            self::FREQUENCY_DAILY => 'Ежедневно',
+            self::FREQUENCY_WEEKLY => 'Еженедельно',
+            self::FREQUENCY_MONTHLY => 'Ежемесячно',
         ];
-    }
-
-    public function beforeSave($insert): bool
-    {
-        if (!parent::beforeSave($insert)) {
-            return false;
-        }
-
-        if ($this->frequency && empty($this->next_date)) {
-            $date = new DateTime();
-            $this->next_date = match ($this->frequency) {
-                self::FREQUENCY_DAILY, self::FREQUENCY_WEEKLY, self::FREQUENCY_MONTHLY => $date->format('Y-m-d'),
-                default => throw new InvalidArgumentException('Unknown frequency: ' . $this->frequency),
-            };
-        }
-
-        return true;
-    }
-
-    public function getBudget(): ActiveQuery
-    {
-        return $this->hasOne(Budget::class, ['id' => 'budget_id']);
     }
 
     public function getCategory(): ActiveQuery
@@ -110,57 +95,23 @@ class RecurringTransaction extends ActiveRecord
         return $this->hasOne(Goal::class, ['id' => 'goal_id']);
     }
 
-    public function getTransactions(): ActiveQuery
-    {
-        return $this->hasMany(Transaction::class, ['recurring_id' => 'id']);
-    }
-
     public function getUser(): ActiveQuery
     {
         return $this->hasOne(User::class, ['id' => 'user_id']);
     }
 
-    public static function optsFrequency(): array
+    public function getTransactions(): ActiveQuery
     {
-        return [
-            self::FREQUENCY_DAILY => 'Ежедневно',
-            self::FREQUENCY_WEEKLY => 'Еженедельно',
-            self::FREQUENCY_MONTHLY => 'Ежемесячно',
-        ];
+        return $this->hasMany(Transaction::class, ['recurring_id' => 'id']);
     }
 
-    public function displayFrequency(): string
+    public static function find(): RecurringTransactionQuery
     {
-        return self::optsFrequency()[$this->frequency] ?? $this->frequency;
+        return new RecurringTransactionQuery(get_called_class());
     }
 
-    public function isFrequencyDaily(): bool
+    public function getBudget(): ActiveQuery
     {
-        return $this->frequency === self::FREQUENCY_DAILY;
-    }
-
-    public function setFrequencyToDaily(): void
-    {
-        $this->frequency = self::FREQUENCY_DAILY;
-    }
-
-    public function isFrequencyWeekly(): bool
-    {
-        return $this->frequency === self::FREQUENCY_WEEKLY;
-    }
-
-    public function setFrequencyToWeekly(): void
-    {
-        $this->frequency = self::FREQUENCY_WEEKLY;
-    }
-
-    public function isFrequencyMonthly(): bool
-    {
-        return $this->frequency === self::FREQUENCY_MONTHLY;
-    }
-
-    public function setFrequencyToMonthly(): void
-    {
-        $this->frequency = self::FREQUENCY_MONTHLY;
+        return $this->hasOne(Budget::class, ['id' => 'budget_id']);
     }
 }

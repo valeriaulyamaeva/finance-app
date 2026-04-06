@@ -1,9 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace app\models;
 
+use app\models\queries\TransactionQuery;
+use Yii;
+use yii\behaviors\AttributeTypecastBehavior;
+use yii\behaviors\TimestampBehavior;
 use yii\db\ActiveQuery;
 use yii\db\ActiveRecord;
+use yii\db\Expression;
 
 /**
  * @property int $id
@@ -15,193 +22,104 @@ use yii\db\ActiveRecord;
  * @property int|null $category_id
  * @property int|null $budget_id
  * @property int|null $goal_id
- * @property string|null $description
  * @property int|null $recurring_id
+ * @property string|null $description
  * @property string|null $created_at
  * @property string|null $updated_at
  *
- * @property Budget $budget
- * @property Category $category
- * @property Goal $goal
- * @property RecurringTransaction $recurring
  * @property User $user
+ * @property Category|null $category
+ * @property Budget|null $budget
+ * @property Goal|null $goal
  */
-class Transaction extends ActiveRecord
+final class Transaction extends ActiveRecord
 {
-    const TYPE_INCOME = 'income';
-    const TYPE_EXPENSE = 'expense';
-    const TYPE_GOAL = 'goal';
-    public ?string $display_amount = null;
-    public ?string $display_currency = null;
+    public const TYPE_INCOME = 'income';
+    public const TYPE_EXPENSE = 'expense';
+    public const TYPE_GOAL = 'goal';
 
-    /**
-     * {@inheritdoc}
-     */
     public static function tableName(): string
     {
         return 'transaction';
     }
 
-    /**
-     * {@inheritdoc}
-     */
+    public function behaviors(): array
+    {
+        return [
+            'timestamp' => [
+                'class' => TimestampBehavior::class,
+                'value' => new Expression('NOW()'),
+            ],
+            'typecast' => [
+                'class' => AttributeTypecastBehavior::class,
+                'attributeTypes' => [
+                    'amount' => AttributeTypecastBehavior::TYPE_FLOAT,
+                    'category_id' => AttributeTypecastBehavior::TYPE_INTEGER,
+                    'budget_id' => AttributeTypecastBehavior::TYPE_INTEGER,
+                    'goal_id' => AttributeTypecastBehavior::TYPE_INTEGER,
+                ],
+                'typecastAfterFind' => true,
+            ],
+        ];
+    }
+
     public function rules(): array
     {
         return [
-            [['category_id', 'budget_id', 'goal_id', 'description', 'recurring_id'], 'default', 'value' => null],
-            [['type'], 'default', 'value' => 'expense'],
-            [['user_id', 'amount', 'date'], 'required'],
+            [['user_id', 'amount', 'date', 'currency', 'type'], 'required'],
             [['user_id', 'category_id', 'budget_id', 'goal_id', 'recurring_id'], 'integer'],
-            [['amount'], 'number'],
-            ['currency', 'string', 'max' => 3],
-            [['currency'], 'safe'],
-            [['date', 'created_at', 'updated_at'], 'safe'],
-            [['type', 'description'], 'string'],
-            ['type', 'in', 'range' => array_keys(self::optsType())],
-            [['budget_id'], 'exist', 'skipOnError' => true, 'targetClass' => Budget::class, 'targetAttribute' => ['budget_id' => 'id']],
-            [['category_id'], 'exist', 'skipOnError' => true, 'targetClass' => Category::class, 'targetAttribute' => ['category_id' => 'id']],
-            [['goal_id'], 'exist', 'skipOnError' => true, 'targetClass' => Goal::class, 'targetAttribute' => ['goal_id' => 'id']],
-            [['recurring_id'], 'exist', 'skipOnError' => true, 'targetClass' => RecurringTransaction::class, 'targetAttribute' => ['recurring_id' => 'id']],
-            [['user_id'], 'exist', 'skipOnError' => true, 'targetClass' => User::class, 'targetAttribute' => ['user_id' => 'id']],
-            [['goal_id'], 'required', 'when' => function ($model) {
-                return $model->category_id && Category::findOne($model->category_id)?->type === 'goal';
-            }, 'message' => 'Выберите цель для категории типа "goal".'],
-            ['currency', 'string', 'max' => 3],
-            ['currency', 'default', 'value' => 'BYN'],
+
+            [['category_id', 'budget_id', 'goal_id', 'recurring_id', 'description'], 'default', 'value' => null],
+
+            [['amount'], 'number', 'min' => 0.01],
+            [['date'], 'date', 'format' => 'php:Y-m-d'],
+            [['currency'], 'string', 'max' => 3],
+            [['description'], 'string', 'max' => 500],
+            [['type'], 'in', 'range' => array_keys(self::getTypes())],
+
+            [['user_id'], 'exist', 'targetClass' => User::class, 'targetAttribute' => 'id'],
+            [['category_id'], 'exist', 'targetClass' => Category::class, 'targetAttribute' => 'id'],
+            [['budget_id'], 'exist', 'targetClass' => Budget::class, 'targetAttribute' => 'id'],
+            [['goal_id'], 'exist', 'targetClass' => Goal::class, 'targetAttribute' => 'id'],
         ];
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function attributeLabels(): array
+    public static function getTypes(): array
     {
         return [
-            'id' => 'ID',
-            'user_id' => 'User ID',
-            'amount' => 'Amount',
-            'currency' => 'Currency',
-            'date' => 'Date',
-            'type' => 'Type',
-            'category_id' => 'Category ID',
-            'budget_id' => 'Budget ID',
-            'goal_id' => 'Goal ID',
-            'description' => 'Description',
-            'recurring_id' => 'Recurring ID',
-            'created_at' => 'Created At',
-            'updated_at' => 'Updated At',
+            self::TYPE_INCOME => Yii::t('app', 'Доход'),
+            self::TYPE_EXPENSE => Yii::t('app', 'Расход'),
+            self::TYPE_GOAL => Yii::t('app', 'Цель/Накопление'),
         ];
     }
 
-    /**
-     * @return ActiveQuery
-     */
-    public function getBudget(): ActiveQuery
-    {
-        return $this->hasOne(Budget::class, ['id' => 'budget_id']);
-    }
-
-    /**
-     * @return ActiveQuery
-     */
-    public function getCategory(): ActiveQuery
-    {
-        return $this->hasOne(Category::class, ['id' => 'category_id']);
-    }
-
-    /**
-     * @return ActiveQuery
-     */
-    public function getGoal(): ActiveQuery
-    {
-        return $this->hasOne(Goal::class, ['id' => 'goal_id']);
-    }
-
-    /**
-     * @return ActiveQuery
-     */
-    public function getRecurring(): ActiveQuery
-    {
-        return $this->hasOne(RecurringTransaction::class, ['id' => 'recurring_id']);
-    }
-
-    /**
-     * @return ActiveQuery
-     */
     public function getUser(): ActiveQuery
     {
         return $this->hasOne(User::class, ['id' => 'user_id']);
     }
 
-
-    /**
-     * @return string[]
-     */
-    public static function optsType(): array
+    public function getCategory(): ActiveQuery
     {
-        return [
-            self::TYPE_INCOME => 'income',
-            self::TYPE_EXPENSE => 'expense',
-            self::TYPE_GOAL => 'goal',
-        ];
+        return $this->hasOne(Category::class, ['id' => 'category_id']);
     }
 
-    /**
-     * @return string
-     */
-    public function displayType(): string
+    public function getBudget(): ActiveQuery
     {
-        return self::optsType()[$this->type];
+        return $this->hasOne(Budget::class, ['id' => 'budget_id']);
     }
 
-    /**
-     * @return bool
-     */
-    public function isTypeIncome(): bool
+    public function getGoal(): ActiveQuery
     {
-        return $this->type === self::TYPE_INCOME;
+        return $this->hasOne(Goal::class, ['id' => 'goal_id']);
     }
 
-    public function setTypeToIncome(): void
+    public function formatAmount(): string
     {
-        $this->type = self::TYPE_INCOME;
+        return number_format($this->amount, 2, '.', ' ');
     }
 
-    /**
-     * @return bool
-     */
-    public function isTypeExpense(): bool
+    public static function find(): TransactionQuery
     {
-        return $this->type === self::TYPE_EXPENSE;
+        return new TransactionQuery(get_called_class());
     }
-
-    public function setTypeToExpense(): void
-    {
-        $this->type = self::TYPE_EXPENSE;
-    }
-
-    /**
-     * @return bool
-     */
-    public function isTypeGoal(): bool
-    {
-        return $this->type === self::TYPE_GOAL;
-    }
-
-    public function setTypeToGoal(): void
-    {
-        $this->type = self::TYPE_GOAL;
-    }
-
-    public function getDisplayAmount(): string
-    {
-        return number_format($this->amount, 2, '.', '');
-    }
-
-
-    public function getRecurringTransaction(): ActiveQuery
-    {
-        return $this->hasOne(RecurringTransaction::class, ['id' => 'recurring_id']);
-    }
-
 }

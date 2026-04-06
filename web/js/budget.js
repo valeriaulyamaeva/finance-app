@@ -7,14 +7,30 @@ document.addEventListener('DOMContentLoaded', () => {
     const formErrors = document.getElementById('formErrors');
     const budgetCurrency = document.getElementById('budgetCurrency');
     const modalTitle = document.getElementById('modalTitle');
+
+    const filterMonth = document.getElementById('filterMonth');
+    const filterYear = document.getElementById('filterYear');
+
     let currentAction = 'create';
     let currentId = null;
+
+    const handleFilterChange = () => {
+        const month = filterMonth.value;
+        const year = filterYear.value;
+        const url = new URL(window.location.href);
+        url.searchParams.set('month', month);
+        url.searchParams.set('year', year);
+        window.location.href = url.toString();
+    };
+
+    if (filterMonth) filterMonth.addEventListener('change', handleFilterChange);
+    if (filterYear) filterYear.addEventListener('change', handleFilterChange);
 
     document.getElementById('addBudgetBtn').addEventListener('click', () => {
         currentAction = 'create';
         currentId = null;
         form.reset();
-        budgetCurrency.value = userCurrency;
+        if (budgetCurrency) budgetCurrency.value = userCurrency;
         modalTitle.textContent = 'Создать бюджет';
         hideError();
         modal.show();
@@ -27,92 +43,70 @@ document.addEventListener('DOMContentLoaded', () => {
         if (target.classList.contains('editBtn')) {
             const id = target.dataset.id;
             fetch(`${viewUrl}?id=${id}`)
-                .then(res => res.ok ? res.json() : Promise.reject(new Error('Network error')))
+                .then(res => res.json())
                 .then(data => {
                     if (data.success && data.budget) {
                         const b = data.budget;
                         setField('Budget[name]', b.name);
-                        setField('Budget[amount]', parseFloat(b.display_amount.replace(/[^\d.-]/g, '')) || '');
-                        setField('Budget[period]', b.period || '');
-                        setField('Budget[category_id]', b.category_id || '');
-                        setField('Budget[start_date]', b.start_date || '');
-                        setField('Budget[end_date]', b.end_date || '');
-                        budgetCurrency.value = b.display_currency || 'BYN';
+                        setField('Budget[amount]', b.amount);
+                        setField('Budget[period]', b.period);
+                        setField('Budget[category_id]', b.category_id);
+                        setField('Budget[start_date]', b.start_date);
+                        setField('Budget[end_date]', b.end_date);
+                        if (budgetCurrency) budgetCurrency.value = b.currency;
 
                         currentAction = 'update';
                         currentId = id;
                         modalTitle.textContent = 'Редактировать бюджет';
                         hideError();
                         modal.show();
-                    } else {
-                        showError(data.message || 'Не удалось загрузить бюджет');
                     }
                 })
-                .catch(err => {
-                    console.error('Edit error:', err);
-                    showError('Ошибка загрузки: ' + err.message);
-                });
+                .catch(err => showError('Ошибка загрузки данных'));
         }
 
         if (target.classList.contains('deleteBtn')) {
-            if (!confirm('Удалить бюджет?')) return;
+            if (!confirm('Удалить этот бюджет?')) return;
             const id = target.dataset.id;
 
-            fetch(deleteUrl, {
+            fetch(`${deleteUrl}?id=${id}`, {
                 method: 'POST',
                 headers: {
                     'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content,
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                },
-                body: new URLSearchParams({ id })
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
             })
-                .then(res => res.ok ? res.json() : Promise.reject(new Error('Network error')))
+                .then(res => res.json())
                 .then(data => {
-                    if (data.success) {
-                        location.reload();
-                    } else {
-                        showError(data.message || 'Ошибка удаления');
-                    }
+                    if (data.success) location.reload();
+                    else showError(data.message || 'Ошибка удаления');
                 })
-                .catch(err => {
-                    console.error('Delete error:', err);
-                    showError('Ошибка: ' + err.message);
-                });
+                .catch(err => showError('Ошибка сети при удалении'));
         }
     });
 
     document.querySelector('.saveBudget').addEventListener('click', () => {
         hideError();
-
         const formData = new FormData(form);
-        formData.set('Budget[currency]', budgetCurrency.value);
-
-        const startDate = form.querySelector('[name="Budget[start_date]"]').value;
-        const endDate = form.querySelector('[name="Budget[end_date]"]').value;
-        if (endDate && startDate && endDate < startDate) {
-            showError('Дата окончания не может быть раньше начала');
-            return;
-        }
-
         const url = currentAction === 'create' ? createUrl : `${updateUrl}?id=${currentId}`;
 
         fetch(url, {
             method: 'POST',
             body: formData,
-            headers: { 'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content }
+            headers: {
+                'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content,
+                'X-Requested-With': 'XMLHttpRequest'
+            }
         })
-            .then(res => res.ok ? res.json() : Promise.reject(new Error('Network error')))
+            .then(res => res.json())
             .then(data => {
                 if (data.success) {
                     location.reload();
                 } else {
-                    showError(data.message || 'Ошибка сохранения');
+                    showError(data.message || 'Ошибка валидации');
                 }
             })
-            .catch(err => {
-                console.error('Save error:', err);
-                showError('Ошибка: ' + err.message);
-            });
+            .catch(err => showError('Ошибка при сохранении'));
     });
 
     function setField(name, value) {
@@ -121,12 +115,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function showError(message) {
-        formErrors.textContent = message;
-        formErrors.classList.remove('d-none');
+        if (formErrors) {
+            formErrors.textContent = message;
+            formErrors.classList.remove('d-none');
+        } else {
+            alert(message);
+        }
     }
 
     function hideError() {
-        formErrors.classList.add('d-none');
-        formErrors.textContent = '';
+        if (formErrors) {
+            formErrors.classList.add('d-none');
+            formErrors.textContent = '';
+        }
     }
 });

@@ -1,9 +1,17 @@
+<?php
+
+use yii\helpers\Url;
+
+/** @var yii\web\View $this */
+
+$this->title = 'Добро пожаловать в PastelFinance';
+?>
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="<?= Yii::$app->language ?>">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="<?= Yii::$app->charset ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Добро пожаловать в PastelFinance</title>
+    <title><?= $this->title ?></title>
     <style>
         body {
             font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
@@ -87,6 +95,8 @@
             cursor: pointer;
             transition: all 0.3s ease;
             margin: 0 0.75rem;
+            text-decoration: none;
+            display: inline-block;
         }
 
         .btn-primary {
@@ -97,6 +107,7 @@
 
         .btn-primary:hover {
             background-color: #737272;
+            color: #fff;
             box-shadow: 0 6px 15px rgba(94, 94, 94, 0.4);
         }
 
@@ -118,14 +129,6 @@
             .card {
                 width: 100%;
                 max-width: 350px;
-            }
-
-            h1 {
-                font-size: 1.8rem;
-            }
-
-            p {
-                font-size: 0.95rem;
             }
         }
     </style>
@@ -151,8 +154,8 @@
     </div>
 
     <div class="buttons">
-        <a href="register"><button class="btn btn-primary">Зарегистрироваться</button></a>
-        <a href="login"><button class="btn btn-secondary">Войти</button></a>
+        <a href="<?= Url::to(['user/register']) ?>" class="btn btn-primary">Зарегистрироваться</a>
+        <a href="<?= Url::to(['user/login']) ?>" class="btn btn-secondary">Войти</a>
     </div>
 </div>
 </body>

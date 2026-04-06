@@ -1,106 +1,103 @@
 <?php
 
+declare(strict_types=1);
+
 namespace app\services;
 
-use app\models\Notification;
+use app\models\forms\RecurringForm;
 use app\models\RecurringTransaction;
-use app\models\Transaction;
-use DateMalformedStringException;
-use InvalidArgumentException;
-use Yii;
 use DateTime;
 use DateInterval;
-use yii\db\Exception;
+use Exception;
+use Yii;
+use yii\web\NotFoundHttpException;
 
-class RecurringTransactionService
+readonly class RecurringTransactionService
 {
-    private CurrencyService $currencyService;
+    public function __construct(
+        private TransactionService $transactionService
+    ) {}
 
-    public function __construct(CurrencyService $currencyService)
+    public function save(array $data, ?int $id = null, int $userId): RecurringTransaction
     {
-        $this->currencyService = $currencyService;
-    }
-
-    /**
-     * @throws Exception
-     */
-    public function saveRecurringTransaction(RecurringTransaction $model, array $data): bool
-    {
-        $model->load($data, '');
-        return $model->save();
-    }
-
-    /**
-     * @param RecurringTransaction $recurring
-     * @return Transaction|null
-     * @throws Exception
-     * @throws DateMalformedStringException
-     * @throws \Exception
-     */
-    public function createTransactionFromRecurring(RecurringTransaction $recurring): ?Transaction
-    {
-        if (!$recurring->active) {
-            return null;
+        $form = new RecurringForm();
+        if (!$form->load($data, '') || !$form->validate()) {
+            throw new Exception('Ошибка валидации: ' . implode(', ', $form->getErrorSummary(true)));
         }
 
-        $userCurrency = $recurring->user->currency ?? 'BYN';
-
-        $transaction = new Transaction();
-        $transaction->user_id = $recurring->user_id;
-        $transaction->amount = $recurring->amount;
-        $transaction->currency = $userCurrency;
-        $transaction->category_id = $recurring->category_id;
-        $transaction->budget_id = $recurring->budget_id;
-        $transaction->goal_id = $recurring->goal_id;
-        $transaction->description = $recurring->description;
-        $transaction->recurring_id = $recurring->id;
-        $transaction->date = $recurring->next_date;
-
-        if (!$transaction->save()) {
-            Yii::error('Failed to create transaction from recurring: ' . json_encode($transaction->errors));
-            return null;
+        $model = $id ? RecurringTransaction::findOne($id) : new RecurringTransaction();
+        if ($id && !$model) {
+            throw new NotFoundHttpException('Шаблон не найден');
         }
 
-        if (!$transaction->save()) {
-            Yii::error('Failed to create transaction from recurring: ' . json_encode($transaction->errors));
-            return null;
+        $model->user_id = $userId;
+        $model->attributes = $form->attributes;
+
+        if (!$model->save()) {
+            throw new Exception('Не удалось сохранить шаблон повтора');
         }
 
-        $recurring->next_date = $this->getNextDate($recurring->next_date, $recurring->frequency);
-        $recurring->save(false);
-
-        return $transaction;
+        return $model;
     }
 
-    /**
-     * @param string $currentDate
-     * @param string $frequency
-     * @return string
-     * @throws DateMalformedStringException
-     */
-    public function getNextDate(string $currentDate, string $frequency): string
+    public function runScheduledTasks(): int
+    {
+        $tasks = RecurringTransaction::find()->active()->due()->all();
+        $processedCount = 0;
+
+        foreach ($tasks as $task) {
+            try {
+                if ($this->executeTask($task)) {
+                    $processedCount++;
+                }
+            } catch (Exception $e) {
+                Yii::error("Ошибка выполнения задачи $task->id: " . $e->getMessage());
+            }
+        }
+
+        return $processedCount;
+    }
+
+    private function executeTask(RecurringTransaction $task): bool
+    {
+        return Yii::$app->db->transaction(function () use ($task) {
+            $this->transactionService->create([
+                'amount' => $task->amount,
+                'currency' => $task->currency,
+                'date' => $task->next_date,
+                'category_id' => $task->category_id,
+                'goal_id' => $task->goal_id,
+                'description' => $task->description ? "Авто: $task->description" : "Повторяющийся платеж",
+                'recurring_id' => $task->id,
+            ], $task->user_id);
+
+            $task->next_date = $this->calculateNextDate($task->next_date, $task->frequency);
+
+            if (!$task->save(false)) {
+                throw new Exception("Не удалось обновить дату для шаблона $task->id");
+            }
+
+            return true;
+        });
+    }
+
+    private function calculateNextDate(string $currentDate, string $frequency): string
     {
         $date = new DateTime($currentDate);
-
-        match ($frequency) {
-            RecurringTransaction::FREQUENCY_DAILY => $date->add(new DateInterval('P1D')),
-            RecurringTransaction::FREQUENCY_WEEKLY => $date->add(new DateInterval('P7D')),
-            RecurringTransaction::FREQUENCY_MONTHLY => $date->add(new DateInterval('P1M')),
-            default => throw new InvalidArgumentException('Unknown frequency: ' . $frequency),
+        $interval = match ($frequency) {
+            RecurringTransaction::FREQUENCY_DAILY => 'P1D',
+            RecurringTransaction::FREQUENCY_WEEKLY => 'P7D',
+            RecurringTransaction::FREQUENCY_MONTHLY => 'P1M',
+            default => throw new Exception("Неизвестная частота: $frequency"),
         };
 
+        $date->add(new DateInterval($interval));
         return $date->format('Y-m-d');
     }
 
-    /**
-     * @return RecurringTransaction[]
-     */
-    public function getDueRecurringTransactions(): array
+    public function delete(int $id): void
     {
-        $today = date('Y-m-d');
-        return RecurringTransaction::find()
-            ->where(['active' => 1])
-            ->andWhere(['<=', 'next_date', $today])
-            ->all();
+        $model = RecurringTransaction::findOne($id);
+        $model?->delete();
     }
 }

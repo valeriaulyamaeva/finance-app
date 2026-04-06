@@ -1,4 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
+    const { createUrl, updateUrl, deleteUrl, viewUrl, userCurrency } = goalConfig;
+
     const modalEl = document.getElementById('goalModal');
     const modal = new bootstrap.Modal(modalEl);
     const form = document.getElementById('goalForm');
@@ -8,112 +10,86 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentAction = 'create';
     let currentId = null;
 
-    document.getElementById('addGoalBtn').addEventListener('click', () => {
+    document.getElementById('addGoalBtn')?.addEventListener('click', () => {
         currentAction = 'create';
         currentId = null;
         form.reset();
-        document.getElementById('goalId').value = '';
-        document.getElementById('goalCurrency').value = userCurrency;
-        modalTitle.textContent = 'Создать цель';
-        formErrors.classList.add('d-none');
+        modalTitle.textContent = 'Новая финансовая цель';
+        hideError();
         modal.show();
     });
 
-    document.querySelectorAll('.editBtn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const id = btn.dataset.id;
-            fetch(`${goalUrls.view}?id=${id}`, {
-                headers: { 'X-Requested-With': 'XMLHttpRequest' }
-            })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success && data.goal) {
-                        const g = data.goal;
-                        document.getElementById('goalId').value = g.id;
-                        document.getElementById('goalName').value = g.name;
-                        document.getElementById('goalTarget').value = g.display_target_amount || g.target_amount;
-                        document.getElementById('goalCurrent').value = g.display_current_amount || g.current_amount || 0;
-                        document.getElementById('goalDeadline').value = g.deadline;
-                        document.getElementById('goalStatus').value = g.status;
+    document.querySelector('.cards-container')?.addEventListener('click', (e) => {
+        const target = e.target.closest('button');
+        if (!target) return;
 
-                        currentAction = 'update';
-                        currentId = g.id;
-                        modalTitle.textContent = 'Редактировать цель';
-                        formErrors.classList.add('d-none');
-                        modal.show();
-                    } else {
-                        showError(data.message || 'Не удалось загрузить цель');
-                    }
-                })
-                .catch(err => {
-                    console.error(err);
-                    showError('Ошибка загрузки данных');
-                });
-        });
-    });
+        const id = target.dataset.id;
 
-    document.querySelectorAll('.deleteBtn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            if (!confirm('Удалить цель навсегда?')) return;
-
-            fetch(`${goalUrls.delete}?id=${btn.dataset.id}`, {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                }
-            })
+        if (target.classList.contains('editBtn')) {
+            fetch(`${viewUrl}?id=${id}`)
                 .then(res => res.json())
                 .then(data => {
                     if (data.success) {
-                        location.reload();
-                    } else {
-                        showError(data.message || 'Ошибка удаления');
+                        currentAction = 'update';
+                        currentId = id;
+                        modalTitle.textContent = 'Редактирование цели';
+
+                        fillForm(data.goal);
+                        hideError();
+                        modal.show();
                     }
+                });
+        }
+
+        if (target.classList.contains('deleteBtn')) {
+            if (confirm('Вы уверены, что хотите удалить цель?')) {
+                fetch(`${deleteUrl}?id=${id}`, {
+                    method: 'POST',
+                    headers: { 'X-CSRF-Token': yii.getCsrfToken() }
                 })
-                .catch(() => showError('Ошибка сети'));
-        });
+                    .then(res => res.json())
+                    .then(data => data.success ? location.reload() : alert(data.message));
+            }
+        }
     });
 
-    form.addEventListener('submit', function(e) {
+    form.addEventListener('submit', (e) => {
         e.preventDefault();
-        formErrors.classList.add('d-none');
-
         const formData = new FormData(form);
-        formData.set('Goal[currency]', userCurrency);
-
-        const target = formData.get('Goal[target_amount]');
-        const current = formData.get('Goal[current_amount]') || '0';
-        if (target) formData.set('Goal[target_amount]', parseFloat(target));
-        if (current) formData.set('Goal[current_amount]', parseFloat(current));
-
-        const url = currentAction === 'create'
-            ? goalUrls.create
-            : `${goalUrls.update}?id=${currentId}`;
+        const url = currentAction === 'create' ? createUrl : `${updateUrl}?id=${currentId}`;
 
         fetch(url, {
             method: 'POST',
             body: formData,
-            headers: {
-                'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                'X-Requested-With': 'XMLHttpRequest'
-            }
+            headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-Token': yii.getCsrfToken() }
         })
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
                     location.reload();
                 } else {
-                    showError(data.message || 'Ошибка сохранения');
+                    showError(data.message || 'Ошибка валидации');
                 }
             })
-            .catch(err => {
-                console.error(err);
-                showError('Ошибка соединения');
-            });
+            .catch(() => showError('Ошибка сети'));
     });
 
-    function showError(message) {
-        formErrors.textContent = message;
+    function fillForm(goal) {
+        document.getElementById('goalName').value = goal.name;
+        document.getElementById('goalTarget').value = goal.target_amount;
+        document.getElementById('goalDeadline').value = goal.deadline;
+        document.getElementById('goalCurrency').value = goal.currency;
+
+        const currentField = document.getElementById('goalCurrent');
+        if (currentField) currentField.value = goal.current_amount;
+    }
+
+    function showError(msg) {
+        formErrors.textContent = msg;
         formErrors.classList.remove('d-none');
+    }
+
+    function hideError() {
+        formErrors.classList.add('d-none');
     }
 });

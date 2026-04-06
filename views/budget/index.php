@@ -1,5 +1,6 @@
 <?php
 
+use app\models\Budget;
 use app\models\User;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Html;
@@ -9,41 +10,36 @@ use yii\web\JqueryAsset;
 use yii\web\View;
 
 /** @var yii\web\View $this */
-/** @var array $budgetsWithDisplay */
+/** @var app\models\Budget[] $budgets */
 /** @var array $summary */
 /** @var User $user */
+/** @var string $selectedMonth */
+/** @var string $selectedYear */
 
 $this->title = 'Бюджеты';
 
-$createUrl = Url::to(['budget/create']);
-$updateUrl = Url::to(['budget/update']);
-$deleteUrl = Url::to(['budget/delete']);
-$viewUrl = Url::to(['budget/view']);
-
-$currencySymbols = [
-    'BYN' => 'Br',
-    'EUR' => '€',
-    'USD' => '$',
-    'RUB' => '₽',
+$years = range(date('Y') - 2, date('Y') + 2);
+$months = [
+    '01' => 'Январь', '02' => 'Февраль', '03' => 'Март', '04' => 'Апрель',
+    '05' => 'Май', '06' => 'Июнь', '07' => 'Июль', '08' => 'Август',
+    '09' => 'Сентябрь', '10' => 'Октябрь', '11' => 'Ноябрь', '12' => 'Декабрь',
 ];
+
 $userCurrency = $user->currency ?? 'BYN';
+$currencySymbols = ['BYN' => 'Br', 'EUR' => '€', 'USD' => '$', 'RUB' => '₽'];
 $currencySymbol = $currencySymbols[$userCurrency] ?? $userCurrency;
 
 $this->registerCssFile('@web/css/budget.css');
 
 $jsVars = [
-    'createUrl' => $createUrl,
-    'updateUrl' => $updateUrl,
-    'deleteUrl' => $deleteUrl,
-    'viewUrl' => $viewUrl,
+    'createUrl' => Url::to(['budget/create']),
+    'updateUrl' => Url::to(['budget/update']),
+    'deleteUrl' => Url::to(['budget/delete']),
+    'viewUrl' => Url::to(['budget/view']),
     'userCurrency' => $userCurrency,
     'currencySymbol' => $currencySymbol,
 ];
-$this->registerJs(
-    'const budgetConfig = ' . json_encode($jsVars) . ';',
-    View::POS_HEAD
-);
-
+$this->registerJs('const budgetConfig = ' . json_encode($jsVars) . ';', View::POS_HEAD);
 $this->registerJsFile('@web/js/budget.js', ['depends' => [JqueryAsset::class]]);
 ?>
 
@@ -55,13 +51,9 @@ $this->registerJsFile('@web/js/budget.js', ['depends' => [JqueryAsset::class]]);
         <div class="sidebar" id="sidebar">
             <div class="sidebar-header d-flex justify-content-between align-items-center d-lg-none">
                 <h2>PastelFinance</h2>
-                <button class="sidebar-close" id="sidebarClose">
-                    <i class="fas fa-times fa-lg"></i>
-                </button>
+                <button class="sidebar-close" id="sidebarClose"><i class="fas fa-times fa-lg"></i></button>
             </div>
-
             <h2 class="d-none d-lg-block">PastelFinance</h2>
-
             <ul>
                 <li><a href="/analytics">Аналитика</a></li>
                 <li><a href="/transaction">Транзакции</a></li>
@@ -73,7 +65,22 @@ $this->registerJsFile('@web/js/budget.js', ['depends' => [JqueryAsset::class]]);
         </div>
 
         <div class="budget-content" id="mainContent">
-            <h1>Бюджеты</h1>
+            <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+                <h1>Бюджеты</h1>
+
+                <div class="filter-section d-flex gap-2 bg-white p-2 rounded-3 shadow-sm border">
+                    <select id="filterMonth" class="form-select form-select-sm border-0 bg-light">
+                        <?php foreach ($months as $num => $name): ?>
+                            <option value="<?= $num ?>" <?= $num == $selectedMonth ? 'selected' : '' ?>><?= $name ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <select id="filterYear" class="form-select form-select-sm border-0 bg-light">
+                        <?php foreach ($years as $y): ?>
+                            <option value="<?= $y ?>" <?= $y == $selectedYear ? 'selected' : '' ?>><?= $y ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+            </div>
 
             <div class="summary-cards">
                 <div class="summary-card">
@@ -91,40 +98,34 @@ $this->registerJsFile('@web/js/budget.js', ['depends' => [JqueryAsset::class]]);
             </div>
 
             <div class="actions mb-4">
-                <button class="btn-add" id="addBudgetBtn" data-bs-toggle="modal" data-bs-target="#budgetModal">
-                    Добавить бюджет
-                </button>
+                <button class="btn-add" id="addBudgetBtn">Добавить бюджет</button>
             </div>
 
             <div class="cards-container">
-                <?php if (!empty($budgetsWithDisplay)): ?>
-                    <?php foreach ($budgetsWithDisplay as $budgetData): ?>
+                <?php if (!empty($budgets)): ?>
+                    <?php foreach ($budgets as $budget): ?>
                         <?php
-                        $budget = $budgetData['model'];
-                        $rawAmount = $budget->amount;
-                        $rawSpent = $budgetData['raw_spent'];
-                        $percent = $rawAmount > 0 ? min(100, ($rawSpent / $rawAmount) * 100) : 0;
+                        $percent = $budget->getProgressPercentage();
                         $progressColor = $percent < 70 ? '#16a34a' : ($percent < 100 ? '#facc15' : '#dc2626');
                         ?>
                         <div class="card" data-id="<?= $budget->id ?>">
                             <div class="card-body">
                                 <h3><?= Html::encode($budget->name) ?></h3>
                                 <p><strong>Категория:</strong> <?= Html::encode($budget->category->name ?? '-') ?></p>
-                                <p><strong>Лимит:</strong> <?= Html::encode($budgetData['display_amount']) ?> <?= Html::encode($userCurrency) ?></p>
-                                <p><strong>Потрачено:</strong> <?= Html::encode($budgetData['display_spent']) ?> <?= Html::encode($userCurrency) ?></p>
+                                <p><strong>Лимит:</strong> <?= number_format($budget->amount, 2) ?> <?= $budget->currency ?></p>
+                                <p><strong>Потрачено:</strong> <?= number_format($budget->spent, 2) ?> <?= $budget->currency ?></p>
 
                                 <div class="budget-progress-bar">
                                     <div class="budget-progress-fill" style="width: <?= $percent ?>%; background: <?= $progressColor ?>;"></div>
                                 </div>
                                 <p class="budget-progress-text">
-                                    <?= number_format($percent, 1) ?>% из <?= number_format($rawAmount, 2) ?> <?= Html::encode($currencySymbol) ?>
+                                    <?= $percent ?>% из <?= number_format($budget->amount, 2) ?> <?= $budget->currency ?>
                                 </p>
 
-                                <p><strong>Остаток:</strong> <?= Html::encode($budgetData['display_remaining']) ?> <?= Html::encode($userCurrency) ?></p>
-                                <p><strong>Период:</strong> <?= Html::encode($budget->displayPeriod()) ?></p>
-                                <p><strong>Срок:</strong> <?= Html::encode($budget->start_date) ?> → <?= Html::encode($budget->end_date ?? '—') ?></p>
+                                <p><strong>Остаток:</strong> <?= number_format($budget->getRemainingAmount(), 2) ?> <?= $budget->currency ?></p>
+                                <p><strong>Период:</strong> <?= Budget::getPeriods()[$budget->period] ?? $budget->period ?></p>
+                                <p><strong>Срок:</strong> <?= $budget->start_date ?> → <?= $budget->end_date ?? '—' ?></p>
                             </div>
-
                             <div class="card-actions">
                                 <button class="editBtn" data-id="<?= $budget->id ?>">✏️</button>
                                 <button class="deleteBtn" data-id="<?= $budget->id ?>">🗑️</button>
@@ -132,7 +133,9 @@ $this->registerJsFile('@web/js/budget.js', ['depends' => [JqueryAsset::class]]);
                         </div>
                     <?php endforeach; ?>
                 <?php else: ?>
-                    <p class="text-muted text-center py-5 fs-4">Нет созданных бюджетов</p>
+                    <div class="w-100 text-center py-5">
+                        <p class="text-muted fs-4">Нет бюджетов за выбранный период</p>
+                    </div>
                 <?php endif; ?>
             </div>
         </div>
@@ -140,15 +143,12 @@ $this->registerJsFile('@web/js/budget.js', ['depends' => [JqueryAsset::class]]);
 
 <?= $this->render('_budgetModal', [
     'categories' => ArrayHelper::map(Category::find()->all(), 'id', 'name'),
-    'userCurrency' => $userCurrency,
+    'user' => $user,
 ]) ?>
 
 <?php
 $this->registerCssFile('https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css');
 $this->registerCssFile('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
-$this->registerJsFile('@web/js/notifications.js', ['depends' => [JqueryAsset::class]]);
-$this->registerJsFile('https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js', [
-    'depends' => [JqueryAsset::class],
-]);
+$this->registerJsFile('https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js', ['depends' => [JqueryAsset::class]]);
 $this->registerJsFile('@web/js/sidebar.js', ['depends' => JqueryAsset::class]);
 ?>

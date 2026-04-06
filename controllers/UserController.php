@@ -1,137 +1,145 @@
 <?php
 
+declare(strict_types=1);
+
 namespace app\controllers;
 
-use app\models\User;
-use Throwable;
-use yii\data\ActiveDataProvider;
-use yii\db\Exception;
-use yii\db\StaleObjectException;
-use yii\web\NotFoundHttpException;
-use yii\filters\VerbFilter;
+use Yii;
+use yii\web\Controller;
 use yii\web\Response;
+use yii\filters\AccessControl;
+use app\models\User;
+use app\models\forms\UserLoginForm;
+use app\models\forms\UserRegisterForm;
+use app\models\forms\ChangePasswordForm;
+use app\models\forms\UserProfileForm;
+use app\services\UserService;
+use Throwable;
 
-class UserController extends BaseController
+class UserController extends Controller
 {
-    /**
-     * @inheritDoc
-     */
+    public function __construct(
+        $id,
+        $module,
+        private readonly UserService $userService,
+        $config = []
+    ) {
+        parent::__construct($id, $module, $config);
+    }
+
     public function behaviors(): array
     {
-        return array_merge(
-            parent::behaviors(),
-            [
-                'verbs' => [
-                    'class' => VerbFilter::className(),
-                    'actions' => [
-                        'delete' => ['POST'],
+        return [
+            'access' => [
+                'class' => AccessControl::class,
+                'rules' => [
+                    [
+                        'actions' => ['login', 'register'],
+                        'allow' => true,
+                        'roles' => ['?'],
+                    ],
+                    [
+                        'actions' => ['profile', 'update', 'change-password', 'logout'],
+                        'allow' => true,
+                        'roles' => ['@'],
                     ],
                 ],
-            ]
-        );
-    }
-
-    /**
-     * @return string
-     */
-    public function actionIndex(): string
-    {
-        $dataProvider = new ActiveDataProvider([
-            'query' => User::find(),
-            /*
-            'pagination' => [
-                'pageSize' => 50
             ],
-            'sort' => [
-                'defaultOrder' => [
-                    'id' => SORT_DESC,
-                ]
-            ],
-            */
-        ]);
-
-        return $this->render('index', [
-            'dataProvider' => $dataProvider,
-        ]);
+        ];
     }
 
-    /**
-     * @param int $id ID
-     * @return string
-     * @throws NotFoundHttpException if the model cannot be found
-     */
-    public function actionView(int $id): string
+    public function actionRegister(): Response|string
     {
-        return $this->render('view', [
-            'model' => $this->findModel($id),
-        ]);
-    }
+        $form = new UserRegisterForm();
 
-    /**
-     * @return string|Response
-     * @throws Exception
-     */
-    public function actionCreate(): Response|string
-    {
-        $model = new User();
-
-        if ($this->request->isPost) {
-            if ($model->load($this->request->post()) && $model->save()) {
-                return $this->redirect(['view', 'id' => $model->id]);
+        if ($form->load(Yii::$app->request->post()) && $form->validate()) {
+            try {
+                $user = $this->userService->register($form);
+                Yii::$app->user->login($user);
+                Yii::$app->session->setFlash('success', 'Регистрация успешна!');
+                return $this->redirect(['profile']);
+            } catch (Throwable $e) {
+                Yii::$app->session->setFlash('error', $e->getMessage());
+                Yii::error($e->getMessage());
             }
-        } else {
-            $model->loadDefaultValues();
         }
 
-        return $this->render('create', [
-            'model' => $model,
+        return $this->render('register', ['model' => $form]);
+    }
+
+    public function actionLogin(): Response|string
+    {
+        if (!Yii::$app->user->isGuest) {
+            return $this->redirect(['profile']);
+        }
+
+        $form = new UserLoginForm();
+
+        if ($form->load(Yii::$app->request->post()) && $form->validate()) {
+            $user = $this->userService->authenticate($form->email, $form->password);
+
+            if ($user) {
+                $duration = $form->rememberMe ? 3600 * 24 * 30 : 0;
+                if (Yii::$app->user->login($user, $duration)) {
+                    $user->updateAttributes(['last_login' => date('Y-m-d H:i:s')]);
+                    return $this->redirect(['profile']);
+                }
+            } else {
+                $form->addError('password', 'Неверный email или пароль.');
+            }
+        }
+
+        return $this->render('login', ['model' => $form]);
+    }
+
+    public function actionLogout(): Response
+    {
+        Yii::$app->user->logout();
+        return $this->goHome();
+    }
+
+    public function actionProfile(): string
+    {
+        return $this->render('profile', [
+            'user' => Yii::$app->user->identity
         ]);
     }
 
-    /**
-     * @param int $id ID
-     * @return string|Response
-     * @throws NotFoundHttpException|Exception if the model cannot be found
-     */
-    public function actionUpdate(int $id): Response|string
+    public function actionUpdate(): Response|string
     {
-        $model = $this->findModel($id);
+        /** @var User $user */
+        $user = Yii::$app->user->identity;
+        $form = new UserProfileForm($user);
 
-        if ($this->request->isPost && $model->load($this->request->post()) && $model->save()) {
-            return $this->redirect(['view', 'id' => $model->id]);
+        if ($form->load(Yii::$app->request->post()) && $form->validate()) {
+            try {
+                $this->userService->updateProfile($user, $form);
+                Yii::$app->session->setFlash('success', 'Профиль обновлен.');
+                return $this->redirect(['profile']);
+            } catch (Throwable $e) {
+                Yii::$app->session->setFlash('error', $e->getMessage());
+            }
         }
 
-        return $this->render('update', [
-            'model' => $model,
-        ]);
+        return $this->render('update', ['model' => $form]);
     }
 
-    /**
-     * @param int $id ID
-     * @return Response
-     */
-    public function actionDelete(int $id): Response
+    public function actionChangePassword(): Response|string
     {
-        try {
-            $this->findModel($id)->delete();
-        } catch (StaleObjectException|Throwable|NotFoundHttpException $e) {
+        /** @var User $user */
+        $user = Yii::$app->user->identity;
+        $form = new ChangePasswordForm();
 
+        if ($form->load(Yii::$app->request->post()) && $form->validate()) {
+            try {
+                $this->userService->changePassword($user, $form);
+                Yii::$app->session->setFlash('success', 'Пароль успешно изменен.');
+                return $this->redirect(['profile']);
+            } catch (Throwable $e) {
+                Yii::$app->session->setFlash('error', $e->getMessage());
+            }
         }
 
-        return $this->redirect(['index']);
-    }
-
-    /**
-     * @param int $id ID
-     * @return User the loaded model
-     * @throws NotFoundHttpException if the model cannot be found
-     */
-    protected function findModel(int $id): User
-    {
-        if (($model = User::findOne(['id' => $id])) !== null) {
-            return $model;
-        }
-
-        throw new NotFoundHttpException('The requested page does not exist.');
+        return $this->render('change-password', ['model' => $form]);
     }
 }

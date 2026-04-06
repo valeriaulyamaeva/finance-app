@@ -1,79 +1,122 @@
 <?php
 
+declare(strict_types=1);
+
 namespace app\services;
 
+use app\models\forms\ChangePasswordForm;
+use app\models\forms\UserProfileForm;
+use app\models\forms\UserRegisterForm;
 use app\models\User;
-use Yii;
-use yii\base\Exception;
-use yii\db\Exception as DbException;
+use yii\db\Connection;
+use RuntimeException;
+use Throwable;
 
-class UserService
+final readonly class UserService
 {
-    public function authenticate(string $email, string $password): ?User
-    {
-        $email = trim($email);
-        Yii::info("LOGIN ATTEMPT: Email = '$email', Password = [HIDDEN]", __METHOD__);
-
-        $user = User::findByEmail($email);
-        if (!$user) {
-            Yii::error("LOGIN ERROR: User not found for email: '$email'", __METHOD__);
-            return null;
-        }
-
-        Yii::info(
-            "LOGIN DEBUG: Found user ID: $user->id, Email: $user->email, Status: $user->status",
-            __METHOD__
-        );
-
-        if (Yii::$app->security->validatePassword($password, $user->password_hash)) {
-            Yii::info("LOGIN DEBUG: Password valid? YES", __METHOD__);
-            return $user;
-        }
-
-        Yii::info("LOGIN DEBUG: Password valid? NO", __METHOD__);
-        return null;
+    public function __construct(
+        private Connection $db,
+        private CategoryService $categoryService
+    ) {
     }
 
     /**
-     * @throws Exception
+     * @throws Throwable
      */
-    public function register(array $data): ?User
+    public function register(UserRegisterForm $form): User
     {
-        $user = new User(['scenario' => 'create']);
-
-        $userData = $data['User'] ?? $data;
-        $user->load([$user->formName() => $userData]);
-
-        $password = $userData['password'] ?? '';
-        Yii::info('REGISTER DEBUG: password = ' . var_export($password, true), __METHOD__);
-
-        $user->setPassword($password);
-        $user->auth_key = Yii::$app->security->generateRandomString();
-        $user->access_token = Yii::$app->security->generateRandomString(64);
-        $user->status = User::STATUS_ACTIVE;
-        $user->theme = User::THEME_LIGHT;
-        $user->currency = 'BYN';
-        $user->created_at = $user->updated_at = date('Y-m-d H:i:s');
-
-        Yii::info('=== USER ATTRIBUTES BEFORE SAVE === ' . json_encode($user->attributes), __METHOD__);
-
+        $transaction = $this->db->beginTransaction();
         try {
-            if (!$user->save(false)) {
-                Yii::error(
-                    '=== SAVE RETURNED FALSE === ' . json_encode($user->errors)
-                    . ', Attributes: ' . json_encode($user->attributes),
-                    __METHOD__
-                );
-                return null;
+            $user = new User();
+            $user->email    = $form->email;
+            $user->username = $this->extractUsernameFromEmail($form->email);
+            $user->status   = User::STATUS_ACTIVE;
+            $user->theme    = User::THEME_LIGHT;
+            $user->currency = User::CURRENCY_BYN;
+
+            $user->setPassword($form->password);
+            $user->generateAuthKey();
+
+            if (!$user->save()) {
+                throw new RuntimeException('Ошибка сохранения: ' . implode(', ', $user->getErrorSummary(true)));
             }
-        } catch (DbException $e) {
-            Yii::error(
-                '=== DB EXCEPTION === ' . $e->getMessage() . ', Attributes: ' . json_encode($user->attributes),
-                __METHOD__
-            );
+
+            $this->categoryService->createDefaultCategories($user->id);
+            $transaction->commit();
+            return $user;
+        } catch (Throwable $e) {
+            $transaction->rollBack();
+            throw $e;
+        }
+    }
+
+    public function authenticate(string $email, string $password): ?User
+    {
+        $user = User::findByEmail($email);
+
+        if (!$user || !$user->validatePassword($password)) {
             return null;
         }
 
         return $user;
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function updateProfile(User $user, UserProfileForm $form): User
+    {
+        $transaction = $this->db->beginTransaction();
+        try {
+            $user->username = $form->username;
+            $user->email    = $form->email;
+
+            if ($form->theme) {
+                $user->theme = $form->theme;
+            }
+            if ($form->currency) {
+                $user->currency = strtoupper($form->currency);
+            }
+
+            if (!empty($form->new_password)) {
+                $user->setPassword($form->new_password);
+                $user->generateAuthKey();
+            }
+
+            if (!$user->save()) {
+                throw new RuntimeException('Ошибка сохранения: ' . implode(', ', $user->getErrorSummary(true)));
+            }
+
+            $transaction->commit();
+            return $user;
+        } catch (Throwable $e) {
+            $transaction->rollBack();
+            throw $e;
+        }
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function changePassword(User $user, ChangePasswordForm $form): void
+    {
+        $transaction = $this->db->beginTransaction();
+        try {
+            $user->setPassword($form->password);
+            $user->generateAuthKey();
+
+            if (!$user->save()) {
+                throw new RuntimeException('Не удалось изменить пароль.');
+            }
+            $transaction->commit();
+        } catch (Throwable $e) {
+            $transaction->rollBack();
+            throw $e;
+        }
+    }
+
+    private function extractUsernameFromEmail(string $email): string
+    {
+        return strstr($email, '@', true) ?: 'user_' . time();
     }
 }

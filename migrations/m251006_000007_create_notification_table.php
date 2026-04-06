@@ -11,8 +11,8 @@ class m251006_000007_create_notification_table extends Migration
             'user_id' => $this->integer()->notNull(),
             'message' => $this->text()->notNull(),
             'type' => "ENUM('budget_exceed', 'goal_reached', 'reminder', 'other') NOT NULL",
-            'read_status' => $this->boolean()->notNull()->defaultValue(false),
-            'created_at' => $this->timestamp()->defaultExpression('CURRENT_TIMESTAMP'),
+            'read_s tatus' => $this->boolean()->notNull()->defaultValue(false),
+            'created_at' => $this->timestamp  ()->defaultExpression('CURRENT_TIMESTAMP'),
             'updated_at' => $this->timestamp()->defaultExpression('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'),
         ]);
 
