@@ -154,8 +154,8 @@ $this->title = 'Добро пожаловать в PastelFinance';
     </div>
 
     <div class="buttons">
-        <a href="<?= Url::to(['user/register']) ?>" class="btn btn-primary">Зарегистрироваться</a>
-        <a href="<?= Url::to(['user/login']) ?>" class="btn btn-secondary">Войти</a>
+        <a href="<?= Url::to(['/register']) ?>" class="btn btn-primary">Зарегистрироваться</a>
+        <a href="<?= Url::to(['/login']) ?>" class="btn btn-secondary">Войти</a>
     </div>
 </div>
 </body>

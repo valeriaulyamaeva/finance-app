@@ -29,9 +29,13 @@ $config = [
     ],
     'params' => $params,
 
+    'container' => require __DIR__ . '/di.php',
     'controllerMap' => [
         'budget' => [
             'class' => 'app\commands\BudgetRenewCommand',
+        ],
+        'recurring-transaction' => [
+            'class' => 'app\commands\RecurringTransactionController',
         ],
     ],
 ];

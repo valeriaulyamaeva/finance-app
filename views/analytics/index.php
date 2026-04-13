@@ -59,14 +59,35 @@ $this->registerCssFile('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.
         <div class="analytics-content" id="mainContent">
             <h1>Аналитика и статистика</h1>
 
+            <div class="period-selector">
+                <a href="/analytics?period=month" class="period-btn <?= $period === 'month' ? 'active' : '' ?>">Месяц</a>
+                <a href="/analytics?period=quarter" class="period-btn <?= $period === 'quarter' ? 'active' : '' ?>">Квартал</a>
+                <a href="/analytics?period=year" class="period-btn <?= $period === 'year' ? 'active' : '' ?>">Год</a>
+                <div class="period-custom">
+                    <input type="date" id="customStart" value="<?= Html::encode($startDate) ?>">
+                    <input type="date" id="customEnd" value="<?= Html::encode($endDate) ?>">
+                    <button class="period-btn" id="applyCustomPeriod">Применить</button>
+                </div>
+            </div>
+
             <div class="summary-cards">
                 <div class="summary-card">
                     <h5>Доход</h5>
                     <p><?= number_format($totalIncome, 2, '.', ' ') ?> <?= Html::encode($currencySymbol) ?></p>
+                    <?php if ($incomeChange !== null): ?>
+                        <span class="change-badge <?= $incomeChange >= 0 ? 'positive' : 'negative' ?>">
+                            <?= $incomeChange >= 0 ? '+' : '' ?><?= $incomeChange ?>%
+                        </span>
+                    <?php endif; ?>
                 </div>
                 <div class="summary-card">
                     <h5>Расход</h5>
                     <p><?= number_format($totalExpense, 2, '.', ' ') ?> <?= Html::encode($currencySymbol) ?></p>
+                    <?php if ($expenseChange !== null): ?>
+                        <span class="change-badge <?= $expenseChange <= 0 ? 'positive' : 'negative' ?>">
+                            <?= $expenseChange >= 0 ? '+' : '' ?><?= $expenseChange ?>%
+                        </span>
+                    <?php endif; ?>
                 </div>
                 <div class="summary-card">
                     <h5>Остаток</h5>
@@ -98,8 +119,12 @@ $this->registerCssFile('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.
 
                 <div class="chart-card">
                     <h4>Топ 5 категорий</h4>
-                    #
                     <canvas id="topCategoriesChart"></canvas>
+                </div>
+
+                <div class="chart-card">
+                    <h4>Расходы по дням недели</h4>
+                    <canvas id="weekdayChart"></canvas>
                 </div>
             </div>
         </div>
@@ -129,9 +154,21 @@ $this->registerJs('
         'expenseValues' => $expenseValues,
         'incomeValues' => $incomeValues,
         'currencySymbol' => $currencySymbol,
+        'weekdayLabels' => $weekdayLabels,
+        'weekdayTotals' => $weekdayTotals,
+        'weekdayCounts' => $weekdayCounts,
     ]) . ';
 ', View::POS_HEAD);
 
 $this->registerJsFile('https://cdn.jsdelivr.net/npm/chart.js', ['position' => View::POS_HEAD]);
 $this->registerJsFile('@web/js/sidebar.js', ['depends' => JqueryAsset::class]);
+$this->registerJs("
+    document.getElementById('applyCustomPeriod')?.addEventListener('click', function() {
+        var start = document.getElementById('customStart').value;
+        var end = document.getElementById('customEnd').value;
+        if (start && end) {
+            window.location.href = '/analytics?period=custom&start=' + start + '&end=' + end;
+        }
+    });
+", View::POS_READY);
 ?>

@@ -3,6 +3,10 @@
 /** @var yii\data\ActiveDataProvider $dataProvider */
 /** @var array $summary */
 /** @var array $goals */
+/** @var app\models\Category[] $categories */
+/** @var string $startDate */
+/** @var string $endDate */
+/** @var int|null $categoryId */
 
 use yii\helpers\Html;
 use yii\helpers\Url;
@@ -96,6 +100,30 @@ $this->registerJsFile('@web/js/transaction.js', ['depends' => [JqueryAsset::clas
             </button>
         </div>
 
+        <div class="filter-bar">
+            <div class="filter-group">
+                <label for="filterStart">С</label>
+                <input type="date" id="filterStart" value="<?= Html::encode($startDate) ?>">
+            </div>
+            <div class="filter-group">
+                <label for="filterEnd">По</label>
+                <input type="date" id="filterEnd" value="<?= Html::encode($endDate) ?>">
+            </div>
+            <div class="filter-group">
+                <label for="filterCategory">Категория</label>
+                <select id="filterCategory">
+                    <option value="">Все</option>
+                    <?php foreach ($categories as $cat): ?>
+                        <option value="<?= $cat->id ?>" <?= $categoryId == $cat->id ? 'selected' : '' ?>>
+                            <?= Html::encode($cat->name) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <button class="btn-add" id="applyFilter">Применить</button>
+            <button class="btn-reset-filter" id="resetFilter">Сбросить</button>
+        </div>
+
         <div class="transactions-container">
             <?php if ($dataProvider->models): ?>
                 <?php foreach ($dataProvider->models as $transaction): ?>
@@ -104,7 +132,7 @@ $this->registerJsFile('@web/js/transaction.js', ['depends' => [JqueryAsset::clas
                             <p><strong>Дата:</strong> <?= Html::encode($transaction->date) ?></p>
                             <p><strong>Сумма:</strong> <?= Html::encode($transaction->display_amount ?? number_format($transaction->amount, 2)) ?>
                                 <?= $currencySymbols[$transaction->display_currency ?? $transaction->currency ?? $userCurrency] ?? '' ?></p>
-                            <p><strong>Тип:</strong> <?= Html::encode($transaction->category->type ?? '-') ?></p>
+                            <p><strong>Тип:</strong> <?= Html::encode($transaction->type ?? '-') ?></p>
                             <p><strong>Категория:</strong> <?= Html::encode($transaction->category->name ?? '-') ?></p>
                             <p><strong>Описание:</strong> <?= Html::encode($transaction->description ?? '-') ?></p>
                             <?php if ($transaction->recurring_id): ?>

@@ -1,110 +1,158 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const notificationBtn = document.getElementById('notificationBtn');
-    const notificationCountEl = document.getElementById('notificationCount');
-    const notificationListEl = document.getElementById('notificationList');
-    const modal = document.getElementById('notificationModal');
-    const closeBtn = modal.querySelector('.close');
-    const markAllReadBtn = modal.querySelector('.mark-all-read');
+    const btn = document.getElementById('notificationBtn');
+    const badge = document.getElementById('notificationCount');
+    const dropdown = document.getElementById('notificationDropdown');
+    const list = document.getElementById('notificationList');
+    const emptyEl = document.getElementById('notifEmpty');
+    const markAllBtn = document.getElementById('markAllReadBtn');
 
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-    const csrfParam = document.querySelector('meta[name="csrf-param"]')?.getAttribute('content');
+    if (!btn || !dropdown || !list) return;
 
-    let intervalId;
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
 
-    if (!notificationBtn || !notificationCountEl || !notificationListEl || !modal || !closeBtn || !markAllReadBtn) return;
+    function setBadge(count) {
+        if (badge) {
+            if (count > 0) {
+                badge.textContent = count;
+                badge.classList.add('visible');
+            } else {
+                badge.textContent = '';
+                badge.classList.remove('visible');
+            }
+        }
+    }
 
-    function fetchNotifications() {
+    function timeAgo(dateStr) {
+        if (!dateStr) return '';
+        const diff = Math.floor((Date.now() - new Date(dateStr.replace(' ', 'T')).getTime()) / 60000);
+        if (isNaN(diff) || diff < 0) return '';
+        if (diff < 1) return 'сейчас';
+        if (diff < 60) return diff + ' мин';
+        if (diff < 1440) return Math.floor(diff / 60) + ' ч';
+        return Math.floor(diff / 1440) + ' дн';
+    }
+
+    function icon(type) {
+        if (type === 'budget_exceed') return '<i class="fas fa-exclamation-triangle" style="color:#ef4444"></i>';
+        if (type === 'goal_reached') return '<i class="fas fa-trophy" style="color:#f59e0b"></i>';
+        if (type === 'reminder') return '<i class="fas fa-clock" style="color:#3b82f6"></i>';
+        return '<i class="fas fa-bell" style="color:#9ca3af"></i>';
+    }
+
+    function esc(s) {
+        const d = document.createElement('div');
+        d.textContent = s || '';
+        return d.innerHTML;
+    }
+
+    function render(items) {
+        list.innerHTML = '';
+        if (!items || items.length === 0) {
+            if (emptyEl) emptyEl.classList.add('visible');
+            return;
+        }
+        if (emptyEl) emptyEl.classList.remove('visible');
+        items.forEach(n => {
+            const li = document.createElement('li');
+            li.dataset.id = n.id;
+            if (!n.read_status) li.classList.add('unread');
+            li.innerHTML = `
+                <div class="notif-icon">${icon(n.type)}</div>
+                <div class="notif-body">
+                    <span class="notif-msg">${esc(n.message)}</span>
+                    <span class="notif-time">${timeAgo(n.created_at)}</span>
+                </div>
+                ${!n.read_status ? '<button type="button" class="notif-read-btn"><i class="fas fa-check"></i></button>' : ''}
+            `;
+            list.appendChild(li);
+        });
+    }
+
+    function load() {
         fetch('/notification/index')
-            .then(res => res.ok ? res.json() : Promise.reject(`HTTP ${res.status}`))
-            .then(data => {
-                notificationCountEl.textContent = data.unread_count > 0 ? data.unread_count : '';
-                notificationListEl.innerHTML = data.notifications.length === 0
-                    ? '<li class="empty">Нет уведомлений</li>'
-                    : data.notifications.map(n => `
-                        <li data-id="${n.id}" class="${n.read_status ? '' : 'unread'}">
-                            <span>${n.message}</span>
-                            <div>
-                                ${n.read_status ? '' : '<button class="mark-read">✓</button>'}
-                            </div>
-                        </li>
-                    `).join('');
+            .then(r => {
+                if (!r.ok) throw new Error(r.status);
+                return r.json();
             })
-            .catch(err => console.error('Ошибка загрузки уведомлений:', err));
+            .then(data => {
+                setBadge(data.unread_count || 0);
+                render(data.notifications || []);
+            })
+            .catch(() => setBadge(0));
     }
 
-    function markAsRead(id, li) {
-        fetch(`/notification/mark-read?id=${id}`, {
+    function loadBadge() {
+        fetch('/notification/index')
+            .then(r => {
+                if (!r.ok) throw new Error(r.status);
+                return r.json();
+            })
+            .then(data => setBadge(data.unread_count || 0))
+            .catch(() => setBadge(0));
+    }
+
+    function postAction(url) {
+        return fetch(url, {
             method: 'POST',
-            headers: { 'X-Requested-With': 'XMLHttpRequest', [csrfParam]: csrfToken }
-        })
-            .then(res => res.ok ? res.json() : Promise.reject(`HTTP ${res.status}`))
-            .then(data => {
-                if (data.success) {
-                    li.style.transition = 'opacity 0.3s ease, height 0.3s ease, margin 0.3s ease, padding 0.3s ease';
-                    li.style.opacity = '0';
-                    li.style.height = '0';
-                    li.style.margin = '0';
-                    li.style.padding = '0';
-                    setTimeout(() => li.remove(), 300);
-                    // Обновляем счетчик
-                    const count = parseInt(notificationCountEl.textContent) || 0;
-                    notificationCountEl.textContent = count > 1 ? count - 1 : '';
-                } else {
-                    console.error('Failed to mark as read:', data.error);
-                }
-            })
-            .catch(err => console.error('Ошибка отметки уведомления как прочитанное:', err));
+            headers: {
+                'X-CSRF-Token': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest',
+            }
+        }).then(r => {
+            if (!r.ok) throw new Error(r.status);
+            return r.json();
+        });
     }
 
-    notificationListEl.addEventListener('click', e => {
-        const li = e.target.closest('li');
-        if (!li || li.classList.contains('empty')) return;
-        const id = li.dataset.id;
-        if (e.target.classList.contains('mark-read')) markAsRead(id, li);
+    // Toggle
+    btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        dropdown.classList.toggle('open');
+        if (dropdown.classList.contains('open')) load();
     });
 
-    markAllReadBtn.textContent = '✓';
-    markAllReadBtn.style.background = 'transparent';
-    markAllReadBtn.style.border = 'none';
-    markAllReadBtn.style.cursor = 'pointer';
-    markAllReadBtn.style.fontSize = '16px';
-    markAllReadBtn.style.padding = '0';
-
-    markAllReadBtn.addEventListener('click', () => {
-        fetch('/notification/mark-all-read', {
-            method: 'POST',
-            headers: { 'X-Requested-With': 'XMLHttpRequest', [csrfParam]: csrfToken }
-        })
-            .then(res => res.ok ? res.json() : Promise.reject(`HTTP ${res.status}`))
-            .then(data => {
-                if (data.success) {
-                    const unreadItems = notificationListEl.querySelectorAll('li.unread');
-                    unreadItems.forEach(item => {
-                        item.style.transition = 'opacity 0.3s ease, height 0.3s ease, margin 0.3s ease, padding 0.3s ease';
-                        item.style.opacity = '0';
-                        item.style.height = '0';
-                        item.style.margin = '0';
-                        item.style.padding = '0';
-                        setTimeout(() => item.remove(), 300);
-                    });
-                    notificationCountEl.textContent = '';
-                }
-            })
-            .catch(err => console.error('Ошибка отметки всех уведомлений:', err));
+    document.addEventListener('click', (e) => {
+        if (!dropdown.contains(e.target) && !btn.contains(e.target)) {
+            dropdown.classList.remove('open');
+        }
     });
 
-    function openModal() {
-        modal.style.display = 'flex';
-        fetchNotifications();
-        intervalId = setInterval(fetchNotifications, 30000);
+    // Mark single
+    list.addEventListener('click', (e) => {
+        const readBtn = e.target.closest('.notif-read-btn');
+        if (!readBtn) return;
+        const li = readBtn.closest('li');
+        if (!li?.dataset.id) return;
+
+        postAction('/notification/mark-read?id=' + li.dataset.id)
+            .then(data => {
+                if (data.success) {
+                    li.classList.remove('unread');
+                    readBtn.remove();
+                    loadBadge();
+                }
+            })
+            .catch(err => console.error('mark-read error:', err));
+    });
+
+    // Mark all
+    if (markAllBtn) {
+        markAllBtn.addEventListener('click', () => {
+            postAction('/notification/mark-all-read')
+                .then(data => {
+                    if (data.success) {
+                        list.querySelectorAll('.unread').forEach(li => {
+                            li.classList.remove('unread');
+                            li.querySelector('.notif-read-btn')?.remove();
+                        });
+                        setBadge(0);
+                    }
+                })
+                .catch(err => console.error('mark-all error:', err));
+        });
     }
 
-    function closeModal() {
-        modal.style.display = 'none';
-        clearInterval(intervalId);
-    }
-
-    notificationBtn.addEventListener('click', openModal);
-    closeBtn.addEventListener('click', closeModal);
-    window.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+    // Init
+    loadBadge();
+    setInterval(loadBadge, 60000);
 });

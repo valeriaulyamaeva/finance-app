@@ -167,15 +167,16 @@ body.sidebar-open::before {
 
 .summary-card {
     background: white;
-    border-radius: 16px;
+    border-radius: 24px;
     padding: 1.5rem;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.1);
     text-align: center;
-    transition: transform 0.3s ease;
+    transition: all 0.3s ease;
 }
 
 .summary-card:hover {
-    transform: translateY(-5px);
+    transform: translateY(-10px);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.18);
 }
 
 .summary-card h5 {
@@ -219,9 +220,9 @@ body.sidebar-open::before {
 
 .transaction-card {
     background: white;
-    border-radius: 16px;
+    border-radius: 24px;
     padding: 1.5rem;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.1);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -229,8 +230,8 @@ body.sidebar-open::before {
 }
 
 .transaction-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 30px rgba(0,0,0,0.12);
+    transform: translateY(-10px);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.18);
 }
 
 .transaction-info p {
@@ -249,6 +250,55 @@ body.sidebar-open::before {
 
 .transaction-actions button:hover {
     color: #1f2937;
+}
+
+.filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: flex-end;
+    margin-bottom: 2rem;
+    padding: 1.2rem 1.5rem;
+    background: white;
+    border-radius: 24px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.filter-group label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #6b7280;
+}
+
+.filter-group input,
+.filter-group select {
+    padding: 0.5rem 0.8rem;
+    border: 1px solid #d1d5db;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    background: white;
+    min-width: 140px;
+}
+
+.btn-reset-filter {
+    background: #e5e7eb;
+    color: #4b453f;
+    border: none;
+    border-radius: 50px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.btn-reset-filter:hover {
+    background: #d1d5db;
 }
 
 .text-muted {

@@ -5,7 +5,7 @@ use yii\helpers\ArrayHelper;
 use yii\helpers\Html;
 use yii\widgets\ActiveForm;
 
-$categories = ArrayHelper::map(Category::find()->all(), 'id', 'name');
+$categories = $categories ?? ArrayHelper::map(Category::find()->where(['user_id' => Yii::$app->user->id])->all(), 'id', 'name');
 $budget = new Budget(['currency' => Yii::$app->user->identity->currency ?? 'BYN']);
 ?>
 

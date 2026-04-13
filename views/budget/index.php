@@ -143,7 +143,7 @@ $this->registerJsFile('@web/js/budget.js', ['depends' => [JqueryAsset::class]]);
     </div>
 
 <?= $this->render('_budgetModal', [
-    'categories' => ArrayHelper::map(Category::find()->all(), 'id', 'name'),
+    'categories' => ArrayHelper::map(Category::find()->where(['user_id' => $user->id])->all(), 'id', 'name'),
     'user' => $user,
 ]) ?>
 

@@ -92,6 +92,22 @@ document.addEventListener('DOMContentLoaded', () => {
             })
             .catch(err => console.error('Ошибка:', err));
     });
+
+    // Filters
+    document.getElementById('applyFilter')?.addEventListener('click', () => {
+        const start = document.getElementById('filterStart').value;
+        const end = document.getElementById('filterEnd').value;
+        const categoryId = document.getElementById('filterCategory').value;
+        const params = new URLSearchParams();
+        if (start) params.set('start', start);
+        if (end) params.set('end', end);
+        if (categoryId) params.set('category_id', categoryId);
+        window.location.href = '/transaction?' + params.toString();
+    });
+
+    document.getElementById('resetFilter')?.addEventListener('click', () => {
+        window.location.href = '/transaction';
+    });
 });
 
 const recurringModal = new bootstrap.Modal(document.getElementById('recurringModal'));

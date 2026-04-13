@@ -16,7 +16,8 @@ use yii\web\NotFoundHttpException;
 readonly class TransactionService
 {
     public function __construct(
-        private CurrencyService $currencyService
+        private CurrencyService $currencyService,
+        private NotificationService $notificationService,
     ) {}
 
     public function create(array $data, int $userId): Transaction
@@ -116,6 +117,16 @@ readonly class TransactionService
                 $budget->spent = (float)$budget->spent + $t->amount;
                 $budget->save(false);
                 $t->budget_id = $budget->id;
+
+                if ($budget->spent > $budget->amount) {
+                    $this->notificationService->createNotification(
+                        $t->user_id,
+                        "Бюджет «{$budget->name}» превышен: потрачено {$budget->spent} из {$budget->amount} {$budget->currency}",
+                        'budget_exceed',
+                        'budget',
+                        $budget->id
+                    );
+                }
             }
         }
 
@@ -126,6 +137,16 @@ readonly class TransactionService
                 $goal->current_amount = $goal->current_amount + $amount;
                 if (method_exists($goal, 'updateStatus')) { $goal->updateStatus(); }
                 $goal->save(false);
+
+                if ($goal->current_amount >= $goal->target_amount) {
+                    $this->notificationService->createNotification(
+                        $t->user_id,
+                        "Цель «{$goal->name}» достигнута! Накоплено {$goal->current_amount} из {$goal->target_amount} {$goal->currency}",
+                        'goal_reached',
+                        'goal',
+                        $goal->id
+                    );
+                }
             }
         }
     }

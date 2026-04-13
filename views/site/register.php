@@ -114,6 +114,9 @@ $this->title = 'Регистрация';
     ]); ?>
 
     <div class="form-group">
+        <?= $form->field($model, 'username')->textInput(['placeholder' => 'Имя']) ?>
+    </div>
+    <div class="form-group">
         <?= $form->field($model, 'email')->textInput(['placeholder' => 'Электронная почта']) ?>
     </div>
     <div class="form-group">
