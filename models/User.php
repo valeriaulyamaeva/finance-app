@@ -38,6 +38,10 @@ class User extends ActiveRecord implements IdentityInterface
     public const int STATUS_ACTIVE  = 1;
     public const int STATUS_DELETED = 0;
 
+    public ?string $password = null;
+    public ?string $password_repeat = null;
+    public ?string $rememberMe = null;
+
     public const string CURRENCY_BYN = 'BYN';
     public const string CURRENCY_USD = 'USD';
     public const string CURRENCY_EUR = 'EUR';
@@ -50,9 +54,18 @@ class User extends ActiveRecord implements IdentityInterface
     }
 
     #[Override]
+    public function scenarios(): array
+    {
+        $scenarios = parent::scenarios();
+        $scenarios['login'] = ['email', 'password', 'rememberMe'];
+        $scenarios['create'] = ['username', 'email', 'password', 'password_repeat'];
+        return $scenarios;
+    }
+
     public function rules(): array
     {
         return [
+            // Default scenario (internal save)
             [['username', 'email', 'password_hash', 'auth_key'], 'required'],
             ['email', 'email'],
             ['email', 'unique'],
@@ -64,6 +77,14 @@ class User extends ActiveRecord implements IdentityInterface
             ['auth_key', 'string', 'max' => 32],
             ['currency', 'string', 'max' => 3],
             [['last_login', 'created_at', 'updated_at'], 'safe'],
+
+            // Login scenario
+            [['email', 'password'], 'required', 'on' => 'login'],
+
+            // Create/register scenario
+            [['username', 'email', 'password', 'password_repeat'], 'required', 'on' => 'create'],
+            ['password', 'string', 'min' => 8, 'on' => 'create'],
+            ['password_repeat', 'compare', 'compareAttribute' => 'password', 'message' => 'Пароли не совпадают', 'on' => 'create'],
         ];
     }
 

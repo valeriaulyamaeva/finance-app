@@ -26,7 +26,7 @@ $config = [
             'identityClass' => 'app\models\User',
             'enableAutoLogin' => true,
             'class' => 'yii\web\User',
-            'loginUrl' => ['user/login'],
+            'loginUrl' => ['site/login'],
         ],
         'recurringTransactionService' => [
             'class' => 'app\services\RecurringTransactionService',
@@ -45,26 +45,15 @@ $config = [
             ],
         ],
         'db' => $db,
-        'authClientCollection' => [
-            'class' => 'yii\authclient\Collection',
-            'clients' => [
-                'google' => [
-                    'class'        => 'yii\authclient\clients\Google',
-                    'clientId'     => '126494301661-rfmqte031qgk167kv969upsngshk1e4j.apps.googleusercontent.com',
-                    'clientSecret' => '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',
-                    'returnUrl' => 'http://localhost:8080/index.php?r=site/google-login',
-                ],
-            ],
-        ],
         'urlManager' => [
             'enablePrettyUrl' => true,
             'showScriptName' => false,
             'rules' => [
                 '' => 'site/index',
 
-                'login' => 'user/login',
-                'logout' => 'user/logout',
-                'register' => 'user/register',
+                'login' => 'site/login',
+                'logout' => 'site/logout',
+                'register' => 'site/register',
                 'settings' => 'settings/index',
                 'settings/save' => 'settings/save',
                 'import' => 'import/index',

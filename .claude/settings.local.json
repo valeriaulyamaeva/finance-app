@@ -8,7 +8,14 @@
       "Read(//mnt/c/Java/**)",
       "Bash(composer update:*)",
       "Bash(docker-compose exec:*)",
-      "Bash(docker-compose up:*)"
+      "Bash(docker-compose up:*)",
+      "Bash(xargs basename:*)",
+      "Bash(powershell.exe:*)",
+      "Bash(cp views/user/login.php views/site/login.php)",
+      "Bash(cp views/user/register.php views/site/register.php)"
     ]
+  },
+  "enabledPlugins": {
+    "php-lsp@claude-plugins-official": true
   }
 }

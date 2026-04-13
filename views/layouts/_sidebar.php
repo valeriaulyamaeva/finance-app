@@ -16,7 +16,5 @@ use yii\helpers\Url;
     <li><a href="<?= Url::to(['settings']) ?>">Настройки</a></li>
 </ul>
 
-<?= Html::beginForm(['/site/logout']) ?>
-<?= Html::submitButton('Выйти', ['class' => 'btn btn-logout']) ?>
-<?= Html::endForm() ?>
+<?= Html::a('Выйти', ['/site/logout'], ['class' => 'btn btn-logout']) ?>
 

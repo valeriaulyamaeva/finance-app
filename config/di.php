@@ -8,6 +8,8 @@ use app\services\TransactionService;
 use app\services\RecurringTransactionService;
 use app\services\CurrencyService;
 use app\services\ImportService;
+use app\services\NotificationService;
+use app\services\KeycloakService;
 
 return [
     'definitions' => [
@@ -27,6 +29,8 @@ return [
         TransactionService::class => TransactionService::class,
         RecurringTransactionService::class => RecurringTransactionService::class,
         ImportService::class => ImportService::class,
+        NotificationService::class => NotificationService::class,
+        KeycloakService::class => KeycloakService::class,
     ],
     'singletons' => [
         CurrencyService::class => CurrencyService::class,

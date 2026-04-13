@@ -4,11 +4,11 @@ namespace app\controllers;
 
 use app\models\Notification;
 use Yii;
-use yii\web\Controller;
+use yii\filters\AccessControl;
 use yii\web\Response;
 use app\services\NotificationService;
 
-class NotificationController extends Controller
+class NotificationController extends BaseController
 {
     private NotificationService $service;
 
@@ -18,18 +18,28 @@ class NotificationController extends Controller
         parent::__construct($id, $module, $config);
     }
 
-    public function beforeAction($action): bool
+    public function behaviors(): array
     {
-        if (in_array($action->id, ['mark-read', 'mark-all-read'])) {
-            $this->enableCsrfValidation = false;
-        }
-        return parent::beforeAction($action);
+        return [
+            'access' => [
+                'class' => AccessControl::class,
+                'rules' => [
+                    ['allow' => true, 'roles' => ['@']],
+                ],
+                'denyCallback' => function () {
+                    Yii::$app->response->format = Response::FORMAT_JSON;
+                    Yii::$app->response->statusCode = 401;
+                    return ['notifications' => [], 'unread_count' => 0];
+                },
+            ],
+        ];
     }
+
 
     public function actionIndex(): array
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
-        $userId = Yii::$app->user->id;
+        $userId = (int)Yii::$app->user->id;
 
         $notifications = $this->service->getUserNotifications($userId);
         $unreadCount = $this->service->countUnread($userId);
@@ -42,10 +52,11 @@ class NotificationController extends Controller
         ];
     }
 
-    public function actionMarkRead(int $id): array
+    public function actionMarkRead(): array
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
-        $userId = Yii::$app->user->id;
+        $id = (int)Yii::$app->request->get('id');
+        $userId = (int)Yii::$app->user->id;
         $notification = Notification::findOne(['id' => $id, 'user_id' => $userId]);
         if ($notification && $this->service->markAsRead($id)) {
             return ['success' => true];

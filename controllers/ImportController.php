@@ -38,7 +38,7 @@ final class ImportController extends BaseController
                         Yii::$app->response->statusCode = 401;
                         return ['success' => false, 'message' => 'Необходима авторизация'];
                     }
-                    return $this->redirect(['user/login']);
+                    return $this->redirect(['/login']);
                 },
             ],
             'verbs' => [

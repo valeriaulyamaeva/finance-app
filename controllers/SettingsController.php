@@ -47,7 +47,7 @@ class SettingsController extends BaseController
                         Yii::$app->response->format = Response::FORMAT_JSON;
                         return ['success' => false, 'message' => 'Требуется авторизация'];
                     }
-                    return Yii::$app->response->redirect(['site/login']);
+                    return Yii::$app->response->redirect(['/login']);
                 },
             ],
         ];

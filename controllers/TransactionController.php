@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace app\controllers;
 
+use app\models\Category;
 use app\models\Transaction;
 use app\models\Goal;
 use app\services\CurrencyService;
@@ -31,13 +32,19 @@ final class TransactionController extends BaseController
         $user = Yii::$app->user->identity;
         $userId = $user->id;
 
-        $firstDay = date('Y-m-01');
-        $lastDay = date('Y-m-t');
+        $request = Yii::$app->request;
+        $startDate = $request->get('start', date('Y-m-01'));
+        $endDate = $request->get('end', date('Y-m-t'));
+        $categoryId = $request->get('category_id');
 
         $query = Transaction::find()
             ->forUser($userId)
-            ->andWhere(['between', 'date', $firstDay, $lastDay])
+            ->andWhere(['between', 'date', $startDate, $endDate])
             ->orderBy(['date' => SORT_DESC, 'id' => SORT_DESC]);
+
+        if ($categoryId) {
+            $query->andWhere(['category_id' => (int)$categoryId]);
+        }
 
         $dataProvider = new ActiveDataProvider([
             'query' => $query,
@@ -50,13 +57,22 @@ final class TransactionController extends BaseController
             'name'
         );
 
-        $summary = $this->service->getMonthlySummary($userId, $firstDay, $lastDay);
+        $categories = Category::find()
+            ->where(['user_id' => $userId])
+            ->orderBy(['name' => SORT_ASC])
+            ->all();
+
+        $summary = $this->service->getMonthlySummary($userId, $startDate, $endDate);
 
         return $this->render('index', [
             'user' => $user,
             'dataProvider' => $dataProvider,
             'summary' => $summary,
             'goals' => $goals,
+            'categories' => $categories,
+            'startDate' => $startDate,
+            'endDate' => $endDate,
+            'categoryId' => $categoryId,
         ]);
     }
 

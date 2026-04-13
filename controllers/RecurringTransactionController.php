@@ -31,7 +31,7 @@ final class RecurringTransactionController extends BaseController
                 $data['currency'] = Yii::$app->user->identity->currency ?? 'BYN';
             }
 
-            $model = $this->service->save($data, null, (int)Yii::$app->user->id);
+            $model = $this->service->save($data, (int)Yii::$app->user->id);
 
             return [
                 'success' => true,
@@ -49,7 +49,7 @@ final class RecurringTransactionController extends BaseController
 
         try {
             $data = Yii::$app->request->post();
-            $this->service->save($data, $id, (int)Yii::$app->user->id);
+            $this->service->save($data, (int)Yii::$app->user->id, $id);
 
             return ['success' => true];
         } catch (Throwable $e) {

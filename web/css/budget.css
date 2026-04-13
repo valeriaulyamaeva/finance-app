@@ -211,7 +211,7 @@ body.sidebar-open::before {
 
 .card {
     background: white;
-    border-radius: 20px;
+    border-radius: 24px;
     padding: 1rem;
     box-shadow: 0 8px 30px rgba(0,0,0,0.1);
     transition: all 0.3s ease;
@@ -221,8 +221,8 @@ body.sidebar-open::before {
 }
 
 .card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+    transform: translateY(-10px);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.18);
 }
 
 .card h3 {

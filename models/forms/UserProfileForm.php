@@ -15,6 +15,11 @@ class UserProfileForm extends Model
     public string $currency = '';
     public ?string $new_password = null;
 
+    public function formName(): string
+    {
+        return 'User';
+    }
+
     public function __construct(
         private readonly User $user,
         array $config = []

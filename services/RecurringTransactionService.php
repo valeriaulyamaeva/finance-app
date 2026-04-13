@@ -18,7 +18,7 @@ readonly class RecurringTransactionService
         private TransactionService $transactionService
     ) {}
 
-    public function save(array $data, ?int $id = null, int $userId): RecurringTransaction
+    public function save(array $data, int $userId, ?int $id = null): RecurringTransaction
     {
         $form = new RecurringForm();
         if (!$form->load($data, '') || !$form->validate()) {

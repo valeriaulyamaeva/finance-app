@@ -39,17 +39,14 @@ $bodyClass = $theme === 'dark' ? 'theme-dark' : 'theme-light';
         <main class="with-sidebar">
             <div class="top-bar">
                 <div class="top-bar-right">
-                    <a href="javascript:void(0);" id="notificationBtn" class="notification-btn">
-                        <i class="fa fa-bell"></i>
-                        <span id="notificationCount" class="notification-count" style="display:none;"></span>
-                    </a>
+                    <button type="button" id="notificationBtn" class="notification-btn">
+                        <i class="fas fa-bell"></i>
+                        <span id="notificationCount" class="notification-count"></span>
+                    </button>
 
-                    <form action="<?= Url::to(['user/logout']) ?>" method="post" style="display: inline;">
-                        <?= Html::hiddenInput(Yii::$app->request->csrfParam, Yii::$app->request->csrfToken) ?>
-                        <button type="submit" class="logout-btn" style="background:none;border:none;padding:0;cursor:pointer; font-size: 1.2rem; color: #5a5045;" title="Выйти">
-                            <i class="fas fa-sign-out-alt"></i>
-                        </button>
-                    </form>
+                    <a href="<?= Url::to(['site/logout']) ?>" class="logout-btn" title="Выйти">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </a>
                 </div>
             </div>
 
@@ -70,17 +67,13 @@ $bodyClass = $theme === 'dark' ? 'theme-dark' : 'theme-light';
         </main>
     <?php endif; ?>
 
-    <div id="notificationModal" class="notification-modal" style="display:none;">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h4>Уведомления</h4>
-                <span class="close">&times;</span>
-            </div>
-            <ul id="notificationList" class="notification-list"></ul>
-            <div class="modal-footer" style="padding: 10px; text-align: right;">
-                <button class="mark-all-read">Отметить все как прочитанные</button>
-            </div>
+    <div id="notificationDropdown" class="notif-dropdown">
+        <div class="notif-dropdown-header">
+            <span>Уведомления</span>
+            <button type="button" id="markAllReadBtn" class="notif-mark-all">Прочитать все</button>
         </div>
+        <ul id="notificationList" class="notif-list"></ul>
+        <div class="notif-empty" id="notifEmpty">Нет уведомлений</div>
     </div>
 
     <?php

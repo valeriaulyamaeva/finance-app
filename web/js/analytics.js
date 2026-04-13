@@ -9,7 +9,10 @@ document.addEventListener('DOMContentLoaded', () => {
         months,
         expenseValues,
         incomeValues,
-        currencySymbol
+        currencySymbol,
+        weekdayLabels,
+        weekdayTotals,
+        weekdayCounts
     } = analyticsData;
 
     const currency = currencySymbol || '₽';
@@ -165,5 +168,47 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Expenses by day of week
+    if (weekdayLabels && weekdayLabels.length > 0) {
+        const maxTotal = Math.max(...weekdayTotals);
+        const weekdayColors = weekdayTotals.map(v =>
+            v === maxTotal && v > 0 ? 'rgba(255,154,162,0.85)' : 'rgba(199,206,234,0.7)'
+        );
+
+        new Chart(document.getElementById('weekdayChart'), {
+            type: 'bar',
+            data: {
+                labels: weekdayLabels,
+                datasets: [{
+                    label: 'Сумма расходов',
+                    data: weekdayTotals,
+                    backgroundColor: weekdayColors,
+                    borderRadius: 8,
+                    barPercentage: 0.7
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: (ctx) => {
+                                const idx = ctx.dataIndex;
+                                return `${formatValue(ctx.raw)} (${weekdayCounts[idx]} операций)`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { callback: (value) => formatValue(value) }
+                    }
+                }
+            }
+        });
+    }
 
 });
