@@ -1,9 +1,9 @@
 body {
     font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
-    background: #f9f7f4;
+    background: var(--bg-app);
     margin: 0;
     padding: 0;
-    color: #4b453f;
+    color: var(--text-primary);
 }
 
 .sidebar-toggle {
@@ -16,16 +16,16 @@ body {
     justify-content: center;
     width: 3.25rem;
     height: 3.25rem;
-    background: #8da4a4;
-    color: white;
+    background: var(--color-primary);
+    color: var(--color-primary-contrast);
     border: none;
     border-radius: 50%;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    box-shadow: var(--shadow-md);
     transition: all 0.3s ease;
 }
 
 .sidebar-toggle:hover {
-    background: #6b8c8c;
+    background: var(--color-primary-hover);
     transform: scale(1.08);
 }
 
@@ -40,18 +40,18 @@ body.sidebar-open .sidebar-toggle {
     left: 0;
     width: 20rem;
     height: 100vh;
-    background: #b6b6b6;
+    background: var(--sidebar-bg);
     padding: 2rem 1rem;
     overflow-y: auto;
     transition: transform 0.35s cubic-bezier(0.25, 0.8, 0.25, 1);
     z-index: 1040;
-    box-shadow: 4px 0 20px rgba(0,0,0,0.15);
+    box-shadow: var(--shadow-md);
 }
 
 .sidebar h2 {
     font-size: 2.3rem;
     font-weight: 700;
-    color: #2c2929;
+    color: var(--text-primary);
     margin: 0 0 2.5rem 0;
     text-align: center;
 }
@@ -67,12 +67,12 @@ body.sidebar-open .sidebar-toggle {
     padding: 0.5rem 0;
     font-size: 1.25rem;
     font-weight: 500;
-    color: #1c1b1b;
+    color: var(--sidebar-text);
     text-decoration: none;
 }
 
 .sidebar ul li a:hover {
-    color: #535353;
+    color: var(--text-primary);
 }
 
 .sidebar-header {
@@ -85,7 +85,7 @@ body.sidebar-open .sidebar-toggle {
 .sidebar-close {
     background: none;
     border: none;
-    color: white;
+    color: var(--text-secondary);
     font-size: 1.5rem;
     cursor: pointer;
 }
@@ -93,7 +93,7 @@ body.sidebar-open .sidebar-toggle {
 .sidebar h2.d-none.d-lg-block {
     font-size: 2.4rem;
     font-weight: 800;
-    color: #2c2929;
+    color: var(--text-primary);
     text-align: center;
     margin: 1.5rem 0 3rem 0;
     letter-spacing: 1px;
@@ -102,7 +102,7 @@ body.sidebar-open .sidebar-toggle {
 .sidebar-header h2 {
     font-size: 2.1rem;
     font-weight: 700;
-    color: #2c2929;
+    color: var(--text-primary);
     margin: 0;
 }
 
@@ -147,7 +147,7 @@ body.sidebar-open::before {
     content: '';
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.55);
+    background: var(--bg-overlay);
     z-index: 1030;
     animation: fadeIn 0.3s ease;
 }
@@ -181,10 +181,11 @@ body.sidebar-open::before {
 
 .chart-card,
 .summary-card {
-    background: white;
-    border-radius: 24px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-lg);
     padding: 2rem;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+    box-shadow: var(--shadow-md);
     transition: all 0.3s ease;
 }
 
@@ -197,15 +198,16 @@ body.sidebar-open::before {
 
 .chart-card:hover,
 .summary-card:hover {
-    transform: translateY(-10px);
-    box-shadow: 0 20px 50px rgba(0,0,0,0.18);
+    transform: translateY(-6px);
+    border-color: var(--border-color-strong);
+    box-shadow: var(--shadow-lg);
 }
 
 .chart-card h4,
 .summary-card h5 {
     margin: 0 0 1rem 0;
     font-weight: 600;
-    color: #2d3748;
+    color: var(--text-primary);
 }
 
 .chart-card canvas {
@@ -232,26 +234,28 @@ body.sidebar-open::before {
 }
 
 .period-btn {
-    background: #e5e7eb;
-    color: #4b453f;
-    border: none;
-    border-radius: 50px;
+    background: var(--color-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-pill);
     padding: 0.5rem 1.2rem;
     font-weight: 500;
     font-size: 0.9rem;
     cursor: pointer;
     text-decoration: none;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
 }
 
 .period-btn:hover {
-    background: #8da4a4;
-    color: white;
+    background: var(--color-secondary-hover);
+    color: var(--text-primary);
+    border-color: var(--border-color-strong);
 }
 
 .period-btn.active {
-    background: #a3c9c9;
-    color: #222;
+    background: var(--color-primary);
+    color: var(--color-primary-contrast);
+    border-color: var(--color-primary);
     font-weight: 600;
 }
 
@@ -264,9 +268,11 @@ body.sidebar-open::before {
 
 .period-custom input {
     padding: 0.4rem 0.6rem;
-    border: 1px solid #d1d5db;
-    border-radius: 12px;
+    border: 1px solid var(--input-border);
+    border-radius: var(--border-radius-sm);
     font-size: 0.85rem;
+    background: var(--input-bg);
+    color: var(--input-text);
 }
 
 /* Change badges */
@@ -274,19 +280,19 @@ body.sidebar-open::before {
     display: inline-block;
     margin-top: 0.5rem;
     padding: 0.2rem 0.7rem;
-    border-radius: 20px;
+    border-radius: var(--border-radius-pill);
     font-size: 0.8rem;
     font-weight: 600;
 }
 
 .change-badge.positive {
-    background: #dcfce7;
-    color: #166534;
+    background: var(--color-success-soft);
+    color: var(--color-success-text);
 }
 
 .change-badge.negative {
-    background: #fee2e2;
-    color: #991b1b;
+    background: var(--color-danger-soft);
+    color: var(--color-danger-text);
 }
 
 @media (max-width: 767.98px) {

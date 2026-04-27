@@ -78,6 +78,7 @@ $bodyClass = $theme === 'dark' ? 'theme-dark' : 'theme-light';
 
     <?php
     $this->registerCssFile('@web/css/notifications.css');
+    $this->registerJsFile('@web/js/ui.js');
     $this->registerJsFile('@web/js/notifications.js', ['depends' => [JqueryAsset::class]]);
     ?>
 

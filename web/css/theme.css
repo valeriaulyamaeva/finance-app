@@ -1,0 +1,605 @@
+/* ─────────────────────────────────────────────────────────────
+   Vale Design System
+   Modern pastel theme with light/dark modes via CSS variables.
+───────────────────────────────────────────────────────────── */
+
+/* ─── Light theme (default) ──────────────────────────────── */
+:root,
+body.theme-light {
+    /* Backgrounds */
+    --bg-app: #f6f5f1;
+    --bg-surface: #ffffff;
+    --bg-surface-2: #faf9f6;
+    --bg-elevated: #ffffff;
+    --bg-overlay: rgba(15, 23, 42, 0.5);
+
+    /* Text */
+    --text-primary: #1f2937;
+    --text-secondary: #4b5563;
+    --text-muted: #9ca3af;
+    --text-inverse: #ffffff;
+
+    /* Borders / dividers */
+    --border-color: #e5e7eb;
+    --border-color-strong: #d1d5db;
+    --border-radius-sm: 12px;
+    --border-radius-md: 16px;
+    --border-radius-lg: 24px;
+    --border-radius-pill: 999px;
+
+    /* Brand colors (pastel) */
+    --color-primary: #a3c9c9;
+    --color-primary-hover: #8db4b4;
+    --color-primary-active: #739d9d;
+    --color-primary-soft: #e6f0f0;
+    --color-primary-contrast: #0f1f1f;
+
+    --color-secondary: #f3f4f6;
+    --color-secondary-hover: #e5e7eb;
+
+    /* Semantic */
+    --color-success: #16a34a;
+    --color-success-soft: #dcfce7;
+    --color-success-text: #166534;
+
+    --color-danger: #dc2626;
+    --color-danger-hover: #b91c1c;
+    --color-danger-soft: #fee2e2;
+    --color-danger-text: #991b1b;
+
+    --color-warning: #f59e0b;
+    --color-warning-soft: #fef3c7;
+    --color-warning-text: #92400e;
+
+    --color-info: #3b82f6;
+    --color-info-soft: #dbeafe;
+    --color-info-text: #1e40af;
+
+    /* Sidebar */
+    --sidebar-bg: #e8e7e3;
+    --sidebar-text: #1f2937;
+    --sidebar-text-active: #1f2937;
+    --sidebar-active-bg: #ffffff;
+
+    /* Shadows */
+    --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06);
+    --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08);
+    --shadow-lg: 0 8px 30px rgba(15, 23, 42, 0.10);
+    --shadow-xl: 0 20px 50px rgba(15, 23, 42, 0.18);
+
+    /* Inputs */
+    --input-bg: #ffffff;
+    --input-border: #d1d5db;
+    --input-border-focus: var(--color-primary);
+    --input-text: #1f2937;
+    --input-placeholder: #9ca3af;
+
+    color-scheme: light;
+}
+
+/* ─── Dark theme — Linear × Vercel inspired ─────────────────
+   Cool graphite with a *very* slight blue-violet undertone (hue ~245).
+   Layered surfaces +5–7% L per step. Accent mint kept as brand,
+   but lifted to a brighter teal for AAA contrast on dark.
+   Borders carry hierarchy; shadows are minimal and pure black.
+─────────────────────────────────────────────────────────────── */
+body.theme-dark {
+    /* Layered backgrounds — five steps, each ~+5% lightness.
+       Subtle hsl 245deg @ 5–8% sat keeps it cool but not "icy".
+       Never pure #000 (too contrasty against accent). */
+    --bg-app:        #0b0b0f;   /* L≈4%  — root canvas */
+    --bg-surface:    #131318;   /* L≈8%  — cards, modals */
+    --bg-surface-2:  #1a1a20;   /* L≈11% — input fields, hover row */
+    --bg-elevated:   #22222a;   /* L≈14% — popovers, dropdowns, top of stack */
+    --bg-overlay:    rgba(0, 0, 0, 0.7);
+
+    /* Soft white text. #fff is too harsh on dark, eyes prefer ~94% L. */
+    --text-primary:   #ededf0;
+    --text-secondary: #a1a1a9;
+    --text-muted:     #6b6b73;
+    --text-inverse:   #0b0b0f;
+
+    /* Borders — translucent white so they sit naturally on any layer.
+       Strong variant for hover/active states. */
+    --border-color:        rgba(255, 255, 255, 0.06);
+    --border-color-strong: rgba(255, 255, 255, 0.11);
+
+    /* Brand mint — bumped to a brighter teal (#7dd3c7) for ~6.5:1 contrast on bg-surface.
+       The original #a3c9c9 is too desaturated on dark, looks grey. */
+    --color-primary:        #7dd3c7;
+    --color-primary-hover:  #98ddd2;
+    --color-primary-active: #65bdb1;
+    --color-primary-soft:   rgba(125, 211, 199, 0.14);
+    --color-primary-contrast: #06201d;   /* dark text on mint button — AAA */
+
+    /* Secondary surfaces */
+    --color-secondary:       #1f1f25;
+    --color-secondary-hover: #292930;
+
+    /* Semantic — calm, slightly desaturated tones (not neon).
+       Each comes with a soft tint and a brighter readable variant. */
+    --color-success:      #51cf85;
+    --color-success-soft: rgba(81, 207, 133, 0.13);
+    --color-success-text: #8be0a8;
+
+    --color-danger:       #f06b6b;
+    --color-danger-hover: #e85555;
+    --color-danger-soft:  rgba(240, 107, 107, 0.13);
+    --color-danger-text:  #f4a3a3;
+
+    --color-warning:      #f0b760;
+    --color-warning-soft: rgba(240, 183, 96, 0.13);
+    --color-warning-text: #f4cc92;
+
+    --color-info:         #6ea8fe;
+    --color-info-soft:    rgba(110, 168, 254, 0.13);
+    --color-info-text:    #9bc1ff;
+
+    /* Sidebar shares the page bg (Linear approach), separated by border-right.
+       Active item gets a 3px mint indicator bar + soft tinted bg. */
+    --sidebar-bg:          #0b0b0f;
+    --sidebar-text:        #a1a1a9;
+    --sidebar-text-active: #ededf0;
+    --sidebar-active-bg:   rgba(125, 211, 199, 0.09);
+
+    /* Shadows — pure black, minimal. Real depth comes from borders. */
+    --shadow-sm: 0 0 0 1px rgba(255, 255, 255, 0.04);
+    --shadow-md: 0 1px 2px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.04);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.05);
+    --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.06);
+
+    /* Inputs — slightly lifted from cards so they stand out inside modals */
+    --input-bg:           #1a1a20;
+    --input-border:       rgba(255, 255, 255, 0.08);
+    --input-border-focus: var(--color-primary);
+    --input-text:         #ededf0;
+    --input-placeholder:  #5a5a62;
+
+    color-scheme: dark;
+}
+
+/* ─── Base ───────────────────────────────────────────────── */
+* {
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: 'Inter', 'Poppins', system-ui, -apple-system, sans-serif;
+    background: var(--bg-app);
+    color: var(--text-primary);
+    margin: 0;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background 0.3s ease, color 0.3s ease;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Poppins', 'Inter', sans-serif;
+    color: var(--text-primary);
+    letter-spacing: -0.01em;
+}
+
+a {
+    color: var(--color-primary);
+    transition: color 0.2s;
+}
+
+a:hover {
+    color: var(--color-primary-hover);
+}
+
+/* ─── Universal overrides for app components ─────────────── */
+.sidebar {
+    background: var(--sidebar-bg) !important;
+    color: var(--sidebar-text);
+    box-shadow: var(--shadow-md);
+}
+
+body.theme-dark .sidebar {
+    box-shadow: none;
+    border-right: 1px solid var(--border-color);
+}
+
+.sidebar h2 {
+    color: var(--text-primary);
+}
+
+/* Sidebar nav items */
+.sidebar ul li a {
+    color: var(--sidebar-text) !important;
+    padding: 0.6rem 0.9rem !important;
+    border-radius: var(--border-radius-sm);
+    margin-bottom: 0.2rem;
+    transition: background 0.15s ease, color 0.15s ease;
+    position: relative;
+}
+
+.sidebar ul li a:hover {
+    background: var(--bg-surface);
+    color: var(--text-primary) !important;
+}
+
+.sidebar ul li a.active {
+    background: var(--sidebar-active-bg) !important;
+    color: var(--sidebar-text-active) !important;
+    font-weight: 600;
+}
+
+/* Active item indicator bar — visible on both themes, accentuated on dark */
+.sidebar ul li a.active::before {
+    content: '';
+    position: absolute;
+    left: -0.3rem;
+    top: 20%;
+    bottom: 20%;
+    width: 3px;
+    background: var(--color-primary);
+    border-radius: 0 3px 3px 0;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+body.theme-dark .sidebar ul li a.active::before {
+    opacity: 1;
+}
+
+.btn-logout {
+    color: var(--text-secondary);
+}
+
+/* Cards */
+.card,
+.summary-card,
+.transaction-card,
+.chart-card {
+    background: var(--bg-surface) !important;
+    color: var(--text-primary);
+    border: 1px solid var(--border-color) !important;
+    box-shadow: var(--shadow-md) !important;
+}
+
+.card:hover,
+.summary-card:hover,
+.transaction-card:hover,
+.chart-card:hover {
+    border-color: var(--border-color-strong) !important;
+    box-shadow: var(--shadow-lg) !important;
+}
+
+/* Dark theme: lift the surface on hover instead of relying on shadow */
+body.theme-dark .card:hover,
+body.theme-dark .summary-card:hover,
+body.theme-dark .transaction-card:hover,
+body.theme-dark .chart-card:hover {
+    background: var(--bg-surface-2) !important;
+}
+
+.card h3,
+.summary-card h5 {
+    color: var(--text-primary);
+}
+
+.card p,
+.summary-card p {
+    color: var(--text-secondary);
+}
+
+.text-muted {
+    color: var(--text-muted) !important;
+}
+
+/* Primary action button */
+.btn-add {
+    background: var(--color-primary) !important;
+    color: var(--color-primary-contrast) !important;
+    border: none;
+    border-radius: var(--border-radius-pill);
+    padding: 0.65rem 1.5rem;
+    font-weight: 600;
+    transition: background 0.18s, transform 0.18s, box-shadow 0.18s;
+    box-shadow: var(--shadow-sm);
+}
+
+.btn-add:hover {
+    background: var(--color-primary-hover) !important;
+    color: var(--color-primary-contrast) !important;
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+/* Dark theme: subtle gradient + inner highlight + soft glow on hover (Stripe/Linear feel) */
+body.theme-dark .btn-add {
+    background: linear-gradient(180deg, var(--color-primary), var(--color-primary-active)) !important;
+    color: var(--color-primary-contrast) !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.18),
+        0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+body.theme-dark .btn-add:hover {
+    background: linear-gradient(180deg, var(--color-primary-hover), var(--color-primary)) !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.22),
+        0 4px 14px rgba(125, 211, 199, 0.22),
+        0 0 0 1px rgba(125, 211, 199, 0.2);
+}
+
+.btn-primary {
+    background: var(--color-primary) !important;
+    border-color: var(--color-primary) !important;
+    color: var(--color-primary-contrast) !important;
+}
+
+.btn-primary:hover {
+    background: var(--color-primary-hover) !important;
+    border-color: var(--color-primary-hover) !important;
+    color: var(--color-primary-contrast) !important;
+}
+
+.btn-secondary,
+.btn-cancel {
+    background: var(--color-secondary) !important;
+    border: 1px solid transparent !important;
+    color: var(--text-primary) !important;
+}
+
+.btn-secondary:hover,
+.btn-cancel:hover {
+    background: var(--color-secondary-hover) !important;
+}
+
+body.theme-dark .btn-secondary,
+body.theme-dark .btn-cancel {
+    border-color: var(--border-color) !important;
+}
+
+body.theme-dark .btn-secondary:hover,
+body.theme-dark .btn-cancel:hover {
+    border-color: var(--border-color-strong) !important;
+}
+
+.btn-light {
+    background: var(--color-secondary) !important;
+    color: var(--text-primary) !important;
+    border-color: transparent !important;
+}
+
+/* Form controls */
+.form-control,
+.form-select,
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="date"],
+textarea,
+select {
+    background: var(--input-bg) !important;
+    color: var(--input-text) !important;
+    border: 1px solid var(--input-border) !important;
+    border-radius: var(--border-radius-sm);
+    transition: border-color 0.18s, box-shadow 0.18s, background 0.18s;
+}
+
+.form-control:hover,
+.form-select:hover,
+textarea:hover,
+select:hover {
+    border-color: var(--border-color-strong) !important;
+}
+
+.form-control:focus,
+.form-select:focus,
+textarea:focus {
+    border-color: var(--input-border-focus) !important;
+    box-shadow: 0 0 0 3px var(--color-primary-soft) !important;
+    outline: none !important;
+}
+
+.form-control::placeholder,
+textarea::placeholder {
+    color: var(--input-placeholder) !important;
+}
+
+.form-floating > label {
+    color: var(--text-muted);
+}
+
+/* Modals */
+.modal-content {
+    background: var(--bg-elevated) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: var(--border-radius-lg) !important;
+}
+
+body.theme-dark .modal-content {
+    box-shadow: var(--shadow-xl);
+}
+
+.modal-header,
+.modal-body,
+.modal-footer {
+    background: transparent !important;
+    color: var(--text-primary) !important;
+    border-color: var(--border-color) !important;
+}
+
+.bg-gradient-primary {
+    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-hover)) !important;
+}
+
+.btn-close {
+    filter: var(--theme-filter, none);
+}
+
+body.theme-dark .btn-close {
+    filter: invert(1) brightness(1.5);
+    opacity: 0.7;
+}
+
+body.theme-dark .btn-close:hover {
+    opacity: 1;
+}
+
+/* Tables — override Bootstrap defaults so they follow theme */
+table {
+    --bs-table-bg: transparent;
+    --bs-table-color: var(--text-primary);
+    --bs-table-border-color: var(--border-color);
+    --bs-table-striped-bg: var(--bg-surface-2);
+    --bs-table-hover-bg: var(--bg-surface-2);
+    color: var(--text-primary);
+}
+
+table th,
+table td {
+    background-color: transparent !important;
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+.preview-table th {
+    background: var(--bg-surface-2) !important;
+    color: var(--text-primary) !important;
+}
+
+.preview-table td {
+    border-color: var(--border-color) !important;
+}
+
+.preview-table tr:hover td {
+    background: var(--bg-surface-2) !important;
+}
+
+/* Filter bar */
+.filter-bar {
+    background: var(--bg-surface) !important;
+    border: 1px solid var(--border-color) !important;
+    box-shadow: var(--shadow-sm) !important;
+}
+
+body.theme-dark .filter-bar {
+    box-shadow: none !important;
+}
+
+/* Sidebar toggle (mobile) */
+.sidebar-toggle {
+    background: var(--color-primary) !important;
+    color: var(--color-primary-contrast) !important;
+    box-shadow: var(--shadow-md);
+}
+
+body.theme-dark .sidebar-toggle {
+    background: linear-gradient(180deg, var(--color-primary), var(--color-primary-active)) !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.2),
+        0 4px 14px rgba(125, 211, 199, 0.22);
+}
+
+/* Top-bar buttons (notification, logout) */
+.notification-btn,
+.logout-btn {
+    background: var(--bg-surface) !important;
+    color: var(--text-secondary) !important;
+    border: 1px solid var(--border-color) !important;
+    box-shadow: var(--shadow-sm);
+    transition: background 0.18s, border-color 0.18s, color 0.18s;
+}
+
+.notification-btn:hover {
+    background: var(--bg-surface-2) !important;
+    border-color: var(--border-color-strong) !important;
+    color: var(--text-primary) !important;
+}
+
+.logout-btn:hover {
+    background: var(--color-danger-soft) !important;
+    border-color: var(--color-danger) !important;
+    color: var(--color-danger) !important;
+}
+
+body.theme-dark .notification-btn,
+body.theme-dark .logout-btn {
+    box-shadow: none;
+}
+
+/* Notification dropdown */
+.notif-dropdown {
+    background: var(--bg-elevated) !important;
+    border: 1px solid var(--border-color) !important;
+    box-shadow: var(--shadow-xl) !important;
+}
+
+.notif-dropdown-header {
+    background: transparent !important;
+    color: var(--text-primary) !important;
+    border-color: var(--border-color) !important;
+}
+
+.notif-list li {
+    border-color: var(--border-color) !important;
+}
+
+.notif-list li.unread {
+    background: var(--color-info-soft) !important;
+}
+
+.notif-msg {
+    color: var(--text-primary) !important;
+}
+
+.notif-time {
+    color: var(--text-muted) !important;
+}
+
+/* Body backgrounds — light gets soft pastel radials; dark stays clean & flat */
+body.theme-light {
+    background-image:
+        radial-gradient(circle at 20% 20%, rgba(163, 201, 201, 0.18), transparent 40%),
+        radial-gradient(circle at 80% 80%, rgba(255, 218, 193, 0.18), transparent 40%);
+    background-attachment: fixed;
+}
+
+body.theme-dark {
+    /* No flashy gradients — keep it clean and flat. A whisper of mint glow at top-left only. */
+    background-image:
+        radial-gradient(circle at 0% 0%, rgba(125, 211, 199, 0.04), transparent 50%);
+    background-attachment: fixed;
+}
+
+/* Scrollbar */
+body.theme-dark ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+body.theme-dark ::-webkit-scrollbar-track {
+    background: var(--bg-app);
+}
+
+body.theme-dark ::-webkit-scrollbar-thumb {
+    background: var(--border-color-strong);
+    border-radius: 10px;
+    border: 2px solid var(--bg-app);
+}
+
+body.theme-dark ::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
+}
+
+/* Selection */
+::selection {
+    background: var(--color-primary-soft);
+    color: var(--text-primary);
+}
+
+/* Focus visible — keyboard accessibility */
+:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}

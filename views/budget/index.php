@@ -39,7 +39,7 @@ $jsVars = [
     'userCurrency' => $userCurrency,
     'currencySymbol' => $currencySymbol,
 ];
-$this->registerJs('const budgetConfig = ' . json_encode($jsVars) . ';', View::POS_HEAD);
+$this->registerJs('window.budgetConfig = ' . json_encode($jsVars) . ';', View::POS_HEAD);
 $this->registerJsFile('@web/js/budget.js', ['depends' => [JqueryAsset::class]]);
 ?>
 
@@ -69,13 +69,13 @@ $this->registerJsFile('@web/js/budget.js', ['depends' => [JqueryAsset::class]]);
             <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
                 <h1>Бюджеты</h1>
 
-                <div class="filter-section d-flex gap-2 bg-white p-2 rounded-3 shadow-sm border">
-                    <select id="filterMonth" class="form-select form-select-sm border-0 bg-light">
+                <div class="filter-section d-flex gap-2 p-2 rounded-3" style="background: var(--bg-surface); border: 1px solid var(--border-color);">
+                    <select id="filterMonth" class="form-select form-select-sm">
                         <?php foreach ($months as $num => $name): ?>
                             <option value="<?= $num ?>" <?= $num == $selectedMonth ? 'selected' : '' ?>><?= $name ?></option>
                         <?php endforeach; ?>
                     </select>
-                    <select id="filterYear" class="form-select form-select-sm border-0 bg-light">
+                    <select id="filterYear" class="form-select form-select-sm">
                         <?php foreach ($years as $y): ?>
                             <option value="<?= $y ?>" <?= $y == $selectedYear ? 'selected' : '' ?>><?= $y ?></option>
                         <?php endforeach; ?>
@@ -111,25 +111,43 @@ $this->registerJsFile('@web/js/budget.js', ['depends' => [JqueryAsset::class]]);
                         ?>
                         <div class="card" data-id="<?= $budget->id ?>">
                             <div class="card-body">
-                                <h3><?= Html::encode($budget->name) ?></h3>
-                                <p><strong>Категория:</strong> <?= Html::encode($budget->category->name ?? '-') ?></p>
-                                <p><strong>Лимит:</strong> <?= number_format($budget->amount, 2) ?> <?= $budget->currency ?></p>
-                                <p><strong>Потрачено:</strong> <?= number_format($budget->spent, 2) ?> <?= $budget->currency ?></p>
-
-                                <div class="budget-progress-bar">
-                                    <div class="budget-progress-fill" style="width: <?= $percent ?>%; background: <?= $progressColor ?>;"></div>
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h3 class="m-0"><?= Html::encode($budget->name) ?></h3>
+                                    <span class="budget-period-badge">
+                                        <?= Budget::getPeriods()[$budget->period] ?? $budget->period ?>
+                                    </span>
                                 </div>
-                                <p class="budget-progress-text">
-                                    <?= $percent ?>% из <?= number_format($budget->amount, 2) ?> <?= $budget->currency ?>
+
+                                <p class="text-muted small mb-3">
+                                    <i class="fas fa-tag me-1"></i>
+                                    <?= Html::encode($budget->category->name ?? '—') ?>
                                 </p>
 
-                                <p><strong>Остаток:</strong> <?= number_format($budget->getRemainingAmount(), 2) ?> <?= $budget->currency ?></p>
-                                <p><strong>Период:</strong> <?= Budget::getPeriods()[$budget->period] ?? $budget->period ?></p>
-                                <p><strong>Срок:</strong> <?= $budget->start_date ?> → <?= $budget->end_date ?? '—' ?></p>
+                                <div class="budget-progress-section">
+                                    <div class="budget-progress-bar">
+                                        <div class="budget-progress-fill" style="width: <?= $percent ?>%; background: <?= $progressColor ?>;"></div>
+                                    </div>
+                                    <div class="d-flex justify-content-between mt-2 small">
+                                        <span class="fw-bold"><?= $percent ?>%</span>
+                                        <span>
+                                            <?= number_format($budget->spent, 2) ?>
+                                            / <?= number_format($budget->amount, 2) ?> <?= Html::encode($budget->currency) ?>
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <p class="text-muted small mt-3 mb-0">
+                                    <i class="far fa-calendar-alt me-1"></i>
+                                    <?= $budget->start_date ?> — <?= $budget->end_date ?? '∞' ?>
+                                </p>
                             </div>
                             <div class="card-actions">
-                                <button class="editBtn" data-id="<?= $budget->id ?>">✏️</button>
-                                <button class="deleteBtn" data-id="<?= $budget->id ?>">🗑️</button>
+                                <button class="editBtn" data-id="<?= $budget->id ?>" title="Редактировать">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="deleteBtn" data-id="<?= $budget->id ?>" title="Удалить">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
                             </div>
                         </div>
                     <?php endforeach; ?>

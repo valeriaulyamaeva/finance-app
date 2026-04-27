@@ -89,7 +89,7 @@ $categories = ArrayHelper::map(
                 <?php ActiveForm::end(); ?>
             </div>
 
-            <div class="modal-footer bg-light border-0 p-4 justify-content-between">
+            <div class="modal-footer border-0 p-4 justify-content-between">
                 <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">
                     Отмена
                 </button>
@@ -114,7 +114,7 @@ $categories = ArrayHelper::map(
             <div class="modal-body p-4">
                 <div id="recurringItemsList" class="mb-4"></div>
 
-                <div id="recurringFormContainer" style="display: none;" class="bg-light p-4 rounded-4 border">
+                <div id="recurringFormContainer" style="display: none; background: var(--bg-surface-2); border: 1px solid var(--border-color);" class="p-4 rounded-4">
                     <h6 class="fw-bold mb-3" id="recurringFormTitle">Новый шаблон</h6>
                     <form id="recurringForm">
                         <input type="hidden" id="recurring-id" name="id">
@@ -171,7 +171,7 @@ $categories = ArrayHelper::map(
                 </div>
             </div>
 
-            <div class="modal-footer bg-light border-0 p-4 justify-content-between">
+            <div class="modal-footer border-0 p-4 justify-content-between">
                 <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Закрыть</button>
                 <button type="button" class="btn btn-primary rounded-pill px-4 shadow-sm" id="createRecurringInModalBtn">
                     <i class="fas fa-plus me-2"></i> Создать

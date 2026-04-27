@@ -1,42 +1,5 @@
-:root {
-    --body-bg: #f9f7f4;
-    --text-primary: #2e2a29;
-    --text-secondary: #6b7280;
-    --card-bg: #ffffff;
-    --border-color: #e5e7eb;
-    --input-bg: #f3ecec;
-    --input-border: #d1d5db;
-    --accent: #a3c9c9;
-    --accent-hover: #8da4a4;
-    --success: #16a34a;
-    --error: #dc2626;
-    --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.05);
-    --shadow-md: 0 10px 30px rgba(0, 0, 0, 0.1);
-}
-
-@media (prefers-color-scheme: dark) {
-    :root {
-        --body-bg: #1f1f1f;
-        --text-primary: #f3f3f3;
-        --text-secondary: #9ca3af;
-        --card-bg: #2a2a2a;
-        --border-color: #4b5563;
-        --input-bg: #ffffff;
-        --input-border: #4b5563;
-    }
-}
-
-body.dark-theme {
-    --body-bg: #1f1f1f;
-    --text-primary: #f3f3f3;
-    --text-secondary: #9ca3af;
-    --card-bg: #2a2a2a;
-    --border-color: #4b5563;
-    --input-bg: #6a6a6a;
-    --input-border: #4b5563;
-    --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.3);
-    --shadow-md: 0 10px 30px rgba(0, 0, 0, 0.4);
-}
+/* settings.css — uses global theme tokens from theme.css.
+   Local variables removed to keep one source of truth (light + dark). */
 
 .sidebar-toggle {
     position: fixed;
@@ -48,16 +11,16 @@ body.dark-theme {
     justify-content: center;
     width: 52px;
     height: 52px;
-    background: #8da4a4;
-    color: white;
+    background: var(--color-primary);
+    color: var(--color-primary-contrast);
     border: none;
     border-radius: 50%;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    box-shadow: var(--shadow-md);
     transition: all 0.3s ease;
 }
 
 .sidebar-toggle:hover {
-    background: #6b8c8c;
+    background: var(--color-primary-hover);
     transform: scale(1.08);
 }
 
@@ -72,18 +35,18 @@ body.sidebar-open .sidebar-toggle {
     left: 0;
     width: 20rem;
     height: 100vh;
-    background: #b6b6b6;
+    background: var(--sidebar-bg);
     padding: 2rem 1rem;
     transition: transform 0.35s cubic-bezier(0.25, 0.8, 0.25, 1);
     z-index: 1040;
-    box-shadow: 4px 0 20px rgba(0,0,0,0.15);
+    box-shadow: var(--shadow-md);
     overflow-y: auto;
 }
 
 .sidebar h2 {
     font-size: 2.3rem;
     font-weight: 700;
-    color: #2c2929;
+    color: var(--text-primary);
     margin: 0 0 2.5rem 0;
     text-align: center;
 }
@@ -98,9 +61,9 @@ body.sidebar-open .sidebar-toggle {
     padding: 0.6rem 0;
     font-size: 1.25rem;
     font-weight: 500;
-    color: #1c1b1b;
+    color: var(--sidebar-text);
     text-decoration: none;
-    border-radius: 8px;
+    border-radius: var(--border-radius-sm);
     transition: background 0.2s;
 }
 
@@ -114,7 +77,7 @@ body.sidebar-open .sidebar-toggle {
 .sidebar-close {
     background: none;
     border: none;
-    color: white;
+    color: var(--text-secondary);
     font-size: 1.5rem;
     cursor: pointer;
 }
@@ -154,7 +117,7 @@ body.sidebar-open::before {
     content: '';
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.55);
+    background: var(--bg-overlay);
     z-index: 1030;
     animation: fadeIn 0.3s ease;
 }
@@ -165,19 +128,20 @@ body.sidebar-open::before {
 }
 
 .settings-card {
-    background: var(--card-bg);
+    background: var(--bg-surface);
     max-width: 40rem;
     margin: 0 auto;
     padding: 2rem;
-    border-radius: 24px;
+    border-radius: var(--border-radius-lg);
     box-shadow: var(--shadow-md);
     border: 1px solid var(--border-color);
     transition: all 0.3s ease;
 }
 
 .settings-card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+    transform: translateY(-4px);
+    border-color: var(--border-color-strong);
+    box-shadow: var(--shadow-lg);
 }
 
 .form-group {
@@ -187,7 +151,7 @@ body.sidebar-open::before {
 .form-group label {
     display: block;
     font-weight: 500;
-    color: black;
+    color: var(--text-primary);
     margin-bottom: 0.6rem;
     font-size: 0.95rem;
 }
@@ -196,63 +160,75 @@ body.sidebar-open::before {
 .form-group select {
     width: 100%;
     padding: 0.9rem 1.2rem;
-    border-radius: 16px;
-    border: 1.5px solid var(--input-border);
+    border-radius: var(--border-radius-md);
+    border: 1px solid var(--input-border);
     background: var(--input-bg);
-    color: #5a5959;
+    color: var(--input-text);
     font-size: 1rem;
-    transition: all 0.25s ease;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .form-group input:focus,
 .form-group select:focus {
     outline: none;
-    border-color: var(--accent-hover);
-    box-shadow: 0 0 0 4px rgba(141, 164, 164, 0.2);
-    transform: scale(1.02);
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px var(--color-primary-soft);
 }
 
 .btn-save {
-    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%);
-    color: #222;
+    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-hover));
+    color: var(--color-primary-contrast);
     border: none;
-    border-radius: 16px;
-    padding: 1rem 2.5rem;
-    font-size: 1.1rem;
+    border-radius: var(--border-radius-md);
+    padding: 0.9rem 2.2rem;
+    font-size: 1.05rem;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 6px 20px rgba(141, 164, 164, 0.3);
+    transition: all 0.25s ease;
+    box-shadow: var(--shadow-md);
     margin-top: 1rem;
 }
 
 .btn-save:hover {
-    background: linear-gradient(135deg, var(--accent-hover) 0%, #758888 100%);
-    color: white;
-    transform: translateY(-3px);
-    box-shadow: 0 12px 30px rgba(117, 136, 136, 0.4);
+    background: linear-gradient(135deg, var(--color-primary-hover), var(--color-primary-active));
+    color: var(--color-primary-contrast);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+body.theme-dark .btn-save {
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.18),
+        0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+body.theme-dark .btn-save:hover {
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.22),
+        0 4px 14px rgba(125, 211, 199, 0.22);
 }
 
 .message {
     margin-top: 1.5rem;
     padding: 1rem 1.5rem;
-    border-radius: 16px;
+    border-radius: var(--border-radius-md);
     font-weight: 500;
     text-align: center;
     opacity: 0;
     transition: opacity 0.4s ease;
+    border: 1px solid transparent;
 }
 
 .message.success {
-    background: rgba(22, 163, 74, 0.15);
-    color: var(--success);
-    border: 1px solid rgba(22, 163, 74, 0.3);
+    background: var(--color-success-soft);
+    color: var(--color-success-text);
+    border-color: var(--color-success);
 }
 
 .message.error {
-    background: rgba(220, 38, 38, 0.15);
-    color: var(--error);
-    border: 1px solid rgba(220, 38, 38, 0.3);
+    background: var(--color-danger-soft);
+    color: var(--color-danger-text);
+    border-color: var(--color-danger);
 }
 
 .message.show {
