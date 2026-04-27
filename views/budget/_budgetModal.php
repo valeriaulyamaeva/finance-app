@@ -94,7 +94,7 @@ $budget = new Budget(['currency' => Yii::$app->user->identity->currency ?? 'BYN'
                 <?php ActiveForm::end(); ?>
             </div>
 
-            <div class="modal-footer bg-light border-0 p-3">
+            <div class="modal-footer border-0 p-3">
                 <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">
                     Отмена
                 </button>

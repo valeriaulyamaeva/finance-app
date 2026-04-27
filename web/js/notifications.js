@@ -154,5 +154,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Init
     loadBadge();
-    setInterval(loadBadge, 60000);
+    setInterval(loadBadge, 180000); // 3 min — less load
 });

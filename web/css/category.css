@@ -1,8 +1,8 @@
 body {
     font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
-    background: #f9f7f4;
+    background: var(--bg-app);
     margin: 0;
-    color: #4b453f;
+    color: var(--text-primary);
 }
 
 .sidebar-toggle {
@@ -15,16 +15,16 @@ body {
     justify-content: center;
     width: 52px;
     height: 52px;
-    background: #8da4a4;
-    color: white;
+    background: var(--color-primary);
+    color: var(--color-primary-contrast);
     border: none;
     border-radius: 50%;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    box-shadow: var(--shadow-md);
     transition: all 0.3s ease;
 }
 
 .sidebar-toggle:hover {
-    background: #6b8c8c;
+    background: var(--color-primary-hover);
     transform: scale(1.08);
 }
 
@@ -39,18 +39,18 @@ body.sidebar-open .sidebar-toggle {
     left: 0;
     width: 20rem;
     height: 100vh;
-    background: #b6b6b6;
+    background: var(--sidebar-bg);
     padding: 2rem 1rem;
     transition: transform 0.35s cubic-bezier(0.25, 0.8, 0.25, 1);
     z-index: 1040;
-    box-shadow: 4px 0 20px rgba(0,0,0,0.15);
+    box-shadow: var(--shadow-md);
     overflow-y: auto;
 }
 
 .sidebar h2 {
     font-size: 2.3rem;
     font-weight: 700;
-    color: #2c2929;
+    color: var(--text-primary);
     margin: 0 0 2.5rem 0;
     text-align: center;
 }
@@ -65,9 +65,9 @@ body.sidebar-open .sidebar-toggle {
     padding: 0.6rem 0;
     font-size: 1.25rem;
     font-weight: 500;
-    color: #1c1b1b;
+    color: var(--sidebar-text);
     text-decoration: none;
-    border-radius: 8px;
+    border-radius: var(--border-radius-sm);
     transition: background 0.2s;
 }
 
@@ -81,7 +81,7 @@ body.sidebar-open .sidebar-toggle {
 .sidebar-close {
     background: none;
     border: none;
-    color: white;
+    color: var(--text-secondary);
     font-size: 1.5rem;
     cursor: pointer;
 }
@@ -121,7 +121,7 @@ body.sidebar-open::before {
     content: '';
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.55);
+    background: var(--bg-overlay);
     z-index: 1030;
     animation: fadeIn 0.3s ease;
 }
@@ -136,18 +136,18 @@ body.sidebar-open::before {
 }
 
 .btn-add {
-    background: #a3c9c9;
-    color: #222;
+    background: var(--color-primary);
+    color: var(--color-primary-contrast);
     border: none;
-    border-radius: 50px;
+    border-radius: var(--border-radius-pill);
     padding: 0.75rem 1.8rem;
     font-weight: 500;
     transition: all 0.3s ease;
 }
 
 .btn-add:hover {
-    background: #8da4a4;
-    color: white;
+    background: var(--color-primary-hover);
+    color: var(--color-primary-contrast);
     transform: translateY(-2px);
 }
 
@@ -174,10 +174,11 @@ body.sidebar-open::before {
 }
 
 .card {
-    background: white;
-    border-radius: 24px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-lg);
     padding: 1rem;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+    box-shadow: var(--shadow-md);
     transition: all 0.3s ease;
     display: flex;
     flex-direction: column;
@@ -185,21 +186,22 @@ body.sidebar-open::before {
 }
 
 .card:hover {
-    transform: translateY(-10px);
-    box-shadow: 0 20px 50px rgba(0,0,0,0.18);
+    transform: translateY(-6px);
+    border-color: var(--border-color-strong);
+    box-shadow: var(--shadow-lg);
 }
 
 .card h3 {
     margin: 0 0 0.8rem 0;
     font-size: 1.5rem;
     font-weight: 600;
-    color: #1f2937;
+    color: var(--text-primary);
 }
 
 .card p {
     margin: 0;
     font-size: 1rem;
-    color: #6b7280;
+    color: var(--text-secondary);
 }
 
 .card-actions {
@@ -214,12 +216,41 @@ body.sidebar-open::before {
     border: none;
     font-size: 1.2rem;
     cursor: pointer;
-    color: #6b7280;
+    color: var(--text-muted);
     transition: color 0.2s;
 }
 
 .card-actions button:hover {
-    color: #1f2937;
+    color: var(--text-primary);
+}
+
+.card-actions .deleteBtn:hover {
+    color: var(--color-danger);
+}
+
+.category-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.3rem 0.7rem;
+    border-radius: var(--border-radius-pill);
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.badge-income {
+    background: var(--color-success-soft);
+    color: var(--color-success-text);
+}
+
+.badge-expense {
+    background: var(--color-danger-soft);
+    color: var(--color-danger-text);
+}
+
+.badge-goal {
+    background: var(--color-info-soft);
+    color: var(--color-info-text);
 }
 
 .text-center.py-5 {

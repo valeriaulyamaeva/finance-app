@@ -88,6 +88,7 @@ document.addEventListener('DOMContentLoaded', function () {
         parsedData.forEach((tx, idx) => {
             const tr = document.createElement('tr');
             if (tx.is_duplicate) tr.classList.add('duplicate');
+            if (!tx.category_id && !tx.is_duplicate) tr.classList.add('no-category');
 
             const amountClass = tx.type === 'income' ? 'amount-income' : 'amount-expense';
             const amountSign = tx.type === 'income' ? '+' : '-';

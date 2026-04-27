@@ -13,7 +13,17 @@ final class CurrencyService extends Component
 {
     private string $apiKey = 'e8c2f4afec9e1abf33fd661d';
     private string $baseUrl = 'https://v6.exchangerate-api.com/v6';
-    private const CACHE_DURATION = 3600;
+    private const CACHE_DURATION = 86400; // 24 hours
+    private const FALLBACK_CACHE_DURATION = 300; // 5 min for failed requests
+    private const HTTP_TIMEOUT = 3; // seconds
+
+    /** Hardcoded fallback rates (relative to BYN) — used when API is down */
+    private const FALLBACK_RATES = [
+        'BYN' => ['BYN' => 1.0, 'USD' => 0.31, 'EUR' => 0.28, 'RUB' => 28.5],
+        'USD' => ['BYN' => 3.25, 'USD' => 1.0, 'EUR' => 0.92, 'RUB' => 92.0],
+        'EUR' => ['BYN' => 3.55, 'USD' => 1.09, 'EUR' => 1.0, 'RUB' => 100.0],
+        'RUB' => ['BYN' => 0.035, 'USD' => 0.011, 'EUR' => 0.01, 'RUB' => 1.0],
+    ];
 
     public function convertTo(float $amount, string $from, string $to): float
     {
@@ -63,7 +73,10 @@ final class CurrencyService extends Component
         $url = "$this->baseUrl/$this->apiKey/latest/$base";
 
         try {
-            $response = @file_get_contents($url);
+            $context = stream_context_create([
+                'http' => ['timeout' => self::HTTP_TIMEOUT, 'ignore_errors' => true],
+            ]);
+            $response = @file_get_contents($url, false, $context);
             if (!$response) {
                 throw new Exception("API request failed for $base");
             }
@@ -82,7 +95,12 @@ final class CurrencyService extends Component
             return $rates;
         } catch (Exception $e) {
             Yii::error("Currency API Error: " . $e->getMessage(), __METHOD__);
-            return [];
+            // Cache fallback rates briefly so we don't hammer the broken API
+            $fallback = self::FALLBACK_RATES[$base] ?? [];
+            if ($cache instanceof Cache && !empty($fallback)) {
+                $cache->set($cacheKey, $fallback, self::FALLBACK_CACHE_DURATION);
+            }
+            return $fallback;
         }
     }
 

@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (filterMonth) filterMonth.addEventListener('change', handleFilterChange);
     if (filterYear) filterYear.addEventListener('change', handleFilterChange);
 
-    document.getElementById('addBudgetBtn').addEventListener('click', () => {
+    document.getElementById('addBudgetBtn')?.addEventListener('click', () => {
         currentAction = 'create';
         currentId = null;
         form.reset();
@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
         modal.show();
     });
 
-    document.querySelector('.cards-container').addEventListener('click', (e) => {
+    document.querySelector('.cards-container')?.addEventListener('click', async (e) => {
         const target = e.target.closest('button');
         if (!target) return;
 
@@ -66,7 +66,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (target.classList.contains('deleteBtn')) {
-            if (!confirm('Удалить этот бюджет?')) return;
+            const ok = await window.appConfirm({
+                title: 'Удалить бюджет?',
+                message: 'Связанные транзакции останутся, но бюджет будет удалён.',
+                confirmText: 'Удалить',
+                danger: true,
+            });
+            if (!ok) return;
             const id = target.dataset.id;
 
             fetch(`${deleteUrl}?id=${id}`, {
@@ -79,13 +85,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 .then(res => res.json())
                 .then(data => {
                     if (data.success) location.reload();
-                    else showError(data.message || 'Ошибка удаления');
+                    else window.appToast(data.message || 'Ошибка удаления', 'error');
                 })
-                .catch(err => showError('Ошибка сети при удалении'));
+                .catch(() => window.appToast('Ошибка сети при удалении', 'error'));
         }
     });
 
-    document.querySelector('.saveBudget').addEventListener('click', () => {
+    document.querySelector('.saveBudget')?.addEventListener('click', () => {
         hideError();
         const formData = new FormData(form);
         const url = currentAction === 'create' ? createUrl : `${updateUrl}?id=${currentId}`;

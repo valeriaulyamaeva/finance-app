@@ -7,10 +7,11 @@ from app.schemas import ParsedTransaction
 # Possible column name variants for each field
 COLUMN_ALIASES = {
     "date": ["Дата операции", "Дата и время совершения операции"],
-    "type": ["Тип операции", "Наименование операции", "Приход/ Расход", "Приход/Расход"],
+    "type": ["Тип операции", "Наименование операции"],
     "mcc": ["MCC", "МСС"],
     "place": ["Место транзакции", "Место проведения", "Место совершения операции"],
     "amount": ["Сумма транзакции", "Сумма в валюте транзакции", "Сумма в валюте операции"],
+    "currency": ["Валюта опера- ции", "Валюта операции", "Валюта опера-ции"],
     "status": ["Статус"],
     "direction": ["Приход/ Расход", "Приход/Расход"],
 }
@@ -78,6 +79,7 @@ def parse_csv(content: bytes) -> tuple[list[ParsedTransaction], list[str], dict]
     mcc_col = _find_col_by_aliases(col_map, COLUMN_ALIASES["mcc"])
     place_col = _find_col_by_aliases(col_map, COLUMN_ALIASES["place"])
     amount_col = _find_col_by_aliases(col_map, COLUMN_ALIASES["amount"])
+    currency_col = _find_col_by_aliases(col_map, COLUMN_ALIASES["currency"])
     status_col = _find_col_by_aliases(col_map, COLUMN_ALIASES["status"])
 
     if date_col is None or amount_col is None:
@@ -107,6 +109,7 @@ def parse_csv(content: bytes) -> tuple[list[ParsedTransaction], list[str], dict]
             raw_mcc = _get_col(cols, mcc_col)
             raw_place = _get_col(cols, place_col)
             raw_status = _get_col(cols, status_col)
+            raw_currency = _get_col(cols, currency_col).strip().upper()
 
             if not raw_date.strip() or not raw_amount.strip():
                 continue
@@ -140,16 +143,19 @@ def parse_csv(content: bytes) -> tuple[list[ParsedTransaction], list[str], dict]
             description = raw_place.strip() if raw_place and raw_place.strip() else raw_type.strip()
             operation_type = raw_type.strip()
 
-            suggested_category = categorize(mcc, operation_type)
+            suggested_category = categorize(mcc, operation_type, description, tx_type)
 
             tx_hash = hashlib.sha256(
                 f"{date}|{amount_val}|{description}".encode("utf-8")
             ).hexdigest()
 
+            # Currency priority: dedicated column → suffix in amount → default
+            final_currency = raw_currency if raw_currency in ("BYN", "USD", "EUR", "RUB") else (currency or default_currency)
+
             transactions.append(ParsedTransaction(
                 date=date,
                 amount=round(abs_amount, 2),
-                currency=currency or default_currency,
+                currency=final_currency,
                 type=tx_type,
                 description=description,
                 mcc=mcc,

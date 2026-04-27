@@ -54,8 +54,8 @@ $this->registerJsFile('@web/js/goal.js', [
                 <li><a href="/analytics">Аналитика</a></li>
                 <li><a href="/transaction">Транзакции</a></li>
                 <li><a href="/budget">Бюджеты</a></li>
-                <li><a href="/category" class="active">Категории</a></li>
-                <li><a href="/goal">Цели</a></li>
+                <li><a href="/category">Категории</a></li>
+                <li><a href="/goal" class="active">Цели</a></li>
                 <li><a href="/import">Импорт выписки</a></li>
                 <li><a href="/settings">Настройки</a></li>
             </ul>

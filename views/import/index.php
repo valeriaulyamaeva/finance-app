@@ -24,7 +24,7 @@ $urls = [
     'confirm' => Url::to(['import/confirm']),
 ];
 
-$this->registerJs('const importConfig = ' . json_encode([
+$this->registerJs('window.importConfig = ' . json_encode([
     'urls' => $urls,
     'categories' => $categoriesData,
 ]) . ';', View::POS_HEAD);
@@ -53,7 +53,7 @@ $this->registerJsFile('@web/js/import.js', ['depends' => [JqueryAsset::class]]);
         <li><a href="/budget">Бюджеты</a></li>
         <li><a href="/category">Категории</a></li>
         <li><a href="/goal">Цели</a></li>
-        <li><a href="/import">Импорт выписки</a></li>
+        <li><a href="/import" class="active">Импорт выписки</a></li>
         <li><a href="/settings">Настройки</a></li>
     </ul>
 </div>

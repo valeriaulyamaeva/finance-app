@@ -46,7 +46,7 @@ $this->registerCssFile('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.
         <h2 class="d-none d-lg-block">PastelFinance</h2>
 
         <ul>
-            <li><a href="/analytics">Аналитика</a></li>
+            <li><a href="/analytics" class="active">Аналитика</a></li>
             <li><a href="/transaction">Транзакции</a></li>
             <li><a href="/budget">Бюджеты</a></li>
             <li><a href="/category">Категории</a></li>

@@ -61,15 +61,37 @@ $this->registerJsFile('@web/js/category.js', [
 
             <div class="cards-container">
                 <?php if ($categories): ?>
-                    <?php foreach ($categories as $category): ?>
-                        <div class="card" data-id="<?= $category->id ?>" data-type="<?= Html::encode($category->type) ?>">
+                    <?php foreach ($categories as $category):
+                        $type = $category->type;
+                        $typeLabel = Category::getTypes()[$type] ?? $type;
+                        $typeBadgeClass = match ($type) {
+                            'income' => 'badge-income',
+                            'goal' => 'badge-goal',
+                            default => 'badge-expense',
+                        };
+                        $typeIcon = match ($type) {
+                            'income' => 'fa-arrow-down',
+                            'goal' => 'fa-bullseye',
+                            default => 'fa-arrow-up',
+                        };
+                        ?>
+                        <div class="card" data-id="<?= $category->id ?>" data-type="<?= Html::encode($type) ?>">
                             <div class="card-body">
-                                <h3><?= Html::encode($category->name) ?></h3>
-                                <p class="text-muted"><?= Html::encode(Category::getTypes()[$category->type] ?? $category->type) ?></p>
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h3 class="m-0"><?= Html::encode($category->name) ?></h3>
+                                    <span class="category-badge <?= $typeBadgeClass ?>">
+                                        <i class="fas <?= $typeIcon ?> me-1"></i>
+                                        <?= Html::encode($typeLabel) ?>
+                                    </span>
+                                </div>
                             </div>
                             <div class="card-actions">
-                                <button class="editBtn" title="Редактировать">✏️</button>
-                                <button class="deleteBtn" title="Удалить">🗑️</button>
+                                <button class="editBtn" title="Редактировать">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="deleteBtn" title="Удалить">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
                             </div>
                         </div>
                     <?php endforeach; ?>
@@ -115,7 +137,7 @@ $this->registerJsFile('@web/js/category.js', [
                     <div id="formErrors" class="alert alert-danger mt-3 d-none"></div>
                 </form>
 
-                <div class="modal-footer bg-light border-0 p-4 justify-content-between">
+                <div class="modal-footer border-0 p-4 justify-content-between">
                     <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">
                         Отмена
                     </button>

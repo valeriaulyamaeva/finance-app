@@ -1,28 +1,41 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const { urls } = transactionConfig;
+    if (!window.transactionConfig) {
+        console.error('transactionConfig not loaded');
+        return;
+    }
+    const config = window.transactionConfig;
+    const urls = config.urls || {};
+
     const modalEl = document.getElementById('transactionModal');
-    const modal = new bootstrap.Modal(modalEl);
+    const modal = modalEl ? new bootstrap.Modal(modalEl) : null;
     const form = document.getElementById('transactionForm');
     const formErrors = document.getElementById('formErrors');
 
     const toggleGoalField = (categoryId) => {
-        if (!categoryId) { document.getElementById('goalSelector').style.display = 'none'; return; }
+        const goalSelector = document.getElementById('goalSelector');
+        if (!goalSelector) return;
+        if (!categoryId) { goalSelector.style.display = 'none'; return; }
         fetch(`/category/type?id=${categoryId}`)
             .then(res => res.json())
             .then(data => {
-                document.getElementById('goalSelector').style.display = (data.type === 'goal') ? 'block' : 'none';
+                goalSelector.style.display = (data.type === 'goal') ? 'block' : 'none';
             });
     };
 
-    document.getElementById('createTransactionBtn').addEventListener('click', () => {
+    document.getElementById('createTransactionBtn')?.addEventListener('click', () => {
+        if (!form || !modal) return;
         form.reset();
-        document.getElementById('transaction-id').value = '';
-        document.getElementById('modalTransactionTitle').textContent = 'Новая транзакция';
-        formErrors.classList.add('d-none');
+        const idEl = document.getElementById('transaction-id');
+        if (idEl) idEl.value = '';
+        const titleEl = document.getElementById('modalTransactionTitle');
+        if (titleEl) titleEl.textContent = 'Новая транзакция';
+        formErrors?.classList.add('d-none');
         modal.show();
     });
 
-    document.querySelector('.transactions-container').addEventListener('click', (e) => {
+    const cardsContainer = document.querySelector('.cards-container');
+
+    cardsContainer?.addEventListener('click', (e) => {
         const btn = e.target.closest('.js-update');
         if (!btn) return;
 
@@ -39,12 +52,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     toggleGoalField(t.category_id);
                     document.getElementById('modalTransactionTitle').textContent = 'Редактирование';
-                    modal.show();
+                    modal?.show();
                 }
             });
     });
 
-    document.querySelector('.saveTransaction').addEventListener('click', () => {
+    document.querySelector('.saveTransaction')?.addEventListener('click', () => {
+        if (!form) return;
         const formData = new FormData(form);
         const id = document.getElementById('transaction-id').value;
         const url = id ? `${urls.update}?id=${id}` : urls.create;
@@ -59,19 +73,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (data.success) {
                     window.location.reload();
                 } else {
-                    formErrors.textContent = data.message;
-                    formErrors.classList.remove('d-none');
+                    if (formErrors) {
+                        formErrors.textContent = data.message;
+                        formErrors.classList.remove('d-none');
+                    }
                 }
             });
     });
 
-    document.querySelector('.transactions-container').addEventListener('click', (e) => {
+    cardsContainer?.addEventListener('click', async (e) => {
         const deleteBtn = e.target.closest('.js-delete');
         if (!deleteBtn) return;
 
-        if (!confirm('Вы уверены, что хотите удалить эту транзакцию?')) {
-            return;
-        }
+        const confirmed = await window.appConfirm({
+            title: 'Удалить транзакцию?',
+            message: 'Это действие нельзя отменить.',
+            confirmText: 'Удалить',
+            danger: true,
+        });
+        if (!confirmed) return;
 
         const id = deleteBtn.dataset.id;
 
@@ -87,7 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (data.success) {
                     window.location.reload();
                 } else {
-                    alert('Ошибка при удалении: ' + data.message);
+                    window.appToast('Ошибка: ' + data.message, 'error');
                 }
             })
             .catch(err => console.error('Ошибка:', err));
@@ -108,87 +128,112 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('resetFilter')?.addEventListener('click', () => {
         window.location.href = '/transaction';
     });
-});
 
-const recurringModal = new bootstrap.Modal(document.getElementById('recurringModal'));
-const recurringListContainer = document.getElementById('recurringItemsList');
-const recurringFormContainer = document.getElementById('recurringFormContainer');
-const recurringForm = document.getElementById('recurringForm');
+    // ─── Recurring transactions ──────────────────────────────────
+    const recurringModalEl = document.getElementById('recurringModal');
+    const recurringModal = recurringModalEl ? new bootstrap.Modal(recurringModalEl) : null;
+    const recurringListContainer = document.getElementById('recurringItemsList');
+    const recurringFormContainer = document.getElementById('recurringFormContainer');
+    const recurringForm = document.getElementById('recurringForm');
 
-document.getElementById('viewRecurringBtn').addEventListener('click', loadRecurringList);
+    function loadRecurringList() {
+        if (!recurringListContainer) return;
+        if (recurringFormContainer) recurringFormContainer.style.display = 'none';
+        recurringListContainer.style.display = 'block';
+        recurringListContainer.innerHTML = '<p class="text-center text-muted py-3">Загрузка...</p>';
 
-function loadRecurringList() {
-    recurringFormContainer.style.display = 'none';
-    recurringListContainer.innerHTML = '<p class="text-center">Загрузка...</p>';
-
-    fetch(urls.recurringList)
-        .then(res => res.json())
-        .then(res => {
-            if (res.success) {
-                renderRecurringList(res.data);
-            }
-        });
-}
-
-function renderRecurringList(data) {
-    if (data.length === 0) {
-        recurringListContainer.innerHTML = '<p class="text-muted text-center">У вас пока нет регулярных платежей</p>';
-        return;
+        fetch(urls.recurringList)
+            .then(res => res.json())
+            .then(res => {
+                if (res.success) {
+                    renderRecurringList(res.data || []);
+                } else {
+                    recurringListContainer.innerHTML = '<p class="text-center text-muted py-3">Не удалось загрузить</p>';
+                }
+            })
+            .catch(() => {
+                recurringListContainer.innerHTML = '<p class="text-center text-muted py-3">Ошибка соединения</p>';
+            });
     }
 
-    recurringListContainer.innerHTML = data.map(item => `
-            <div class="d-flex justify-content-between align-items-center border-bottom py-2">
-                <div>
-                    <span class="fw-bold">${item.amount} ${item.currency}</span> 
-                    <span class="badge bg-info ms-2">${item.frequency_label}</span>
-                    <div class="small text-muted">${item.category} • След: ${item.next_date}</div>
+    function renderRecurringList(data) {
+        if (!recurringListContainer) return;
+        if (data.length === 0) {
+            recurringListContainer.innerHTML = '<p class="text-muted text-center py-3">У вас пока нет регулярных платежей</p>';
+            return;
+        }
+
+        recurringListContainer.innerHTML = data.map(item => `
+            <div class="recurring-item">
+                <div class="recurring-info">
+                    <div class="recurring-header">
+                        <span class="recurring-amount">${item.amount} ${item.currency}</span>
+                        <span class="recurring-badge">${item.frequency_label}</span>
+                    </div>
+                    <div class="recurring-meta">
+                        <i class="fas fa-tag"></i> ${item.category}
+                        <span class="mx-2">•</span>
+                        <i class="far fa-calendar-alt"></i> ${item.next_date}
+                    </div>
                 </div>
-                <div class="btn-group btn-group-sm">
-                    <button class="btn btn-outline-danger delete-recurring" data-id="${item.id}">🗑️</button>
-                </div>
+                <button class="recurring-delete delete-recurring" data-id="${item.id}" title="Удалить">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
             </div>
         `).join('');
 
-    // Навешиваем удаление
-    document.querySelectorAll('.delete-recurring').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            if (confirm('Удалить этот шаблон?')) {
-                fetch(`${urls.recurringDelete}?id=${btn.dataset.id}`, { method: 'POST', headers: { 'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content }})
-                    .then(() => loadRecurringList());
-            }
+        recurringListContainer.querySelectorAll('.delete-recurring').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const ok = await window.appConfirm({
+                    title: 'Удалить шаблон?',
+                    message: 'Будущие транзакции по этому шаблону создаваться не будут.',
+                    confirmText: 'Удалить',
+                    danger: true,
+                });
+                if (!ok) return;
+                fetch(`${urls.recurringDelete}?id=${btn.dataset.id}`, {
+                    method: 'POST',
+                    headers: { 'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content }
+                }).then(() => loadRecurringList());
+            });
         });
+    }
+
+    document.getElementById('viewRecurringBtn')?.addEventListener('click', loadRecurringList);
+
+    document.getElementById('createRecurringInModalBtn')?.addEventListener('click', () => {
+        if (!recurringForm) return;
+        recurringForm.reset();
+        const idEl = document.getElementById('recurring-id');
+        if (idEl) idEl.value = '';
+        if (recurringFormContainer) recurringFormContainer.style.display = 'block';
+        if (recurringListContainer) recurringListContainer.style.display = 'none';
     });
-}
 
-document.getElementById('createRecurringInModalBtn').addEventListener('click', () => {
-    recurringForm.reset();
-    document.getElementById('recurring-id').value = '';
-    recurringFormContainer.style.display = 'block';
-    recurringListContainer.style.display = 'none';
-});
+    document.getElementById('cancelRecurringBtn')?.addEventListener('click', () => {
+        if (recurringFormContainer) recurringFormContainer.style.display = 'none';
+        if (recurringListContainer) recurringListContainer.style.display = 'block';
+    });
 
-document.getElementById('cancelRecurringBtn').addEventListener('click', () => {
-    recurringFormContainer.style.display = 'none';
-    recurringListContainer.style.display = 'block';
-});
+    recurringForm?.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const formData = new FormData(recurringForm);
 
-recurringForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const formData = new FormData(recurringForm);
-
-    fetch(urls.recurringCreate, {
-        method: 'POST',
-        body: formData,
-        headers: { 'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content }
-    })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                recurringFormContainer.style.display = 'none';
-                recurringListContainer.style.display = 'block';
-                loadRecurringList();
-            } else {
-                alert('Ошибка: ' + data.message);
-            }
-        });
+        fetch(urls.recurringCreate, {
+            method: 'POST',
+            body: formData,
+            headers: { 'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content }
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    if (recurringFormContainer) recurringFormContainer.style.display = 'none';
+                    if (recurringListContainer) recurringListContainer.style.display = 'block';
+                    loadRecurringList();
+                    window.appToast('Шаблон создан', 'success');
+                } else {
+                    window.appToast('Ошибка: ' + data.message, 'error');
+                }
+            });
+    });
 });

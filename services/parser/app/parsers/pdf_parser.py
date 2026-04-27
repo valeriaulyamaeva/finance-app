@@ -105,6 +105,7 @@ def parse_pdf(content: bytes) -> tuple[list[ParsedTransaction], list[str], dict]
     place_col = _find_col_by_aliases(header_map, COLUMN_ALIASES["place"])
     amount_col = _find_col_by_aliases(header_map, COLUMN_ALIASES["amount"])
     amount_account_col = _find_col_by_aliases(header_map, AMOUNT_ACCOUNT_ALIASES)
+    currency_col = _find_col_by_aliases(header_map, COLUMN_ALIASES["currency"])
     status_col = _find_col_by_aliases(header_map, COLUMN_ALIASES["status"])
     direction_col = _find_col_by_aliases(header_map, COLUMN_ALIASES["direction"])
 
@@ -122,6 +123,7 @@ def parse_pdf(content: bytes) -> tuple[list[ParsedTransaction], list[str], dict]
             raw_place = _get_col(cells, place_col)
             raw_status = _get_col(cells, status_col)
             raw_direction = _get_col(cells, direction_col)
+            raw_currency = _get_col(cells, currency_col).strip().upper()
 
             if not raw_date:
                 continue
@@ -183,16 +185,19 @@ def parse_pdf(content: bytes) -> tuple[list[ParsedTransaction], list[str], dict]
             description = raw_place.strip() if raw_place and raw_place.strip() else raw_type.strip()
             operation_type = raw_type.strip() if raw_type else ""
 
-            suggested_category = categorize(mcc, operation_type)
+            suggested_category = categorize(mcc, operation_type, description, tx_type)
 
             tx_hash = hashlib.sha256(
                 f"{date}|{amount_val}|{description}".encode("utf-8")
             ).hexdigest()
 
+            # Currency priority: dedicated currency column → suffix in amount → BYN
+            final_currency = raw_currency if raw_currency in ("BYN", "USD", "EUR", "RUB") else (currency or "BYN")
+
             transactions.append(ParsedTransaction(
                 date=date,
                 amount=round(abs_amount, 2),
-                currency=currency or "BYN",
+                currency=final_currency,
                 type=tx_type,
                 description=description,
                 mcc=mcc,

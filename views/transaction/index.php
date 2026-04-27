@@ -34,14 +34,15 @@ $urls = [
     'recurringUpdate' => Url::to(['recurring-transaction/update']),
 ];
 
-$this->registerJs('const transactionConfig = ' . json_encode([
+$this->registerJs('window.transactionConfig = ' . json_encode([
         'urls' => $urls,
         'currencySymbols' => $currencySymbols,
         'userCurrency' => $userCurrency,
     ]) . ';', View::POS_HEAD);
 
-$this->registerCssFile('@web/css/transaction.css');
-$this->registerJsFile('@web/js/transaction.js', ['depends' => [JqueryAsset::class]]);
+$assetVersion = filemtime(Yii::getAlias('@webroot/js/transaction.js'));
+$this->registerCssFile('@web/css/transaction.css?v=' . filemtime(Yii::getAlias('@webroot/css/transaction.css')));
+$this->registerJsFile('@web/js/transaction.js?v=' . $assetVersion, ['depends' => [JqueryAsset::class]]);
 ?>
 
 <button class="sidebar-toggle d-lg-none" id="sidebarToggle">
@@ -60,7 +61,7 @@ $this->registerJsFile('@web/js/transaction.js', ['depends' => [JqueryAsset::clas
 
     <ul>
         <li><a href="/analytics">Аналитика</a></li>
-        <li><a href="/transaction">Транзакции</a></li>
+        <li><a href="/transaction" class="active">Транзакции</a></li>
         <li><a href="/budget">Бюджеты</a></li>
         <li><a href="/category">Категории</a></li>
         <li><a href="/goal">Цели</a></li>
@@ -124,29 +125,55 @@ $this->registerJsFile('@web/js/transaction.js', ['depends' => [JqueryAsset::clas
             <button class="btn-reset-filter" id="resetFilter">Сбросить</button>
         </div>
 
-        <div class="transactions-container">
+        <div class="cards-container">
             <?php if ($dataProvider->models): ?>
-                <?php foreach ($dataProvider->models as $transaction): ?>
-                    <div class="transaction-card" data-id="<?= $transaction->id ?>">
-                        <div class="transaction-info">
-                            <p><strong>Дата:</strong> <?= Html::encode($transaction->date) ?></p>
-                            <p><strong>Сумма:</strong> <?= Html::encode($transaction->display_amount ?? number_format($transaction->amount, 2)) ?>
-                                <?= $currencySymbols[$transaction->display_currency ?? $transaction->currency ?? $userCurrency] ?? '' ?></p>
-                            <p><strong>Тип:</strong> <?= Html::encode($transaction->type ?? '-') ?></p>
-                            <p><strong>Категория:</strong> <?= Html::encode($transaction->category->name ?? '-') ?></p>
-                            <p><strong>Описание:</strong> <?= Html::encode($transaction->description ?? '-') ?></p>
+                <?php foreach ($dataProvider->models as $transaction):
+                    $isIncome = $transaction->type === 'income';
+                    $amountColor = $isIncome ? '#16a34a' : '#dc2626';
+                    $sign = $isIncome ? '+' : '−';
+                    $currency = $transaction->display_currency ?? $transaction->currency ?? $userCurrency;
+                    $symbol = $currencySymbols[$currency] ?? $currency;
+                    ?>
+                    <div class="card<?= $transaction->category_id ? '' : ' card--no-category' ?>" data-id="<?= $transaction->id ?>">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h3 class="m-0"><?= Html::encode($transaction->category->name ?? 'Без категории') ?></h3>
+                                <span class="transaction-amount" style="color: <?= $amountColor ?>;">
+                                    <?= $sign ?><?= number_format($transaction->display_amount ?? $transaction->amount, 2) ?> <?= $symbol ?>
+                                </span>
+                            </div>
+
+                            <p class="text-muted small mb-2">
+                                <i class="far fa-calendar-alt me-1"></i>
+                                <?= Yii::$app->formatter->asDate($transaction->date, 'long') ?>
+                            </p>
+
+                            <?php if (!empty($transaction->description)): ?>
+                                <p class="transaction-description"><?= Html::encode($transaction->description) ?></p>
+                            <?php endif; ?>
+
                             <?php if ($transaction->recurring_id): ?>
-                                <p><strong>Повтор:</strong> <?= Html::encode($transaction->recurringTransaction->displayFrequency()) ?></p>
+                                <p class="text-muted small mt-2">
+                                    <i class="fas fa-redo me-1"></i>
+                                    <?= Html::encode($transaction->recurringTransaction->displayFrequency()) ?>
+                                </p>
                             <?php endif; ?>
                         </div>
-                        <div class="transaction-actions">
-                            <button class="editBtn js-update" data-id="<?= $transaction->id ?>">✏️</button>
-                            <button class="deleteBtn js-delete" data-id="<?= $transaction->id ?>">🗑️</button>
+
+                        <div class="card-actions">
+                            <button class="editBtn js-update" data-id="<?= $transaction->id ?>" title="Редактировать">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="deleteBtn js-delete" data-id="<?= $transaction->id ?>" title="Удалить">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
                         </div>
                     </div>
                 <?php endforeach; ?>
             <?php else: ?>
-                <p class="text-muted text-center py-5">Нет транзакций за выбранный период</p>
+                <div class="w-100 text-center py-5">
+                    <p class="text-muted fs-4">Нет транзакций за выбранный период</p>
+                </div>
             <?php endif; ?>
         </div>
     </div>

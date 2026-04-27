@@ -57,8 +57,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // Удаление
-        card.querySelector('.deleteBtn').addEventListener('click', async () => {
-            if (!confirm('Вы уверены?')) return;
+        card.querySelector('.deleteBtn')?.addEventListener('click', async () => {
+            const ok = await window.appConfirm({
+                title: 'Удалить категорию?',
+                message: 'Связанные транзакции потеряют категорию.',
+                confirmText: 'Удалить',
+                danger: true,
+            });
+            if (!ok) return;
 
             try {
                 const response = await fetch(`${deleteUrl}?id=${card.dataset.id}`, {
@@ -69,9 +75,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 });
                 const data = await response.json();
-                if (data.success) card.remove();
-                else alert(data.error || 'Ошибка удаления');
-            } catch (e) { alert('Ошибка сети'); }
+                if (data.success) {
+                    card.remove();
+                    window.appToast('Категория удалена', 'success');
+                } else {
+                    window.appToast(data.error || 'Ошибка удаления', 'error');
+                }
+            } catch (e) {
+                window.appToast('Ошибка сети', 'error');
+            }
         });
     }
 

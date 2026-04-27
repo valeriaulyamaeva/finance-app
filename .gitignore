@@ -31,3 +31,16 @@ tests/_support/_generated
 
 #vagrant folder
 /.vagrant
+
+# Private bank statements — never commit personal financial data
+/card-histories/
+
+# Claude Code local settings (per-machine)
+/.claude/settings.local.json
+
+# Runtime data
+/runtime/cache/*
+/runtime/logs/*
+/runtime/debug/*
+!/runtime/cache/.gitkeep
+!/runtime/logs/.gitkeep
