@@ -12,7 +12,13 @@
       "Bash(xargs basename:*)",
       "Bash(powershell.exe:*)",
       "Bash(cp views/user/login.php views/site/login.php)",
-      "Bash(cp views/user/register.php views/site/register.php)"
+      "Bash(cp views/user/register.php views/site/register.php)",
+      "Bash(docker-compose ps *)",
+      "Bash(python3 -c ' *)",
+      "Bash(grep -oE '\\\\{\"date\":\"[^\"]*\",\"amount\":[0-9.]*,\"currency\":\"USD\"[^}]*\\\\}')",
+      "WebFetch(domain:mcc-codes.ru)",
+      "WebFetch(domain:tannei.by)",
+      "Bash(docker-compose logs *)"
     ]
   },
   "enabledPlugins": {

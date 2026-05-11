@@ -114,58 +114,83 @@ $categories = ArrayHelper::map(
             <div class="modal-body p-4">
                 <div id="recurringItemsList" class="mb-4"></div>
 
-                <div id="recurringFormContainer" style="display: none; background: var(--bg-surface-2); border: 1px solid var(--border-color);" class="p-4 rounded-4">
-                    <h6 class="fw-bold mb-3" id="recurringFormTitle">Новый шаблон</h6>
+                <div id="recurringFormContainer" style="display: none;" class="recurring-form-card">
+                    <h6 class="fw-bold mb-3" id="recurringFormTitle">
+                        <i class="fas fa-clock me-2 text-muted"></i>Новый шаблон
+                    </h6>
                     <form id="recurringForm">
                         <input type="hidden" id="recurring-id" name="id">
 
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-semibold small">Сумма</label>
-                                <input type="number" step="0.01" name="amount" id="recurring-amount" class="form-control" required>
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <div class="app-field">
+                                    <label for="recurring-amount" class="app-label">Сумма</label>
+                                    <input type="number" step="0.01" name="amount" id="recurring-amount" class="form-control" placeholder="0.00" required>
+                                </div>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-semibold small">Частота</label>
-                                <select name="frequency" id="recurring-frequency" class="form-select" required>
-                                    <option value="daily">Ежедневно</option>
-                                    <option value="weekly">Еженедельно</option>
-                                    <option value="monthly" selected>Ежемесячно</option>
-                                </select>
+                            <div class="col-md-3">
+                                <div class="app-field">
+                                    <label for="recurring-currency" class="app-label">Валюта</label>
+                                    <select name="currency" id="recurring-currency" class="form-select">
+                                        <option value="BYN">BYN</option>
+                                        <option value="USD">USD</option>
+                                        <option value="EUR">EUR</option>
+                                        <option value="RUB">RUB</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="app-field">
+                                    <label for="recurring-frequency" class="app-label">Частота</label>
+                                    <select name="frequency" id="recurring-frequency" class="form-select" required>
+                                        <option value="daily">Ежедневно</option>
+                                        <option value="weekly">Еженедельно</option>
+                                        <option value="monthly" selected>Ежемесячно</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-semibold small">Категория</label>
-                                <?= Html::dropDownList('category_id', null, $categories, [
-                                    'id' => 'recurring-category_id',
-                                    'class' => 'form-select',
-                                    'prompt' => 'Выберите категорию'
-                                ]) ?>
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <div class="app-field">
+                                    <label for="recurring-category_id" class="app-label">Категория</label>
+                                    <?= Html::dropDownList('category_id', null, $categories, [
+                                        'id' => 'recurring-category_id',
+                                        'class' => 'form-select',
+                                        'prompt' => 'Выберите категорию'
+                                    ]) ?>
+                                </div>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-semibold small">Дата следующего платежа</label>
-                                <input type="date" name="next_date" id="recurring-next_date" class="form-control" value="<?= date('Y-m-d') ?>" required>
+                            <div class="col-md-6">
+                                <div class="app-field">
+                                    <label for="recurring-next_date" class="app-label">Дата следующего платежа</label>
+                                    <input type="date" name="next_date" id="recurring-next_date" class="form-control" value="<?= date('Y-m-d') ?>" required>
+                                </div>
                             </div>
                         </div>
 
                         <div id="recurringGoalSelector" class="mb-3" style="display:none;">
-                            <label class="form-label fw-semibold small">Цель</label>
-                            <?= Html::dropDownList('goal_id', null, $goals ?? [], [
-                                'id' => 'recurring-goal_id',
-                                'class' => 'form-select',
-                                'prompt' => 'Выберите цель'
-                            ]) ?>
+                            <div class="app-field">
+                                <label for="recurring-goal_id" class="app-label">Цель</label>
+                                <?= Html::dropDownList('goal_id', null, $goals ?? [], [
+                                    'id' => 'recurring-goal_id',
+                                    'class' => 'form-select',
+                                    'prompt' => 'Выберите цель'
+                                ]) ?>
+                            </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold small">Описание</label>
+                        <div class="app-field mb-3">
+                            <label for="recurring-description" class="app-label">Описание <span class="text-muted small">(необязательно)</span></label>
                             <textarea name="description" id="recurring-description" class="form-control" rows="2" placeholder="Например: Аренда квартиры"></textarea>
                         </div>
 
-                        <div class="d-flex justify-content-end gap-2 border-top pt-3 mt-2">
-                            <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3" id="cancelRecurringBtn">Отмена</button>
-                            <button type="submit" class="btn btn-success btn-sm rounded-pill px-4">Сохранить шаблон</button>
+                        <div class="d-flex justify-content-end gap-2 pt-3 mt-2" style="border-top: 1px solid var(--border-color);">
+                            <button type="button" class="btn btn-outline-secondary rounded-pill px-4" id="cancelRecurringBtn">Отмена</button>
+                            <button type="submit" class="btn btn-primary rounded-pill px-4">
+                                <i class="fas fa-save me-1"></i> Сохранить
+                            </button>
                         </div>
                     </form>
                 </div>

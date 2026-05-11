@@ -135,39 +135,39 @@ $this->registerJsFile('@web/js/goal.js', [
                 </div>
 
                 <form id="goalForm" class="modal-body p-4">
-                    <div class="form-floating mb-3">
-                        <input type="text" class="form-control" name="Goal[name]" id="goalName" placeholder="Название" required>
-                        <label for="goalName">Название цели</label>
+                    <div class="app-field mb-3">
+                        <label for="goalName" class="app-label">Название цели</label>
+                        <input type="text" class="form-control" name="Goal[name]" id="goalName" placeholder="Например, Машина" required>
                     </div>
 
                     <div class="row g-2">
                         <div class="col-md-8">
-                            <div class="form-floating mb-3">
-                                <input type="number" step="0.01" class="form-control" name="Goal[target_amount]" id="goalTarget" placeholder="Сумма" required>
-                                <label for="goalTarget">Целевая сумма</label>
+                            <div class="app-field mb-3">
+                                <label for="goalTarget" class="app-label">Целевая сумма</label>
+                                <input type="number" step="0.01" class="form-control" name="Goal[target_amount]" id="goalTarget" placeholder="0.00" required>
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <div class="form-floating mb-3">
+                            <div class="app-field mb-3">
+                                <label for="goalCurrency" class="app-label">Валюта</label>
                                 <select class="form-select" name="Goal[currency]" id="goalCurrency">
                                     <option value="BYN">BYN</option>
                                     <option value="USD">USD</option>
                                     <option value="EUR">EUR</option>
                                     <option value="RUB">RUB</option>
                                 </select>
-                                <label for="goalCurrency">Валюта</label>
                             </div>
                         </div>
                     </div>
 
-                    <div class="form-floating mb-3">
+                    <div class="app-field mb-3">
+                        <label for="goalDeadline" class="app-label">К какому числу накопить?</label>
                         <input type="date" class="form-control" name="Goal[deadline]" id="goalDeadline" required>
-                        <label for="goalDeadline">К какому числу накопить?</label>
                     </div>
 
-                    <div class="form-floating mb-3">
-                        <input type="number" step="0.01" class="form-control" name="Goal[current_amount]" id="goalCurrent" placeholder="Уже есть">
-                        <label for="goalCurrent">Уже накоплено (необязательно)</label>
+                    <div class="app-field mb-3">
+                        <label for="goalCurrent" class="app-label">Уже накоплено <span class="text-muted small">(необязательно)</span></label>
+                        <input type="number" step="0.01" class="form-control" name="Goal[current_amount]" id="goalCurrent" placeholder="0.00">
                     </div>
 
                     <div id="formErrors" class="alert alert-danger d-none"></div>

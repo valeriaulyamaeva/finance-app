@@ -25,6 +25,7 @@ readonly class RecurringTransactionService
             throw new Exception('Ошибка валидации: ' . implode(', ', $form->getErrorSummary(true)));
         }
 
+        $isNew = !$id;
         $model = $id ? RecurringTransaction::findOne($id) : new RecurringTransaction();
         if ($id && !$model) {
             throw new NotFoundHttpException('Шаблон не найден');
@@ -35,6 +36,16 @@ readonly class RecurringTransactionService
 
         if (!$model->save()) {
             throw new Exception('Не удалось сохранить шаблон повтора');
+        }
+
+        // If new template's next_date is today or in the past, execute immediately
+        // so the first transaction appears in the list right away (no need to wait for cron).
+        if ($isNew && $model->next_date <= date('Y-m-d')) {
+            try {
+                $this->executeTask($model);
+            } catch (Exception $e) {
+                Yii::error("Не удалось сразу выполнить новый шаблон {$model->id}: " . $e->getMessage());
+            }
         }
 
         return $model;
