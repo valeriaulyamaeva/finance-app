@@ -102,12 +102,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 <td class="${amountClass}">${amountSign}${tx.amount.toFixed(2)} ${tx.currency}</td>
                 <td>${escapeHtml(tx.description)}</td>
                 <td>${escapeHtml(tx.operation_type)}</td>
-                <td>${tx.mcc || '-'}</td>
                 <td>
                     <select class="category-select" data-idx="${idx}" ${tx.is_duplicate ? 'disabled' : ''}>
-                        <option value="">-- Без категории --</option>
+                        <option value="">Без категории</option>
                         ${importConfig.categories.map(c =>
-                `<option value="${c.id}" ${c.id == tx.category_id ? 'selected' : ''}>${escapeHtml(c.name)} (${c.type})</option>`
+                `<option value="${c.id}" ${c.id == tx.category_id ? 'selected' : ''}>${escapeHtml(c.name)}</option>`
             ).join('')}
                     </select>
                 </td>

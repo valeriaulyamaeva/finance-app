@@ -87,7 +87,6 @@ $this->registerJsFile('@web/js/import.js', ['depends' => [JqueryAsset::class]]);
                     <th>Сумма</th>
                     <th>Описание</th>
                     <th>Тип операции</th>
-                    <th>MCC</th>
                     <th>Категория</th>
                     <th>Статус</th>
                 </tr>

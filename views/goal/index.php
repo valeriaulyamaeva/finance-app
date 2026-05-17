@@ -83,7 +83,7 @@ $this->registerJsFile('@web/js/goal.js', [
                             <div class="card-body">
                                 <div class="d-flex justify-content-between align-items-start mb-2">
                                     <h3 class="m-0"><?= Html::encode($goal->name) ?></h3>
-                                    <span class="badge bg-<?= $goal->getStatusColor() ?> rounded-pill">
+                                    <span class="goal-status-badge goal-status-<?= $goal->status ?>">
                                     <?= $goal->getStatusLabel() ?>
                                 </span>
                                 </div>

@@ -51,7 +51,6 @@ $this->registerJsFile('@web/js/category.js', [
 
         <div class="category-content" id="mainContent">
             <h1><?= Html::encode($this->title) ?></h1>
-            <p class="text-muted mb-4">Управляйте своими категориями доходов и расходов</p>
 
             <div class="actions mb-4">
                 <button class="btn-add" id="addCategoryBtn" data-bs-toggle="modal" data-bs-target="#categoryModal">
@@ -59,7 +58,7 @@ $this->registerJsFile('@web/js/category.js', [
                 </button>
             </div>
 
-            <div class="cards-container">
+            <div class="cards-container category-cards">
                 <?php if ($categories): ?>
                     <?php foreach ($categories as $category):
                         $type = $category->type;
@@ -75,15 +74,13 @@ $this->registerJsFile('@web/js/category.js', [
                             default => 'fa-arrow-up',
                         };
                         ?>
-                        <div class="card" data-id="<?= $category->id ?>" data-type="<?= Html::encode($type) ?>">
+                        <div class="card category-card" data-id="<?= $category->id ?>" data-type="<?= Html::encode($type) ?>">
                             <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <h3 class="m-0"><?= Html::encode($category->name) ?></h3>
-                                    <span class="category-badge <?= $typeBadgeClass ?>">
-                                        <i class="fas <?= $typeIcon ?> me-1"></i>
-                                        <?= Html::encode($typeLabel) ?>
-                                    </span>
-                                </div>
+                                <h3 class="m-0 mb-2"><?= Html::encode($category->name) ?></h3>
+                                <span class="category-badge <?= $typeBadgeClass ?>">
+                                    <i class="fas <?= $typeIcon ?> me-1"></i>
+                                    <?= Html::encode($typeLabel) ?>
+                                </span>
                             </div>
                             <div class="card-actions">
                                 <button class="editBtn" title="Редактировать">

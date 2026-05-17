@@ -256,3 +256,37 @@ body.sidebar-open::before {
 .text-center.py-5 {
     grid-column: 1 / -1;
 }
+
+/* Bigger category cards with badge below name */
+.category-cards {
+    grid-template-columns: 1fr !important;
+    gap: 1.2rem !important;
+}
+
+@media (min-width: 640px) {
+    .category-cards { grid-template-columns: repeat(2, 1fr) !important; }
+}
+@media (min-width: 992px) {
+    .category-cards { grid-template-columns: repeat(3, 1fr) !important; }
+}
+@media (min-width: 1400px) {
+    .category-cards { grid-template-columns: repeat(4, 1fr) !important; }
+}
+
+.category-card {
+    min-height: 9rem;
+    padding: 1.5rem !important;
+}
+
+.category-card h3 {
+    font-size: 1.25rem !important;
+    line-height: 1.2;
+    word-wrap: break-word;
+}
+
+.category-card .category-badge {
+    display: inline-flex;
+    max-width: 100%;
+    word-break: keep-all;
+    white-space: nowrap;
+}

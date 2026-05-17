@@ -245,3 +245,37 @@ body.sidebar-open::before {
 .text-center.py-5 {
     grid-column: 1 / -1;
 }
+
+/* Goal status badge — uses brand palette */
+.goal-status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.3rem 0.8rem;
+    border-radius: var(--border-radius-pill);
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+/* Active — mint brand color (was Bootstrap blue) */
+.goal-status-active {
+    background: var(--color-primary-soft);
+    color: var(--color-primary-active);
+    border: 1px solid var(--color-primary);
+}
+body.theme-dark .goal-status-active {
+    color: var(--color-primary);
+    border-color: var(--color-primary-active);
+}
+
+/* Completed — success green */
+.goal-status-completed {
+    background: var(--color-success-soft);
+    color: var(--color-success-text);
+}
+
+/* Failed — danger red */
+.goal-status-failed {
+    background: var(--color-danger-soft);
+    color: var(--color-danger-text);
+}
