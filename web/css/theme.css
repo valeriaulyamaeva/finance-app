@@ -920,9 +920,7 @@ body.theme-dark .modal-header .btn-close {
     body .goal-content,
     body .analytics-content,
     body .settings-content,
-    body .import-content,
-    body main.with-sidebar > .content-wrapper {
-        margin-left: 16rem !important;
+    body .import-content {
         padding: 1.2rem 1.5rem !important;
     }
 
@@ -1042,3 +1040,85 @@ body.theme-dark .modal-header .btn-close {
         font-size: 0.7rem !important;
     }
 }
+
+/* ─── Layout: fixed sidebar + offset content ────────────────
+   Single sidebar (rendered per-page), position fixed.
+   Content offset by margin-left = sidebar width. No flex,
+   no double-offset (the layout no longer renders its own sidebar).
+─────────────────────────────────────────────────────────────── */
+@media (min-width: 992px) {
+    body .goal-page,
+    body .budget-page,
+    body .category-page,
+    body .transaction-page,
+    body .analytics-page,
+    body .settings-page {
+        display: block !important;
+    }
+
+    body .sidebar {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        height: 100vh !important;
+        width: 18rem !important;
+        transform: none !important;
+    }
+
+    body .goal-content,
+    body .budget-content,
+    body .category-content,
+    body .transaction-content,
+    body .analytics-content,
+    body .settings-content,
+    body .import-content {
+        margin-left: 18rem !important;
+        width: auto !important;
+        padding: 1.5rem 4.5rem 2rem 2rem !important;
+    }
+}
+
+/* Narrow desktop (≤1399px) — slimmer 16rem sidebar */
+@media (min-width: 992px) and (max-width: 1399px) {
+    body .sidebar {
+        width: 16rem !important;
+    }
+    body .goal-content,
+    body .budget-content,
+    body .category-content,
+    body .transaction-content,
+    body .analytics-content,
+    body .settings-content,
+    body .import-content {
+        margin-left: 16rem !important;
+        padding: 1.2rem 4rem 2rem 1.5rem !important;
+    }
+}
+
+/* Floating top-bar (bell + logout) */
+.app-topbar {
+    position: fixed;
+    top: 1rem;
+    right: 1.5rem;
+    z-index: 1100;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+/* Flash messages — float top-center */
+.app-flash {
+    position: fixed;
+    top: 1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1105;
+    padding: 0.8rem 1.4rem;
+    border-radius: var(--border-radius-md);
+    font-size: 0.9rem;
+    font-weight: 500;
+    box-shadow: var(--shadow-lg);
+}
+
+.app-flash--success { background: var(--color-success-soft); color: var(--color-success-text); }
+.app-flash--error { background: var(--color-danger-soft); color: var(--color-danger-text); }

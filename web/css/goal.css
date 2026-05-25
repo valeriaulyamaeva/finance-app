@@ -87,7 +87,7 @@ body.sidebar-open .sidebar-toggle {
 }
 
 .goal-page {
-    display: flex;
+    display: block;
     min-height: 100vh;
 }
 

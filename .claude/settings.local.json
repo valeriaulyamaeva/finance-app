@@ -19,7 +19,11 @@
       "WebFetch(domain:mcc-codes.ru)",
       "WebFetch(domain:tannei.by)",
       "Bash(docker-compose logs *)",
-      "Bash(grep -nA10 \"1280×720 and narrow\" web/css/theme.css)"
+      "Bash(grep -nA10 \"1280×720 and narrow\" web/css/theme.css)",
+      "PowerShell(Get-NetTCPConnection *)",
+      "Bash([ -f \"$f.css\" ])",
+      "Bash(perl -0pi -e 's/\\(\\\\.\\\\w+-page \\\\{\\\\s*\\\\n\\\\s*display: block;\\)\\\\n\\\\s*display: flex;/$1/g' __TRACKED_VAR__.css)",
+      "PowerShell(Select-String -Path \"C:\\\\Java\\\\Vale\\\\views\\\\category\\\\index.php\" -Pattern 'href=' | Select-Object -First 12 | ForEach-Object { $_.Line.Trim\\(\\) })"
     ]
   },
   "enabledPlugins": {

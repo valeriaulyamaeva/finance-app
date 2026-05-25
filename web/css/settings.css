@@ -83,7 +83,7 @@ body.sidebar-open .sidebar-toggle {
 }
 
 .settings-page {
-    display: flex;
+    display: block;
     min-height: 100vh;
 }
 

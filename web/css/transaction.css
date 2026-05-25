@@ -106,7 +106,7 @@ body.sidebar-open .sidebar-toggle {
 }
 
 .transaction-page {
-    display: flex;
+    display: block;
     min-height: 100vh;
 }
 

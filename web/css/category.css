@@ -87,7 +87,7 @@ body.sidebar-open .sidebar-toggle {
 }
 
 .category-page {
-    display: flex;
+    display: block;
     min-height: 100vh;
 }
 

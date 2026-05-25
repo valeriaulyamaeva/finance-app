@@ -33,38 +33,25 @@ $bodyClass = $theme === 'dark' ? 'theme-dark' : 'theme-light';
         </main>
 
     <?php else: ?>
-        <div class="sidebar">
-            <?= $this->render('_sidebar') ?>
+        <?php /* Floating top-bar (bell + logout). The sidebar is rendered by each page view. */ ?>
+        <div class="app-topbar">
+            <button type="button" id="notificationBtn" class="notification-btn">
+                <i class="fas fa-bell"></i>
+                <span id="notificationCount" class="notification-count"></span>
+            </button>
+            <a href="<?= Url::to(['/site/logout']) ?>" class="logout-btn" title="Выйти">
+                <i class="fas fa-sign-out-alt"></i>
+            </a>
         </div>
-        <main class="with-sidebar">
-            <div class="top-bar">
-                <div class="top-bar-right">
-                    <button type="button" id="notificationBtn" class="notification-btn">
-                        <i class="fas fa-bell"></i>
-                        <span id="notificationCount" class="notification-count"></span>
-                    </button>
 
-                    <a href="<?= Url::to(['site/logout']) ?>" class="logout-btn" title="Выйти">
-                        <i class="fas fa-sign-out-alt"></i>
-                    </a>
-                </div>
-            </div>
+        <?php if (Yii::$app->session->hasFlash('success')): ?>
+            <div class="app-flash app-flash--success"><?= Yii::$app->session->getFlash('success') ?></div>
+        <?php endif; ?>
+        <?php if (Yii::$app->session->hasFlash('error')): ?>
+            <div class="app-flash app-flash--error"><?= Yii::$app->session->getFlash('error') ?></div>
+        <?php endif; ?>
 
-            <div class="content-wrapper" style="padding: 20px;">
-                <?php if (Yii::$app->session->hasFlash('success')): ?>
-                    <div class="alert alert-success" style="background:#d6f0e1; color:#2b5d3b; padding:15px; border-radius:10px; margin-bottom:20px;">
-                        <?= Yii::$app->session->getFlash('success') ?>
-                    </div>
-                <?php endif; ?>
-                <?php if (Yii::$app->session->hasFlash('error')): ?>
-                    <div class="alert alert-danger" style="background:#f8d6d6; color:#842029; padding:15px; border-radius:10px; margin-bottom:20px;">
-                        <?= Yii::$app->session->getFlash('error') ?>
-                    </div>
-                <?php endif; ?>
-
-                <?= $content ?>
-            </div>
-        </main>
+        <?= $content ?>
     <?php endif; ?>
 
     <div id="notificationDropdown" class="notif-dropdown">
