@@ -1,5 +1,9 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const { createUrl, updateUrl, deleteUrl, viewUrl, userCurrency } = goalConfig;
+    if (!window.goalConfig) {
+        console.error('goalConfig not loaded');
+        return;
+    }
+    const { createUrl, updateUrl, deleteUrl, viewUrl, userCurrency } = window.goalConfig;
 
     const modalEl = document.getElementById('goalModal');
     const modal = new bootstrap.Modal(modalEl);
@@ -51,7 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!ok) return;
             fetch(`${deleteUrl}?id=${id}`, {
                 method: 'POST',
-                headers: { 'X-CSRF-Token': yii.getCsrfToken() }
+                headers: { 'X-CSRF-Token': (document.querySelector('meta[name="csrf-token"]')?.content || '') }
             })
                 .then(res => res.json())
                 .then(data => {
@@ -68,7 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
         fetch(url, {
             method: 'POST',
             body: formData,
-            headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-Token': yii.getCsrfToken() }
+            headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-Token': (document.querySelector('meta[name="csrf-token"]')?.content || '') }
         })
             .then(res => res.json())
             .then(data => {

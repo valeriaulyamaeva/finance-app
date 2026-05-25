@@ -28,7 +28,7 @@ $jsVars = [
     'currencySymbol' => $currencySymbol,
 ];
 
-$this->registerJs('const goalConfig = ' . json_encode($jsVars) . ';', View::POS_HEAD);
+$this->registerJs('window.goalConfig = ' . json_encode($jsVars) . ';', View::POS_HEAD);
 
 $this->registerCssFile('@web/css/goal.css');
 $this->registerJsFile('@web/js/goal.js', [

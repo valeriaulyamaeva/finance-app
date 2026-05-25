@@ -18,7 +18,8 @@
       "Bash(grep -oE '\\\\{\"date\":\"[^\"]*\",\"amount\":[0-9.]*,\"currency\":\"USD\"[^}]*\\\\}')",
       "WebFetch(domain:mcc-codes.ru)",
       "WebFetch(domain:tannei.by)",
-      "Bash(docker-compose logs *)"
+      "Bash(docker-compose logs *)",
+      "Bash(grep -nA10 \"1280×720 and narrow\" web/css/theme.css)"
     ]
   },
   "enabledPlugins": {
