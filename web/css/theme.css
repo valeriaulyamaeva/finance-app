@@ -907,3 +907,95 @@ body.theme-dark .modal-header .btn-close {
     color: var(--text-primary);
     font-size: 0.95rem;
 }
+
+/* ─── 1280×720 and narrow desktop fixes ──────────────────── */
+@media (min-width: 992px) and (max-width: 1399px) {
+    /* Slimmer sidebar to free up content width */
+    .sidebar {
+        width: 16rem !important;
+    }
+    .transaction-content,
+    .budget-content,
+    .category-content,
+    .goal-content,
+    .analytics-content,
+    .settings-content,
+    .import-content,
+    main.with-sidebar > .content-wrapper {
+        margin-left: 16rem !important;
+        padding: 1.2rem 1.5rem !important;
+    }
+
+    /* Smaller sidebar title */
+    .sidebar h2 {
+        font-size: 1.4rem !important;
+        margin: 0.3rem 0 1.4rem 0 !important;
+    }
+
+    /* Compact nav items */
+    .sidebar ul li a {
+        font-size: 0.95rem !important;
+        padding: 0.55rem 0.75rem !important;
+    }
+
+    /* H1 a touch smaller */
+    .transaction-content > h1,
+    .budget-content > h1,
+    .category-content > h1,
+    .goal-content > h1,
+    .analytics-content > h1,
+    .settings-content > h1,
+    .import-content > h1,
+    .transaction-content > .d-flex > h1,
+    .budget-content > .d-flex > h1,
+    .category-content > .d-flex > h1,
+    .goal-content > .d-flex > h1,
+    .analytics-content > .d-flex > h1,
+    .settings-content > .d-flex > h1,
+    .import-content > .d-flex > h1 {
+        font-size: 1.5rem !important;
+    }
+
+    /* Summary cards — smaller paddings */
+    .summary-card {
+        padding: 1.1rem !important;
+    }
+    .summary-card h5 { font-size: 0.85rem !important; }
+    .summary-card p  { font-size: 1.3rem !important; }
+
+    /* Cards grid — fewer columns */
+    .cards-container {
+        gap: 1.2rem !important;
+    }
+
+    /* Filter bar wraps nicely */
+    .filter-bar {
+        padding: 0.9rem 1.1rem !important;
+    }
+
+    .filter-group input,
+    .filter-group select {
+        min-width: 0 !important;
+        max-width: 150px;
+    }
+
+    /* Notification dropdown narrower so it doesn't overflow */
+    .notif-dropdown {
+        width: 320px !important;
+        right: 12px !important;
+        top: 60px !important;
+    }
+
+    /* Modals — keep within viewport */
+    .modal-lg {
+        max-width: 700px !important;
+    }
+}
+
+/* Prevent text overflow in narrow cards */
+.card h3,
+.summary-card p,
+.transaction-amount {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}

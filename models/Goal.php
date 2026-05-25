@@ -13,6 +13,7 @@ use yii\db\Expression;
 /**
  * @property int $id
  * @property int $user_id
+ * @property int|null $category_id
  * @property string $name
  * @property float $target_amount
  * @property string $currency
@@ -24,6 +25,7 @@ use yii\db\Expression;
  *
  * @property Transaction[] $transactions
  * @property User $user
+ * @property Category|null $category
  */
 final class Goal extends ActiveRecord
 {
@@ -50,7 +52,7 @@ final class Goal extends ActiveRecord
     {
         return [
             [['user_id', 'name', 'target_amount', 'deadline'], 'required'],
-            [['user_id'], 'integer'],
+            [['user_id', 'category_id'], 'integer'],
             [['target_amount', 'current_amount'], 'number', 'min' => 0],
             [['deadline'], 'date', 'format' => 'php:Y-m-d'],
             [['status'], 'string'],
@@ -59,8 +61,15 @@ final class Goal extends ActiveRecord
             [['currency'], 'default', 'value' => 'BYN'],
             [['status'], 'default', 'value' => self::STATUS_ACTIVE],
             [['status'], 'in', 'range' => array_keys(self::getStatuses())],
+            [['category_id'], 'default', 'value' => null],
+            [['category_id'], 'exist', 'skipOnError' => true, 'targetClass' => Category::class, 'targetAttribute' => ['category_id' => 'id']],
             [['user_id'], 'exist', 'skipOnError' => true, 'targetClass' => User::class, 'targetAttribute' => ['user_id' => 'id']],
         ];
+    }
+
+    public function getCategory(): ActiveQuery
+    {
+        return $this->hasOne(Category::class, ['id' => 'category_id']);
     }
 
     public function getProgress(): float

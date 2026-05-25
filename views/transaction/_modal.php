@@ -33,7 +33,7 @@ $categories = ArrayHelper::map(
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Закрыть"></button>
             </div>
 
-            <div class="modal-body p-4 p-lg-5">
+            <div class="modal-body p-4">
                 <?php $form = ActiveForm::begin([
                     'id' => 'transactionForm',
                     'enableClientValidation' => false,
@@ -41,60 +41,61 @@ $categories = ArrayHelper::map(
 
                 <?= Html::hiddenInput('id', '', ['id' => 'transaction-id']) ?>
 
-                <div class="mb-3">
-                    <?= $form->field($modelForm, 'amount')->textInput([
-                        'id' => 'transaction-amount',
-                        'type' => 'number',
-                        'step' => '0.01',
-                        'class' => 'form-control rounded-3',
-                        'placeholder' => '0.00'
-                    ])->label('Сумма') ?>
-                </div>
-
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <?= $form->field($modelForm, 'date')->textInput([
-                            'id' => 'transaction-date',
-                            'type' => 'date',
-                            'value' => date('Y-m-d')
-                        ])->label('Дата') ?>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="app-field mb-3">
+                            <label for="transaction-amount" class="app-label">Сумма</label>
+                            <input type="number" step="0.01" id="transaction-amount" name="amount" class="form-control" placeholder="0.00" required>
+                        </div>
                     </div>
-                    <div class="col-md-6 mb-3">
-                        <?= $form->field($modelForm, 'category_id')->dropDownList($categories, [
-                            'id' => 'transaction-category_id',
-                            'prompt' => 'Выберите категорию',
-                            'class' => 'form-select rounded-3'
-                        ])->label('Категория') ?>
+                    <div class="col-md-6">
+                        <div class="app-field mb-3">
+                            <label for="transaction-date" class="app-label">Дата</label>
+                            <input type="date" id="transaction-date" name="date" class="form-control" value="<?= date('Y-m-d') ?>" required>
+                        </div>
                     </div>
                 </div>
 
-                <div id="goalSelector" class="mb-3" style="display:none;">
-                    <?= $form->field($modelForm, 'goal_id')->dropDownList($goals ?? [], [
-                        'id' => 'transaction-goal_id',
-                        'prompt' => 'Выберите цель',
-                        'class' => 'form-select rounded-3'
-                    ])->label('Цель') ?>
+                <div class="app-field mb-3">
+                    <label for="transaction-category_id" class="app-label">Категория</label>
+                    <select id="transaction-category_id" name="category_id" class="form-select" required>
+                        <option value="">Выберите категорию</option>
+                        <?php foreach ($categories as $catId => $catName): ?>
+                            <option value="<?= $catId ?>"><?= Html::encode($catName) ?></option>
+                        <?php endforeach; ?>
+                    </select>
                 </div>
 
-                <div class="mb-3">
-                    <?= $form->field($modelForm, 'description')->textarea([
-                        'id' => 'transaction-description',
-                        'rows' => 2,
-                        'class' => 'form-control rounded-3'
-                    ])->label('Описание') ?>
+                <div id="goalSelector" class="app-field mb-3" style="display:none;">
+                    <label for="transaction-goal_id" class="app-label">Цель</label>
+                    <select id="transaction-goal_id" name="goal_id" class="form-select">
+                        <option value="">Выберите цель</option>
+                        <?php foreach ($goals ?? [] as $gId => $gName): ?>
+                            <option value="<?= $gId ?>"><?= Html::encode($gName) ?></option>
+                        <?php endforeach; ?>
+                    </select>
                 </div>
+
+                <div class="app-field mb-3">
+                    <label for="transaction-description" class="app-label">
+                        Описание <span class="text-muted small">(необязательно)</span>
+                    </label>
+                    <textarea id="transaction-description" name="description" class="form-control" rows="2" placeholder="Заметка к транзакции"></textarea>
+                </div>
+
+                <input type="hidden" name="currency" value="<?= Html::encode(Yii::$app->user->identity->currency ?? 'BYN') ?>">
 
                 <div id="formErrors" class="alert alert-danger d-none"></div>
 
                 <?php ActiveForm::end(); ?>
             </div>
 
-            <div class="modal-footer border-0 p-4 justify-content-between">
+            <div class="modal-footer">
                 <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">
                     Отмена
                 </button>
-                <button type="button" class="btn btn-primary rounded-pill px-5 shadow-sm saveTransaction">
-                    <i class="fas fa-save me-2"></i>Сохранить
+                <button type="button" class="btn btn-primary rounded-pill px-4 saveTransaction">
+                    <i class="fas fa-save me-1"></i> Сохранить
                 </button>
             </div>
         </div>

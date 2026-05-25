@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
         modal.show();
     });
 
-    document.querySelector('.cards-container')?.addEventListener('click', (e) => {
+    document.querySelector('.cards-container')?.addEventListener('click', async (e) => {
         const target = e.target.closest('button');
         if (!target) return;
 
@@ -42,19 +42,26 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (target.classList.contains('deleteBtn')) {
-            if (confirm('Вы уверены, что хотите удалить цель?')) {
-                fetch(`${deleteUrl}?id=${id}`, {
-                    method: 'POST',
-                    headers: { 'X-CSRF-Token': yii.getCsrfToken() }
-                })
-                    .then(res => res.json())
-                    .then(data => data.success ? location.reload() : alert(data.message));
-            }
+            const ok = await window.appConfirm({
+                title: 'Удалить цель?',
+                message: 'Это действие нельзя отменить.',
+                confirmText: 'Удалить',
+                danger: true,
+            });
+            if (!ok) return;
+            fetch(`${deleteUrl}?id=${id}`, {
+                method: 'POST',
+                headers: { 'X-CSRF-Token': yii.getCsrfToken() }
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) location.reload();
+                    else window.appToast(data.message || 'Ошибка', 'error');
+                });
         }
     });
 
-    form.addEventListener('submit', (e) => {
-        e.preventDefault();
+    function saveGoal() {
         const formData = new FormData(form);
         const url = currentAction === 'create' ? createUrl : `${updateUrl}?id=${currentId}`;
 
@@ -72,13 +79,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             })
             .catch(() => showError('Ошибка сети'));
+    }
+
+    form?.addEventListener('submit', (e) => {
+        e.preventDefault();
+        saveGoal();
     });
+
+    document.getElementById('goalSaveBtn')?.addEventListener('click', saveGoal);
 
     function fillForm(goal) {
         document.getElementById('goalName').value = goal.name;
         document.getElementById('goalTarget').value = goal.target_amount;
         document.getElementById('goalDeadline').value = goal.deadline;
         document.getElementById('goalCurrency').value = goal.currency;
+
+        const categoryField = document.getElementById('goalCategory');
+        if (categoryField) categoryField.value = goal.category_id || '';
 
         const currentField = document.getElementById('goalCurrent');
         if (currentField) currentField.value = goal.current_amount;

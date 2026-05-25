@@ -127,10 +127,13 @@ $this->registerJsFile('@web/js/goal.js', [
     </div>
 
     <div class="modal fade" id="goalModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content shadow-lg border-0 rounded-4">
-                <div class="modal-header border-0 pb-0">
-                    <h5 class="modal-title fw-bold" id="goalModalTitle">Создать цель</h5>
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content shadow-lg border-0 overflow-hidden">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">
+                        <i class="fas fa-bullseye me-2"></i>
+                        <span id="goalModalTitle">Новая цель</span>
+                    </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
 
@@ -140,7 +143,7 @@ $this->registerJsFile('@web/js/goal.js', [
                         <input type="text" class="form-control" name="Goal[name]" id="goalName" placeholder="Например, Машина" required>
                     </div>
 
-                    <div class="row g-2">
+                    <div class="row g-3">
                         <div class="col-md-8">
                             <div class="app-field mb-3">
                                 <label for="goalTarget" class="app-label">Целевая сумма</label>
@@ -161,22 +164,49 @@ $this->registerJsFile('@web/js/goal.js', [
                     </div>
 
                     <div class="app-field mb-3">
-                        <label for="goalDeadline" class="app-label">К какому числу накопить?</label>
-                        <input type="date" class="form-control" name="Goal[deadline]" id="goalDeadline" required>
+                        <label for="goalCategory" class="app-label">
+                            Категория-цель <span class="text-muted small">(вклады в эту категорию идут в цель)</span>
+                        </label>
+                        <select class="form-select" name="Goal[category_id]" id="goalCategory">
+                            <option value="">Без привязки</option>
+                            <?php foreach ($categories as $cat): ?>
+                                <option value="<?= $cat->id ?>"><?= Html::encode($cat->name) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                        <?php if (empty($categories)): ?>
+                            <small class="text-muted mt-1">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Создайте категорию типа «Цель» на странице категорий — тогда вклады в неё будут автоматически идти в эту цель.
+                            </small>
+                        <?php endif; ?>
                     </div>
 
-                    <div class="app-field mb-3">
-                        <label for="goalCurrent" class="app-label">Уже накоплено <span class="text-muted small">(необязательно)</span></label>
-                        <input type="number" step="0.01" class="form-control" name="Goal[current_amount]" id="goalCurrent" placeholder="0.00">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="app-field mb-3">
+                                <label for="goalDeadline" class="app-label">К какому числу накопить?</label>
+                                <input type="date" class="form-control" name="Goal[deadline]" id="goalDeadline" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="app-field mb-3">
+                                <label for="goalCurrent" class="app-label">
+                                    Уже накоплено <span class="text-muted small">(необязательно)</span>
+                                </label>
+                                <input type="number" step="0.01" class="form-control" name="Goal[current_amount]" id="goalCurrent" placeholder="0.00">
+                            </div>
+                        </div>
                     </div>
 
                     <div id="formErrors" class="alert alert-danger d-none"></div>
-
-                    <div class="modal-footer border-0 px-0 pb-0">
-                        <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Отмена</button>
-                        <button type="submit" class="btn btn-primary rounded-pill px-5">Сохранить</button>
-                    </div>
                 </form>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-primary rounded-pill px-4" id="goalSaveBtn">
+                        <i class="fas fa-save me-1"></i> Сохранить
+                    </button>
+                </div>
             </div>
         </div>
     </div>

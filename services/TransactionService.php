@@ -35,7 +35,18 @@ readonly class TransactionService
             // 1. Устанавливаем тип на основе логики категорий
             $transaction->type = $this->resolveTypeByCategory($transaction->category_id, $transaction->goal_id);
 
-            // 2. Применяем изменения к бюджету/целям
+            // 2. Auto-link goal by category — if category type=goal and a Goal is bound to it
+            if (!$transaction->goal_id && $transaction->category_id && $transaction->type === Transaction::TYPE_GOAL) {
+                $goal = Goal::find()
+                    ->where(['category_id' => $transaction->category_id, 'user_id' => $userId])
+                    ->andWhere(['status' => Goal::STATUS_ACTIVE])
+                    ->one();
+                if ($goal) {
+                    $transaction->goal_id = $goal->id;
+                }
+            }
+
+            // 3. Применяем изменения к бюджету/целям
             $this->syncRelatedEntities($transaction);
 
             if (!$transaction->save()) {
@@ -62,6 +73,17 @@ readonly class TransactionService
 
             $transaction->attributes = $form->attributes;
             $transaction->type = $this->resolveTypeByCategory($transaction->category_id, $transaction->goal_id);
+
+            // Auto-link goal by category if not set explicitly
+            if (!$transaction->goal_id && $transaction->category_id && $transaction->type === Transaction::TYPE_GOAL) {
+                $goal = Goal::find()
+                    ->where(['category_id' => $transaction->category_id, 'user_id' => $transaction->user_id])
+                    ->andWhere(['status' => Goal::STATUS_ACTIVE])
+                    ->one();
+                if ($goal) {
+                    $transaction->goal_id = $goal->id;
+                }
+            }
 
             $this->syncRelatedEntities($transaction);
 

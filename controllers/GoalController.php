@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace app\controllers;
 
+use app\models\Category;
 use app\models\Goal;
 use app\models\forms\GoalForm;
 use app\services\CurrencyService;
@@ -48,10 +49,17 @@ final class GoalController extends BaseController
             ->orderBy(['deadline' => SORT_ASC])
             ->all();
 
+        // Categories of type "goal" — for binding goals to a category
+        $categories = Category::find()
+            ->where(['user_id' => $userId, 'type' => Category::TYPE_GOAL])
+            ->orderBy(['name' => SORT_ASC])
+            ->all();
+
         return $this->render('index', [
             'goals' => $goals,
             'user' => $user,
             'currencyService' => $this->currencyService,
+            'categories' => $categories,
         ]);
     }
 

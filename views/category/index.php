@@ -110,25 +110,26 @@ $this->registerJsFile('@web/js/category.js', [
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Закрыть"></button>
                 </div>
 
-                <form id="categoryForm" class="modal-body p-4 p-lg-5">
+                <form id="categoryForm" class="modal-body p-4">
                     <input type="hidden" id="categoryId">
 
-                    <div class="form-floating mb-4">
+                    <div class="app-field mb-3">
+                        <label for="categoryName" class="app-label">Название</label>
                         <input type="text"
-                               class="form-control rounded-3"
+                               class="form-control"
                                id="categoryName"
                                name="CategoryForm[name]"
-                               placeholder="Название категории"
+                               placeholder="Например, Подписки"
                                required>
                     </div>
 
-                    <div class="form-floating mb-4">
-                        <select class="form-select rounded-3" id="categoryType" name="CategoryForm[type]" required>
+                    <div class="app-field mb-3">
+                        <label for="categoryType" class="app-label">Тип</label>
+                        <select class="form-select" id="categoryType" name="CategoryForm[type]" required>
                             <?php foreach (Category::getTypes() as $value => $label): ?>
                                 <option value="<?= Html::encode($value) ?>"><?= Html::encode($label) ?></option>
                             <?php endforeach; ?>
                         </select>
-                        <label for="categoryType">Тип</label>
                     </div>
 
                     <div id="formErrors" class="alert alert-danger mt-3 d-none"></div>

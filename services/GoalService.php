@@ -18,7 +18,7 @@ final class GoalService
         $this->mapFormToModel($form, $goal);
 
         $goal->currency = $form->currency ?: $defaultCurrency;
-        $goal->current_amount = 0;
+        $goal->current_amount = (float)($form->current_amount ?? 0);
 
         if (!$goal->save()) {
             throw new DomainException('Ошибка при создании цели: ' . json_encode($goal->errors));
@@ -88,6 +88,7 @@ final class GoalService
         $goal->name = $form->name;
         $goal->target_amount = $form->target_amount;
         $goal->deadline = $form->deadline;
+        $goal->category_id = $form->category_id;
         if ($form->currency) {
             $goal->currency = $form->currency;
         }
