@@ -88,7 +88,9 @@ final class GoalService
         $goal->name = $form->name;
         $goal->target_amount = $form->target_amount;
         $goal->deadline = $form->deadline;
-        $goal->category_id = $form->category_id;
+        $goal->category_id = $form->category_id !== null && $form->category_id !== ''
+            ? (int)$form->category_id
+            : null;
         if ($form->currency) {
             $goal->currency = $form->currency;
         }

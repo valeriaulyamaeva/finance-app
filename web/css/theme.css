@@ -999,3 +999,46 @@ body.theme-dark .modal-header .btn-close {
     word-wrap: break-word;
     overflow-wrap: break-word;
 }
+
+/* Tighter summary cards on transaction page at 1280-1399px */
+@media (min-width: 992px) and (max-width: 1399px) {
+    .summary-cards {
+        gap: 0.8rem !important;
+    }
+    .summary-card {
+        padding: 0.9rem !important;
+        border-radius: var(--border-radius-md) !important;
+    }
+    .summary-card h5 {
+        font-size: 0.75rem !important;
+        margin: 0 0 0.4rem 0 !important;
+        line-height: 1.2;
+    }
+    .summary-card p {
+        font-size: 1.05rem !important;
+        font-weight: 600 !important;
+        line-height: 1.2;
+        margin: 0 !important;
+        white-space: nowrap;
+    }
+    .summary-card .change-badge {
+        font-size: 0.7rem !important;
+        padding: 0.1rem 0.5rem !important;
+        margin-top: 0.3rem !important;
+    }
+
+    /* Transactions page: 4 summary cards in one row should fit */
+    .transaction-content .summary-cards {
+        grid-template-columns: repeat(4, 1fr) !important;
+    }
+}
+
+/* Even smaller at really tight 1280px */
+@media (min-width: 992px) and (max-width: 1280px) {
+    .summary-card p {
+        font-size: 0.95rem !important;
+    }
+    .summary-card h5 {
+        font-size: 0.7rem !important;
+    }
+}

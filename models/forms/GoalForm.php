@@ -9,12 +9,12 @@ use yii\base\Model;
 
 final class GoalForm extends Model
 {
-    public ?string $name = null;
-    public ?float $target_amount = null;
-    public ?string $currency = null;
-    public ?string $deadline = null;
-    public ?int $category_id = null;
-    public ?float $current_amount = null;
+    public mixed $name = null;
+    public mixed $target_amount = null;
+    public mixed $currency = null;
+    public mixed $deadline = null;
+    public mixed $category_id = null;
+    public mixed $current_amount = null;
 
     public function rules(): array
     {
