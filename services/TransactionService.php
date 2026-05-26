@@ -110,7 +110,7 @@ readonly class TransactionService
         if ($t->category_id && ($t->type === Transaction::TYPE_EXPENSE || $t->type === Transaction::TYPE_GOAL)) {
             $budget = Budget::findOne(['category_id' => $t->category_id, 'user_id' => $t->user_id]);
             if ($budget) {
-                $budget->spent = max(0, $budget->spent - $t->amount);
+                $budget->spent = max(0, (float)$budget->spent - (float)$t->amount);
                 $budget->save(false);
             }
         }
@@ -136,7 +136,7 @@ readonly class TransactionService
                 ->one();
 
             if ($budget) {
-                $budget->spent = (float)$budget->spent + $t->amount;
+                $budget->spent = (float)$budget->spent + (float)$t->amount;
                 $budget->save(false);
                 $t->budget_id = $budget->id;
 
@@ -173,8 +173,9 @@ readonly class TransactionService
         }
     }
 
-    private function convertToGoalCurrency(float $amount, string $from, string $to): float
+    private function convertToGoalCurrency(mixed $amount, string $from, string $to): float
     {
+        $amount = (float)$amount;
         return ($from === $to) ? $amount : $this->currencyService->fromBase($this->currencyService->toBase($amount, $from), $to);
     }
 
