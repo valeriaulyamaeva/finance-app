@@ -8,6 +8,7 @@ use yii\helpers\Url;
 
 <ul>
     <li><a href="<?= Url::to(['/analytics']) ?>">Аналитика</a></li>
+    <li><a href="<?= Url::to(['/forecast']) ?>">Прогнозирование</a></li>
     <li><a href="<?= Url::to(['/transaction']) ?>">Транзакции</a></li>
     <li><a href="<?= Url::to(['/budget']) ?>">Бюджеты</a></li>
     <li><a href="<?= Url::to(['/category']) ?>">Категории</a></li>

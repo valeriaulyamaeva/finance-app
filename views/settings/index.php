@@ -30,6 +30,7 @@ $saveUrl = Url::to(['settings/save']);
 
         <ul>
             <li><a href="/analytics">Аналитика</a></li>
+                <li><a href="/forecast">Прогнозирование</a></li>
             <li><a href="/transaction">Транзакции</a></li>
             <li><a href="/budget">Бюджеты</a></li>
             <li><a href="/category">Категории</a></li>

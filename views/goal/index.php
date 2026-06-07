@@ -52,6 +52,7 @@ $this->registerJsFile('@web/js/goal.js', [
             <h2 class="d-none d-lg-block">PastelFinance</h2>
             <ul>
                 <li><a href="/analytics">Аналитика</a></li>
+                <li><a href="/forecast">Прогнозирование</a></li>
                 <li><a href="/transaction">Транзакции</a></li>
                 <li><a href="/budget">Бюджеты</a></li>
                 <li><a href="/category">Категории</a></li>

@@ -58,6 +58,7 @@ $config = [
                 'settings/save' => 'settings/save',
                 'import' => 'import/index',
                 'import/<action:\w+>' => 'import/<action>',
+                'forecast' => 'forecast/index',
 
                 '<controller:\w+>/<action:\w+>/<id:\d+>' => '<controller>/<action>',
                 '<controller:\w+>/<action:\w+>' => '<controller>/<action>',

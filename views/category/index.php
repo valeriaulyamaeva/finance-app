@@ -40,6 +40,7 @@ $this->registerJsFile('@web/js/category.js', [
 
             <ul>
                 <li><a href="/analytics">Аналитика</a></li>
+                <li><a href="/forecast">Прогнозирование</a></li>
                 <li><a href="/transaction">Транзакции</a></li>
                 <li><a href="/budget">Бюджеты</a></li>
                 <li><a href="/category" class="active">Категории</a></li>
