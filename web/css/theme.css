@@ -923,7 +923,8 @@ body.theme-dark .modal-header .btn-close {
     body .analytics-content,
     body .settings-content,
     body .import-content,
-    body .forecast-content {
+    body .forecast-content,
+    body .investment-content {
         padding: 1.2rem 1.5rem !important;
     }
 
@@ -1075,7 +1076,8 @@ body.theme-dark .modal-header .btn-close {
     body .analytics-content,
     body .settings-content,
     body .import-content,
-    body .forecast-content {
+    body .forecast-content,
+    body .investment-content {
         margin-left: 18rem !important;
         width: auto !important;
         padding: 1.5rem 4.5rem 2rem 2rem !important;
@@ -1094,7 +1096,8 @@ body.theme-dark .modal-header .btn-close {
     body .analytics-content,
     body .settings-content,
     body .import-content,
-    body .forecast-content {
+    body .forecast-content,
+    body .investment-content {
         margin-left: 16rem !important;
         padding: 1.2rem 4rem 2rem 1.5rem !important;
     }

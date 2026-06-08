@@ -52,6 +52,7 @@ $this->registerCssFile('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.
             <li><a href="/budget">Бюджеты</a></li>
             <li><a href="/category">Категории</a></li>
             <li><a href="/goal">Цели</a></li>
+                <li><a href="/investment">Инвестиции</a></li>
             <li><a href="/import">Импорт выписки</a></li>
             <li><a href="/settings">Настройки</a></li>
         </ul>
@@ -82,6 +83,10 @@ $this->registerCssFile('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.
                     <?php endif; ?>
                 </div>
                 <div class="summary-card">
+                    <h5>Остаток с прошлого периода</h5>
+                    <p><?= number_format($previousBalance, 2, '.', ' ') ?> <?= Html::encode($currencySymbol) ?></p>
+                </div>
+                <div class="summary-card">
                     <h5>Расход</h5>
                     <p><?= number_format($totalExpense, 2, '.', ' ') ?> <?= Html::encode($currencySymbol) ?></p>
                     <?php if ($expenseChange !== null): ?>
@@ -91,8 +96,8 @@ $this->registerCssFile('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.
                     <?php endif; ?>
                 </div>
                 <div class="summary-card">
-                    <h5>Остаток</h5>
-                    <p><?= number_format($remaining, 2, '.', ' ') ?> <?= Html::encode($currencySymbol) ?></p>
+                    <h5>Итоговый остаток</h5>
+                    <p><?= number_format($previousBalance + $remaining, 2, '.', ' ') ?> <?= Html::encode($currencySymbol) ?></p>
                 </div>
             </div>
 

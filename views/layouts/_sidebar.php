@@ -13,6 +13,7 @@ use yii\helpers\Url;
     <li><a href="<?= Url::to(['/budget']) ?>">Бюджеты</a></li>
     <li><a href="<?= Url::to(['/category']) ?>">Категории</a></li>
     <li><a href="<?= Url::to(['/goal']) ?>">Цели</a></li>
+    <li><a href="<?= Url::to(['/investment']) ?>">Инвестиции</a></li>
     <li><a href="<?= Url::to(['/import']) ?>">Импорт выписки</a></li>
     <li><a href="<?= Url::to(['/settings']) ?>">Настройки</a></li>
 </ul>

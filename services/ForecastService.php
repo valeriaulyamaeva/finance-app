@@ -20,7 +20,25 @@ final readonly class ForecastService
 
     public function __construct(
         private CurrencyService $currencyService,
+        private InvestmentService $investmentService,
     ) {}
+
+    /**
+     * Net worth = cash balance (from transactions) + current value of all investments.
+     *
+     * @return array{cash: float, investments: float, total: float}
+     */
+    public function getNetWorth(int $userId, string $userCurrency): array
+    {
+        $cash = $this->getCurrentBalance($userId, $userCurrency);
+        $investments = $this->investmentService->getTotalCurrentValue($userId, $userCurrency);
+
+        return [
+            'cash' => $cash,
+            'investments' => round($investments, 2),
+            'total' => round($cash + $investments, 2),
+        ];
+    }
 
     /**
      * Forecast end-of-month balance.
@@ -259,7 +277,7 @@ final readonly class ForecastService
             ->from(['t' => 'transaction'])
             ->where(['t.user_id' => $userId])
             ->andWhere(['>=', 't.date', $since])
-            ->andWhere(['in', 't.type', ['expense', 'income']])
+            ->andWhere(['in', 't.type', ['expense', 'income', 'goal']])
             ->groupBy(['t.type'])
             ->all();
 
@@ -267,10 +285,11 @@ final readonly class ForecastService
         $income = 0.0;
         foreach ($rows as $row) {
             $value = $this->convert((float)$row['total'], $userCurrency);
-            if ($row['type'] === 'expense') {
-                $expense = $value;
-            } else {
+            if ($row['type'] === 'income') {
                 $income = $value;
+            } else {
+                // expense + goal both count as outflow
+                $expense += $value;
             }
         }
 
@@ -284,12 +303,14 @@ final readonly class ForecastService
 
     private function getBalanceAt(int $userId, string $date, string $userCurrency): float
     {
+        // Goal contributions are outflows too — money moved into a goal
+        // leaves the spendable balance, so it's subtracted like an expense.
         $rows = (new Query())
             ->select(['type' => 't.type', 'total' => 'SUM(t.amount)'])
             ->from(['t' => 'transaction'])
             ->where(['t.user_id' => $userId])
             ->andWhere(['<=', 't.date', $date])
-            ->andWhere(['in', 't.type', ['expense', 'income']])
+            ->andWhere(['in', 't.type', ['expense', 'income', 'goal']])
             ->groupBy(['t.type'])
             ->all();
 

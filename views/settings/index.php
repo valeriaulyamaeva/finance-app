@@ -35,6 +35,7 @@ $saveUrl = Url::to(['settings/save']);
             <li><a href="/budget">Бюджеты</a></li>
             <li><a href="/category">Категории</a></li>
             <li><a href="/goal">Цели</a></li>
+                <li><a href="/investment">Инвестиции</a></li>
             <li><a href="/import">Импорт выписки</a></li>
             <li><a href="/settings" class="active">Настройки</a></li>
         </ul>

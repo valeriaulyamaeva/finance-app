@@ -165,7 +165,11 @@ body.sidebar-open::before {
 }
 
 @media (min-width: 768px) {
-    .summary-cards { grid-template-columns: repeat(3, 1fr); }
+    .summary-cards { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (min-width: 1200px) {
+    .summary-cards { grid-template-columns: repeat(4, 1fr); }
 }
 
 .charts-grid {

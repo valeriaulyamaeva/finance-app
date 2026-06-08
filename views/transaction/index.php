@@ -66,6 +66,7 @@ $this->registerJsFile('@web/js/transaction.js?v=' . $assetVersion, ['depends' =>
         <li><a href="/budget">Бюджеты</a></li>
         <li><a href="/category">Категории</a></li>
         <li><a href="/goal">Цели</a></li>
+                <li><a href="/investment">Инвестиции</a></li>
         <li><a href="/import">Импорт выписки</a></li>
         <li><a href="/settings">Настройки</a></li>
     </ul>

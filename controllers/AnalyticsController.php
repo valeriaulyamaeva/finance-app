@@ -44,6 +44,9 @@ class AnalyticsController extends BaseController
         $totalExpense = $this->sumByType($userId, 'expense', $startDate, $endDate, $userCurrency);
         $remaining = $totalIncome - $totalExpense;
 
+        // Carry-over balance from before the period start
+        $previousBalance = $this->getBalanceBefore($userId, $startDate, $userCurrency);
+
         // Previous period totals for comparison
         $prevIncome = $this->sumByType($userId, 'income', $prevStart, $prevEnd, $userCurrency);
         $prevExpense = $this->sumByType($userId, 'expense', $prevStart, $prevEnd, $userCurrency);
@@ -71,6 +74,7 @@ class AnalyticsController extends BaseController
             'totalIncome' => $totalIncome,
             'totalExpense' => $totalExpense,
             'remaining' => $remaining,
+            'previousBalance' => $previousBalance,
             'prevIncome' => $prevIncome,
             'prevExpense' => $prevExpense,
             'incomeChange' => $incomeChange,
@@ -134,6 +138,30 @@ class AnalyticsController extends BaseController
             $this->currencyService->toBase($total, 'BYN'),
             $userCurrency
         ), 2);
+    }
+
+    /** Balance of all transactions strictly before $date (income − expense − goal). */
+    private function getBalanceBefore(int $userId, string $date, string $userCurrency): float
+    {
+        $rows = (new Query())
+            ->select(['type' => 'type', 'total' => 'SUM(amount)'])
+            ->from('transaction')
+            ->where(['user_id' => $userId])
+            ->andWhere(['<', 'date', $date])
+            ->andWhere(['in', 'type', ['income', 'expense', 'goal']])
+            ->groupBy('type')
+            ->all();
+
+        $balance = 0.0;
+        foreach ($rows as $row) {
+            $value = $this->currencyService->fromBase(
+                $this->currencyService->toBase((float)$row['total'], 'BYN'),
+                $userCurrency
+            );
+            $balance += $row['type'] === 'income' ? $value : -$value;
+        }
+
+        return round($balance, 2);
     }
 
     private function getCategoryData(int $userId, string $start, string $end, string $userCurrency): array

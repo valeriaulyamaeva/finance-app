@@ -11,6 +11,8 @@ use app\services\ImportService;
 use app\services\NotificationService;
 use app\services\KeycloakService;
 use app\services\ForecastService;
+use app\services\InvestmentService;
+use app\services\MarketDataService;
 
 return [
     'definitions' => [
@@ -33,6 +35,8 @@ return [
         NotificationService::class => NotificationService::class,
         KeycloakService::class => KeycloakService::class,
         ForecastService::class => ForecastService::class,
+        InvestmentService::class => InvestmentService::class,
+        MarketDataService::class => MarketDataService::class,
     ],
     'singletons' => [
         CurrencyService::class => CurrencyService::class,

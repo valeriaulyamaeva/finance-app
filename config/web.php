@@ -59,6 +59,7 @@ $config = [
                 'import' => 'import/index',
                 'import/<action:\w+>' => 'import/<action>',
                 'forecast' => 'forecast/index',
+                'investment' => 'investment/index',
 
                 '<controller:\w+>/<action:\w+>/<id:\d+>' => '<controller>/<action>',
                 '<controller:\w+>/<action:\w+>' => '<controller>/<action>',

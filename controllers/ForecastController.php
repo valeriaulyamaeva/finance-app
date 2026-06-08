@@ -52,6 +52,7 @@ final class ForecastController extends BaseController
             'categories' => $this->forecastService->forecastCategories($userId, $userCurrency),
             'goals' => $this->forecastService->forecastGoals($userId),
             'timeline' => $this->forecastService->balanceTimeline($userId, $userCurrency),
+            'netWorth' => $this->forecastService->getNetWorth($userId, $userCurrency),
             'userCurrency' => $userCurrency,
         ]);
     }

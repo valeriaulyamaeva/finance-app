@@ -45,6 +45,7 @@ $this->registerJsFile('@web/js/forecast.js?v=' . $jsVer, ['depends' => [JqueryAs
             <li><a href="/budget">Бюджеты</a></li>
             <li><a href="/category">Категории</a></li>
             <li><a href="/goal">Цели</a></li>
+            <li><a href="/investment">Инвестиции</a></li>
             <li><a href="/import">Импорт выписки</a></li>
             <li><a href="/settings">Настройки</a></li>
         </ul>
@@ -52,6 +53,25 @@ $this->registerJsFile('@web/js/forecast.js?v=' . $jsVer, ['depends' => [JqueryAs
 
     <div class="forecast-content" id="mainContent">
         <h1>Прогнозирование</h1>
+
+        <!-- Net worth (cash + investments) -->
+        <div class="networth-banner">
+            <div class="networth-main">
+                <span class="networth-label">Общий капитал</span>
+                <span class="networth-total"><?= number_format($netWorth['total'], 2) ?> <?= $cs ?></span>
+            </div>
+            <div class="networth-breakdown">
+                <div class="networth-part">
+                    <i class="fas fa-wallet"></i>
+                    <span>Деньги: <b><?= number_format($netWorth['cash'], 2) ?> <?= $cs ?></b></span>
+                </div>
+                <div class="networth-part">
+                    <i class="fas fa-coins"></i>
+                    <span>Активы: <b><?= number_format($netWorth['investments'], 2) ?> <?= $cs ?></b></span>
+                    <a href="/investment" class="networth-link">управлять →</a>
+                </div>
+            </div>
+        </div>
 
         <!-- Month-end forecast summary -->
         <div class="summary-cards">

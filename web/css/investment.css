@@ -5,26 +5,26 @@ body {
     color: var(--text-primary);
 }
 
-.forecast-page {
+.investment-page {
     display: block;
     min-height: 100vh;
 }
 
-.forecast-content {
+.investment-content {
     padding: 1.5rem 2rem;
     transition: margin-left 0.35s ease;
 }
 
 @media (min-width: 992px) {
-    .forecast-content { margin-left: 18rem; }
+    .investment-content { margin-left: 18rem; }
 }
 
 @media (min-width: 992px) and (max-width: 1399px) {
-    .forecast-content { margin-left: 16rem; }
+    .investment-content { margin-left: 16rem; }
 }
 
 @media (max-width: 991.98px) {
-    .forecast-content { margin-left: 0; padding: 1rem; }
+    .investment-content { margin-left: 0; padding: 1rem; }
 }
 
 /* Summary cards (reuse pattern) */
@@ -72,7 +72,7 @@ body {
 }
 
 /* Chart card */
-.forecast-chart-card {
+.investment-chart-card {
     background: var(--bg-surface);
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius-lg);
@@ -84,29 +84,29 @@ body {
     flex-direction: column;
 }
 
-.forecast-chart-card h4 {
+.investment-chart-card h4 {
     margin: 0 0 1rem;
     font-size: 1.05rem;
     color: var(--text-primary);
 }
 
-.forecast-chart-card canvas {
+.investment-chart-card canvas {
     flex: 1;
     min-height: 0;
 }
 
 /* Two-column blocks */
-.forecast-columns {
+.investment-columns {
     display: grid;
     grid-template-columns: 1fr;
     gap: 1.5rem;
 }
 
 @media (min-width: 1200px) {
-    .forecast-columns { grid-template-columns: 1fr 1fr; }
+    .investment-columns { grid-template-columns: 1fr 1fr; }
 }
 
-.forecast-block {
+.investment-block {
     background: var(--bg-surface);
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius-lg);
@@ -114,35 +114,35 @@ body {
     box-shadow: var(--shadow-md);
 }
 
-.forecast-block h4 {
+.investment-block h4 {
     margin: 0 0 1.2rem;
     font-size: 1rem;
     color: var(--text-primary);
 }
 
 /* Forecast item rows */
-.forecast-list {
+.investment-list {
     display: flex;
     flex-direction: column;
     gap: 1rem;
 }
 
-.forecast-item {
+.investment-item {
     padding: 0.9rem 1rem;
     background: var(--bg-surface-2);
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius-md);
 }
 
-.forecast-item--over {
+.investment-item--over {
     border-left: 3px solid var(--color-danger);
 }
 
-.forecast-item--under {
+.investment-item--under {
     border-left: 3px solid var(--color-success);
 }
 
-.forecast-item-head {
+.investment-item-head {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -150,13 +150,13 @@ body {
     margin-bottom: 0.5rem;
 }
 
-.forecast-item-name {
+.investment-item-name {
     font-weight: 600;
     font-size: 0.92rem;
     color: var(--text-primary);
 }
 
-.forecast-badge {
+.investment-badge {
     font-size: 0.7rem;
     font-weight: 600;
     padding: 0.2rem 0.6rem;
@@ -164,13 +164,13 @@ body {
     white-space: nowrap;
 }
 
-.forecast-badge--over { background: var(--color-danger-soft); color: var(--color-danger-text); }
-.forecast-badge--under { background: var(--color-success-soft); color: var(--color-success-text); }
-.forecast-badge--ontrack { background: var(--color-success-soft); color: var(--color-success-text); }
-.forecast-badge--late { background: var(--color-warning-soft); color: var(--color-warning-text); }
-.forecast-badge--stale { background: var(--color-secondary); color: var(--text-muted); }
+.investment-badge--over { background: var(--color-danger-soft); color: var(--color-danger-text); }
+.investment-badge--under { background: var(--color-success-soft); color: var(--color-success-text); }
+.investment-badge--ontrack { background: var(--color-success-soft); color: var(--color-success-text); }
+.investment-badge--late { background: var(--color-warning-soft); color: var(--color-warning-text); }
+.investment-badge--stale { background: var(--color-secondary); color: var(--text-muted); }
 
-.forecast-item-bar {
+.investment-item-bar {
     height: 8px;
     background: var(--bg-elevated);
     border-radius: 6px;
@@ -178,18 +178,18 @@ body {
     margin-bottom: 0.5rem;
 }
 
-.forecast-item-fill {
+.investment-item-fill {
     height: 100%;
     background: var(--color-primary);
     border-radius: 6px;
     transition: width 0.6s ease;
 }
 
-.forecast-item--over .forecast-item-fill { background: var(--color-danger); }
-.forecast-item--under .forecast-item-fill { background: var(--color-success); }
-.forecast-item-fill--goal { background: var(--color-primary); }
+.investment-item--over .investment-item-fill { background: var(--color-danger); }
+.investment-item--under .investment-item-fill { background: var(--color-success); }
+.investment-item-fill--goal { background: var(--color-primary); }
 
-.forecast-item-meta {
+.investment-item-meta {
     display: flex;
     justify-content: space-between;
     flex-wrap: wrap;
@@ -310,68 +310,171 @@ body.sidebar-open::before {
     z-index: 1030;
 }
 
-/* Net worth banner (cash + investments) */
-.networth-banner {
-    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-active));
-    color: var(--color-primary-contrast);
+/* ─── Investment-specific ──────────────────────────────────── */
+
+/* Cards grid */
+.cards-container {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+}
+
+@media (min-width: 768px)  { .cards-container { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1200px) { .cards-container { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 1600px) { .cards-container { grid-template-columns: repeat(4, 1fr); } }
+
+.card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
     border-radius: var(--border-radius-lg);
-    padding: 1.6rem 1.8rem;
-    margin: 1.5rem 0 2rem;
+    padding: 1.5rem;
+    box-shadow: var(--shadow-md);
+    transition: all 0.3s ease;
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.card:hover {
+    transform: translateY(-6px);
+    border-color: var(--border-color-strong);
+    box-shadow: var(--shadow-lg);
+}
+
+.card h3 {
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    word-wrap: break-word;
+}
+
+.investment-type-badge {
+    background: var(--color-info-soft);
+    color: var(--color-info-text);
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.25rem 0.7rem;
+    border-radius: var(--border-radius-pill);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.investment-values {
+    margin-top: 0.8rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.investment-value-row {
+    display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 1.2rem;
-    box-shadow: var(--shadow-md);
-}
-
-.networth-main {
-    display: flex;
-    flex-direction: column;
-    gap: 0.2rem;
-}
-
-.networth-label {
-    font-size: 0.85rem;
-    opacity: 0.85;
-    font-weight: 500;
-}
-
-.networth-total {
-    font-size: 2rem;
-    font-weight: 700;
-    line-height: 1.1;
-}
-
-.networth-breakdown {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
     font-size: 0.9rem;
 }
 
-.networth-part {
+.investment-current {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.card-actions {
     display: flex;
-    align-items: center;
-    gap: 0.5rem;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 1.2rem;
 }
 
-.networth-part i {
-    opacity: 0.8;
-    width: 1.1rem;
-    text-align: center;
+.card-actions button {
+    background: none;
+    border: none;
+    font-size: 1.1rem;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: color 0.2s;
+    padding: 0.3rem 0.6rem;
 }
 
-.networth-link {
+.card-actions button:hover { color: var(--text-primary); }
+.card-actions .deleteBtn:hover { color: var(--color-danger); }
+
+/* Button */
+.btn-add {
+    background: var(--color-primary);
     color: var(--color-primary-contrast);
-    opacity: 0.8;
-    text-decoration: underline;
-    font-size: 0.8rem;
-    margin-left: 0.4rem;
+    border: none;
+    border-radius: var(--border-radius-pill);
+    padding: 0.75rem 1.8rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
 }
 
-.networth-link:hover { opacity: 1; color: var(--color-primary-contrast); }
-
-@media (max-width: 575.98px) {
-    .networth-total { font-size: 1.6rem; }
+.btn-add:hover {
+    background: var(--color-primary-hover);
+    color: var(--color-primary-contrast);
+    transform: translateY(-2px);
 }
+
+.text-center.py-5 { grid-column: 1 / -1; }
+
+/* Refresh button */
+.btn-refresh {
+    background: var(--color-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-pill);
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-refresh:hover {
+    background: var(--color-secondary-hover);
+    border-color: var(--border-color-strong);
+}
+
+.btn-refresh:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Market price box in modal */
+.market-price-box {
+    background: var(--bg-surface-2);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    padding: 1rem 1.1rem;
+    margin-bottom: 1.1rem;
+}
+
+.btn-fetch-price {
+    width: 100%;
+    background: var(--color-primary);
+    color: var(--color-primary-contrast);
+    border: none;
+    border-radius: var(--border-radius-sm);
+    padding: 0.65rem 0.9rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-fetch-price:hover {
+    background: var(--color-primary-hover);
+}
+
+.market-price-result {
+    margin-top: 0.7rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    min-height: 1.1rem;
+}
+
+.market-price-result--ok { color: var(--color-success-text); }
+.market-price-result--error { color: var(--color-danger-text); }
+
+.fa-spin { animation: fa-spin 1s linear infinite; }
+@keyframes fa-spin { from { transform: rotate(0); } to { transform: rotate(360deg); } }

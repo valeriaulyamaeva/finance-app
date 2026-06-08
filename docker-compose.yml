@@ -15,6 +15,7 @@ services:
       - MYSQL_USER=root
       - MYSQL_PASSWORD=root
       - YII_DEBUG_TOOLBAR=0
+      - FINNHUB_API_KEY=d8j75ahr01qgth6isbi0d8j75ahr01qgth6isbig
 
   mysql:
     image: mysql:8.0

@@ -10,4 +10,8 @@ return [
     'keycloakClientId' => getenv('KEYCLOAK_CLIENT_ID') ?: 'vale-app',
     'keycloakAdminUser' => getenv('KEYCLOAK_ADMIN_USER') ?: 'admin',
     'keycloakAdminPassword' => getenv('KEYCLOAK_ADMIN_PASSWORD') ?: 'admin',
+
+    // Finnhub free API key for stock prices — get one at https://finnhub.io/register
+    // Crypto (CoinGecko) works without a key.
+    'finnhubApiKey' => getenv('FINNHUB_API_KEY') ?: '',
 ];
